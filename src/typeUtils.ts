@@ -1,6 +1,4 @@
-export type MaybePromise<T> = Promise<T> | T;
-
-export type MaybeFunction<T> = T | (() => MaybePromise<T>);
+export type MaybeFunction<T> = T | (() => Promise<T>);
 
 // Helper type to check if a type is 'never'
 type IsNever<T> = T extends never ? true : false;

@@ -1,9 +1,15 @@
-# Type Safe ShipEngine Client
+# ShipEngine Client
 
-Create a type safe client
+A type-safe fetch client for the ShipEngine.com API
+
+## Authentication
+
+If `SHIPENGINE_API_KEY` is in the environent variables it will be used as the auth token, else you will need to set a token using the callback when initializing a new ShipEngine client
+
+## Client Usage
 
 ```ts
-import getClientFactory from "./index";
+import getClientFactory from "shipengine-ts";
 
 // get a user api token for the shipengine API here
 async function userAPIKey(_userId: string) {
@@ -27,16 +33,18 @@ const getClient = (userId: string) => {
 export default getClient;
 ```
 
-client usage
+## Client Usage
 
 ```ts
-const client = getClient("userId");
+import getClient from "shipengine-ts";
 
-const carriers = client.GET("/v1/carriers");
+const client = await getClient("userId");
+
+const carriers = await client.GET("/v1/carriers");
 
 // full type safe request body/params/etc
 // and type safe responses
-const createPackage = client.POST("/v1/packages", {
+const createPackage = await client.POST("/v1/packages", {
   body: {
     name: "name",
     package_code: "custom_12312",
@@ -51,14 +59,26 @@ const createPackage = client.POST("/v1/packages", {
 });
 ```
 
-Extracting types from codegen
+## Extracting types from codegen
 
 ```ts
-import type { paths } from "./definitions";
-import type { PickDeep } from "./typeUtils";
+import type { PickDeep, ShipEngineTypes } from "shipengine-ts";
 
+// getting types for request body
 type RateRequestBodyRaw = PickDeep<
-  paths,
+  ShipEngineTypes,
   ["/v1/rates", "post", "requestBody", "content", "application/json"]
+>;
+
+// getting types for response body
+type RateResponseBodyRaw = PickDeep<
+  ShipEngineTypes,
+  ["/v1/rates", "post", "responses", 200, "content", "application/json"]
+>;
+
+// getting types for response errors
+type RateResponseErrors = PickDeep<
+  ShipEngineTypes,
+  ["/v1/rates", "post", "responses", 400, "content", "application/json"]
 >;
 ```

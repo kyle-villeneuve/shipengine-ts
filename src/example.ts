@@ -1,6 +1,8 @@
-import type { paths } from "./definitions";
-import getClientFactory from "./index";
-import type { PickDeep } from "./typeUtils";
+import {
+  default as getClientFactory,
+  type PickDeep,
+  type ShipEngineTypes,
+} from ".";
 
 // get a user api token for the shipengine API here
 async function userAPIKey(_userId: string) {
@@ -23,27 +25,42 @@ const getClient = (userId: string) => {
 
 export default getClient;
 
-const client = getClient("userId");
+(async () => {
+  const client = await getClient("userId");
 
-// example of type safety for request/response
+  // example of type safety for request/response
 
-const carriers = client.GET("/v1/carriers");
+  const carriers = client.GET("/v1/carriers");
 
-const createPackage = client.POST("/v1/packages", {
-  body: {
-    name: "name",
-    package_code: "custom_12312",
-    description: "description",
-    dimensions: {
-      height: 3,
-      length: 3,
-      width: 3,
-      unit: "inch",
+  const createPackage = client.POST("/v1/packages", {
+    body: {
+      name: "name",
+      package_code: "custom_12312",
+      description: "description",
+      dimensions: {
+        height: 3,
+        length: 3,
+        width: 3,
+        unit: "inch",
+      },
     },
-  },
-});
+  });
+})();
 
+// getting types for request body
 type RateRequestBodyRaw = PickDeep<
-  paths,
+  ShipEngineTypes.paths,
   ["/v1/rates", "post", "requestBody", "content", "application/json"]
+>;
+
+// getting types for response body
+type RateResponseBodyRaw = PickDeep<
+  ShipEngineTypes.paths,
+  ["/v1/rates", "post", "responses", 200, "content", "application/json"]
+>;
+
+// getting types for response errors
+type RateResponseErrors = PickDeep<
+  ShipEngineTypes.paths,
+  ["/v1/rates", "post", "responses", 400, "content", "application/json"]
 >;
