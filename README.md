@@ -64,19 +64,19 @@ import type { PickDeep, ShipEngineTypes } from "shipengine-ts";
 
 // getting types for request body
 type RateRequestBodyRaw = PickDeep<
-  ShipEngineTypes,
+  ShipEngineTypes.paths,
   ["/v1/rates", "post", "requestBody", "content", "application/json"]
 >;
 
 // getting types for response body
 type RateResponseBodyRaw = PickDeep<
-  ShipEngineTypes,
+  ShipEngineTypes.paths,
   ["/v1/rates", "post", "responses", 200, "content", "application/json"]
 >;
 
 // getting types for response errors
 type RateResponseErrors = PickDeep<
-  ShipEngineTypes,
+  ShipEngineTypes.paths,
   ["/v1/rates", "post", "responses", 400, "content", "application/json"]
 >;
 ```
