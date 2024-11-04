@@ -31,6 +31,12 @@ export default async function makeClient(
     options = await options();
   }
 
+  if (!options.headers["Api-Key"]) {
+    throw new Error(
+      "API key must be set as the environment variable `SHIPENGINE_API_KEY` or set during client creation in the `options` callback"
+    );
+  }
+
   const client = initClient<paths>({
     baseUrl: "https://api.shipengine.com/",
     ...options,
