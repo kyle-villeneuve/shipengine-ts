@@ -36,8 +36,6 @@ export default getClient;
 ## Client Usage
 
 ```ts
-import getClient from "shipengine-ts";
-
 const client = await getClient("userId");
 
 const carriers = await client.GET("/v1/carriers");
