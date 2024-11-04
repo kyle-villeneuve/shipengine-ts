@@ -1,0 +1,19 @@
+{
+  "name": "shipengine-ts",
+  "version": "1.0.0",
+  "description": "A type-safe fetch client for the ShipEngine.com API",
+  "main": "index.ts",
+  "author": "Kyle Villeneuve (skusavvy.com)",
+  "license": "MIT",
+  "private": false,
+  "dependencies": {
+    "openapi-fetch": "^0.13.0"
+  },
+  "scripts": {
+    "typegen": "npx openapi-typescript https://raw.githubusercontent.com/ShipEngine/shipengine-openapi/master/openapi.json  -o ./src/definitions.ts"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.4.2",
+    "typescript": "5.6.2"
+  }
+}
