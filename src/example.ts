@@ -11,6 +11,7 @@ async function userAPIKey(_userId: string) {
 
 const getClient = (userId: string) => {
   return getClientFactory(async () => {
+    // this is only needed when prcoess.env.SHIPENGINE_API_KEY is not set
     const apiKey = await userAPIKey(userId);
 
     const headers: Record<string, string> = {
