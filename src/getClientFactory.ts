@@ -11,6 +11,10 @@ const envApiKey = process.env.SHIPENGINE_API_KEY;
 type InitOptions = MaybeFunction<
   Omit<ClientOptions, "baseUrl" | "headers"> & {
     headers: Record<string, string>;
+    /**
+     * uniquely identify the client for per-account rate limiting state management
+     **/
+    clientId?: string;
   }
 >;
 
@@ -41,30 +45,30 @@ const DEFAULT_RETRY_CONFIG: RetryConfig = {
 };
 
 class RateLimitHandler {
-  // Only stores the rate limit window per API key
+  // Only stores the rate limit window per clientId
   private rateLimitCache = new Map<string, number>();
   private retryConfig: RetryConfig;
 
-  constructor(config?: Partial<RetryConfig>) {
-    this.retryConfig = config
-      ? { ...DEFAULT_RETRY_CONFIG, ...config }
+  constructor(retryConfig?: Partial<RetryConfig>) {
+    this.retryConfig = retryConfig
+      ? { ...DEFAULT_RETRY_CONFIG, ...retryConfig }
       : DEFAULT_RETRY_CONFIG;
   }
 
   private calculateBackoff(retryCount: number): number {
-    const delay = Math.min(
-      this.retryConfig.baseDelay *
-        Math.pow(this.retryConfig.retryMultiplier, retryCount),
-      this.retryConfig.maxDelay
-    );
+    const scale = Math.pow(this.retryConfig.retryMultiplier, retryCount);
+    const delay = this.retryConfig.baseDelay * scale;
 
     // Add jitter to prevent thundering herd
-    return delay * (0.75 + Math.random() * 0.5);
+    return Math.min(
+      this.retryConfig.maxDelay,
+      delay + delay * (Math.random() * 0.5)
+    );
   }
 
   // Check if we need to wait due to rate limiting
-  private async handlePreRequest(apiKey: string): Promise<void> {
-    const waitUntil = this.rateLimitCache.get(apiKey);
+  private async handlePreRequest(clientId: string): Promise<void> {
+    const waitUntil = this.rateLimitCache.get(clientId);
 
     if (!waitUntil) return;
 
@@ -75,7 +79,7 @@ class RateLimitHandler {
   }
 
   handleResponse(
-    apiKey: string,
+    clientId: string,
     status: number,
     headers: Headers,
     retryCount: number
@@ -91,31 +95,32 @@ class RateLimitHandler {
         : this.calculateBackoff(retryCount);
 
       // Update the rate limit window for this API key
-      this.rateLimitCache.set(apiKey, Date.now() + retryMs);
+      this.rateLimitCache.set(clientId, Date.now() + retryMs);
 
       throw new RetryError();
     }
 
     // Reset rate limit info on successful response
     if (status < 400) {
-      this.rateLimitCache.delete(apiKey);
+      this.rateLimitCache.delete(clientId);
     }
   }
 
-  wrap<T extends (...args: any[]) => Promise<any>>(
-    apiKey: string,
+  wrap<T extends (arg1: any, arg2: any) => Promise<any>>(
+    clientId: string,
     method: T
   ): T {
-    return (async (...args: Parameters<T>) => {
+    return (async (arg1: Parameters<T>[0], arg2: Parameters<T>[1]) => {
       let retryCount = 0;
 
       while (true) {
-        await this.handlePreRequest(apiKey);
-        const response = await method(...args);
+        await this.handlePreRequest(clientId);
+        const response = await method(arg1, arg2);
 
         try {
+          // if a rate limit is detected in the response, this will throw a RetryError
           this.handleResponse(
-            apiKey,
+            clientId,
             response.status,
             response.headers,
             retryCount
@@ -129,6 +134,7 @@ class RateLimitHandler {
             retryCount++;
             continue;
           }
+
           throw error;
         }
       }
@@ -165,9 +171,11 @@ export default async function makeClient(
     ? Object.assign(headers, options.headers)
     : options.headers;
 
+  let { clientId, ...rest } = options;
+
   const client = initClient<paths>({
     baseUrl: "https://api.shipengine.com/",
-    ...options,
+    ...rest,
     headers: mergedHeaders,
   });
 
@@ -175,12 +183,14 @@ export default async function makeClient(
     client.use(...middleware);
   }
 
+  clientId = clientId || API_KEY;
+
   // Each wrapped method handles its own retries
-  client.DELETE = rateLimitHandler.wrap(API_KEY, client.DELETE.bind(client));
-  client.GET = rateLimitHandler.wrap(API_KEY, client.GET.bind(client));
-  client.PATCH = rateLimitHandler.wrap(API_KEY, client.PATCH.bind(client));
-  client.POST = rateLimitHandler.wrap(API_KEY, client.POST.bind(client));
-  client.PUT = rateLimitHandler.wrap(API_KEY, client.PUT.bind(client));
+  client.DELETE = rateLimitHandler.wrap(clientId, client.DELETE);
+  client.GET = rateLimitHandler.wrap(clientId, client.GET);
+  client.PATCH = rateLimitHandler.wrap(clientId, client.PATCH);
+  client.POST = rateLimitHandler.wrap(clientId, client.POST);
+  client.PUT = rateLimitHandler.wrap(clientId, client.PUT);
 
   return client;
 }
