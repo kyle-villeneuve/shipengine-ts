@@ -21,6 +21,7 @@ function userAPIKey(_userId) {
 }
 const getClient = (userId) => {
     return (0, _1.default)(() => __awaiter(void 0, void 0, void 0, function* () {
+        // this is only needed when prcoess.env.SHIPENGINE_API_KEY is not set
         const apiKey = yield userAPIKey(userId);
         const headers = {
             "Content-Type": "application/json",
