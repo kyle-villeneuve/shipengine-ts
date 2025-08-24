@@ -1,13 +1,14 @@
 {
   "name": "shipengine-ts",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "A type-safe fetch client for the ShipEngine.com API",
-  "main": "dist/index.cjs",
-  "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "author": "Kyle Villeneuve (skusavvy.com)",
   "license": "MIT",
   "private": false,
+  "type": "module",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
   "exports": {
     ".": {
       "import": "./dist/index.js",
