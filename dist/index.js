@@ -31,12 +31,9 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 var index_exports = {};
 __export(index_exports, {
   ShipEngineTypes: () => definitions_exports,
-  default: () => makeClient
+  default: () => index_default
 });
 module.exports = __toCommonJS(index_exports);
-
-// src/definitions.ts
-var definitions_exports = {};
 
 // src/getClientFactory.ts
 var import_openapi_fetch = __toESM(require("openapi-fetch"));
@@ -156,6 +153,12 @@ async function makeClient(options, middleware) {
   client.PUT = rateLimitHandler.wrap(clientId, client.PUT);
   return client;
 }
+
+// src/definitions.ts
+var definitions_exports = {};
+
+// src/index.ts
+var index_default = makeClient;
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   ShipEngineTypes

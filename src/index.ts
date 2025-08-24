@@ -1,3 +1,5 @@
+import makeClient from "./getClientFactory";
+
 export * as ShipEngineTypes from "./definitions";
-export { default } from "./getClientFactory";
 export type * from "./typeUtils";
+export default makeClient;
