@@ -624,7 +624,7 @@ export interface paths {
         put?: never;
         /**
          * Create a Webhook
-         * @description Create a webook for specific events in the environment.
+         * @description Create a webhook for specific events in the environment.
          */
         post: operations["create_webhook"];
         delete?: never;
@@ -782,6 +782,36 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/labels/rate_shopper_id/{rate_shopper_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The rate selection strategy for the Rate Shopper. This determines which carrier
+                 *     and service will be automatically selected from your wallet carriers based on
+                 *     the rates returned for the shipment.
+                 *      */
+                rate_shopper_id: "best_value" | "cheapest" | "fastest";
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Purchase Label from Rate Shopper
+         * @description Purchase and print a shipping label using the Rate Shopper. The Rate Shopper
+         *     automatically selects the optimal carrier and service from your wallet carriers
+         *     based on your specified rate selection strategy (cheapest, fastest, or best_value).
+         *     For more information about this in the [rates documentation](https://www.shipengine.com/docs/rates/#about-the-response).
+         *
+         */
+        post: operations["create_label_from_rate_shopper"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/labels/shipment/{shipment_id}": {
         parameters: {
             query?: never;
@@ -894,6 +924,29 @@ export interface paths {
          */
         put: operations["void_label"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/labels/{label_id}/cancel_refund": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Label ID */
+                label_id: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancel a label refund request
+         * @description Cancel a scheduled refund request for a label. Only labels with refund status "request_scheduled" can be excluded from an upcoming refund request.
+         */
+        post: operations["cancel_label_refund"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3574,7 +3627,7 @@ export interface components {
                  * @description The display format that the label should be shown in.
                  * @default label
                  */
-                display_scheme: "label" | "qr_code" | "label_and_qr_code" | "paperless" | "label_and_paperless";
+                display_scheme: "label" | "paperless" | "label_and_paperless";
             };
         };
         /**
@@ -3624,7 +3677,7 @@ export interface components {
                  * @description The display format that the label should be shown in.
                  * @default label
                  */
-                display_scheme: "label" | "qr_code" | "label_and_qr_code" | "paperless" | "label_and_paperless";
+                display_scheme: "label" | "paperless" | "label_and_paperless";
             };
         };
         /**
@@ -3632,7 +3685,7 @@ export interface components {
          * @description The display format that the label should be shown in.
          * @enum {string}
          */
-        display_scheme: "label" | "qr_code" | "label_and_qr_code" | "paperless" | "label_and_paperless";
+        display_scheme: "label" | "paperless" | "label_and_paperless";
         /**
          * create_batch_response_body
          * @description A create batch response body
@@ -4149,7 +4202,7 @@ export interface components {
              * @description The display format that the label should be shown in.
              * @default label
              */
-            display_scheme: "label" | "qr_code" | "label_and_qr_code" | "paperless" | "label_and_paperless";
+            display_scheme: "label" | "paperless" | "label_and_paperless";
         };
         /**
          * remove_from_batch_request_body
@@ -4198,6 +4251,8 @@ export interface components {
                 readonly primary?: boolean;
                 /** @description Carrier supports multiple packages per shipment */
                 readonly has_multi_package_supporting_services?: boolean;
+                /** @description The carrier has services that support return shipments. */
+                readonly allows_returns?: boolean;
                 /** @description The carrier supports adding custom label messages to an order. */
                 readonly supports_label_messages?: boolean;
                 /** @description The carrier is disabled by the current ShipEngine account's billing plan. */
@@ -4223,6 +4278,8 @@ export interface components {
                     readonly international?: boolean;
                     /** @description Carrier supports multiple packages per shipment */
                     readonly is_multi_package_supported?: boolean;
+                    /** @description This service supports return shipments. */
+                    readonly is_return_supported?: boolean;
                 }[];
                 /** @description A list of package types that are supported by the carrier */
                 readonly packages?: {
@@ -4272,6 +4329,15 @@ export interface components {
                     /** @description Description of option */
                     readonly description?: string;
                 }[];
+                /** @description The carrier provides rates for the shipment. */
+                readonly send_rates?: boolean;
+                /** @description The carrier supports user-managed rates for shipments. */
+                readonly supports_user_managed_rates?: boolean;
+                /**
+                 * @description The current connection status of the carrier. Indicates whether the carrier connection is pending approval or has been approved for use.
+                 * @enum {string}
+                 */
+                readonly connection_status?: "pending_approval" | "approved";
             }[];
         } & {
             /** @description A UUID that uniquely identifies the request id.
@@ -4340,6 +4406,8 @@ export interface components {
                 readonly primary?: boolean;
                 /** @description Carrier supports multiple packages per shipment */
                 readonly has_multi_package_supporting_services?: boolean;
+                /** @description The carrier has services that support return shipments. */
+                readonly allows_returns?: boolean;
                 /** @description The carrier supports adding custom label messages to an order. */
                 readonly supports_label_messages?: boolean;
                 /** @description The carrier is disabled by the current ShipEngine account's billing plan. */
@@ -4365,6 +4433,8 @@ export interface components {
                     readonly international?: boolean;
                     /** @description Carrier supports multiple packages per shipment */
                     readonly is_multi_package_supported?: boolean;
+                    /** @description This service supports return shipments. */
+                    readonly is_return_supported?: boolean;
                 }[];
                 /** @description A list of package types that are supported by the carrier */
                 readonly packages?: {
@@ -4414,6 +4484,15 @@ export interface components {
                     /** @description Description of option */
                     readonly description?: string;
                 }[];
+                /** @description The carrier provides rates for the shipment. */
+                readonly send_rates?: boolean;
+                /** @description The carrier supports user-managed rates for shipments. */
+                readonly supports_user_managed_rates?: boolean;
+                /**
+                 * @description The current connection status of the carrier. Indicates whether the carrier connection is pending approval or has been approved for use.
+                 * @enum {string}
+                 */
+                readonly connection_status?: "pending_approval" | "approved";
             }[];
         };
         /**
@@ -4456,6 +4535,8 @@ export interface components {
             readonly primary?: boolean;
             /** @description Carrier supports multiple packages per shipment */
             readonly has_multi_package_supporting_services?: boolean;
+            /** @description The carrier has services that support return shipments. */
+            readonly allows_returns?: boolean;
             /** @description The carrier supports adding custom label messages to an order. */
             readonly supports_label_messages?: boolean;
             /** @description The carrier is disabled by the current ShipEngine account's billing plan. */
@@ -4481,6 +4562,8 @@ export interface components {
                 readonly international?: boolean;
                 /** @description Carrier supports multiple packages per shipment */
                 readonly is_multi_package_supported?: boolean;
+                /** @description This service supports return shipments. */
+                readonly is_return_supported?: boolean;
             }[];
             /** @description A list of package types that are supported by the carrier */
             readonly packages?: {
@@ -4530,6 +4613,15 @@ export interface components {
                 /** @description Description of option */
                 readonly description?: string;
             }[];
+            /** @description The carrier provides rates for the shipment. */
+            readonly send_rates?: boolean;
+            /** @description The carrier supports user-managed rates for shipments. */
+            readonly supports_user_managed_rates?: boolean;
+            /**
+             * @description The current connection status of the carrier. Indicates whether the carrier connection is pending approval or has been approved for use.
+             * @enum {string}
+             */
+            readonly connection_status?: "pending_approval" | "approved";
         };
         /**
          * service
@@ -4555,6 +4647,8 @@ export interface components {
             readonly international?: boolean;
             /** @description Carrier supports multiple packages per shipment */
             readonly is_multi_package_supported?: boolean;
+            /** @description This service supports return shipments. */
+            readonly is_return_supported?: boolean;
         };
         /**
          * package_type
@@ -4684,6 +4778,8 @@ export interface components {
             readonly primary?: boolean;
             /** @description Carrier supports multiple packages per shipment */
             readonly has_multi_package_supporting_services?: boolean;
+            /** @description The carrier has services that support return shipments. */
+            readonly allows_returns?: boolean;
             /** @description The carrier supports adding custom label messages to an order. */
             readonly supports_label_messages?: boolean;
             /** @description The carrier is disabled by the current ShipEngine account's billing plan. */
@@ -4709,6 +4805,8 @@ export interface components {
                 readonly international?: boolean;
                 /** @description Carrier supports multiple packages per shipment */
                 readonly is_multi_package_supported?: boolean;
+                /** @description This service supports return shipments. */
+                readonly is_return_supported?: boolean;
             }[];
             /** @description A list of package types that are supported by the carrier */
             readonly packages?: {
@@ -4758,6 +4856,15 @@ export interface components {
                 /** @description Description of option */
                 readonly description?: string;
             }[];
+            /** @description The carrier provides rates for the shipment. */
+            readonly send_rates?: boolean;
+            /** @description The carrier supports user-managed rates for shipments. */
+            readonly supports_user_managed_rates?: boolean;
+            /**
+             * @description The current connection status of the carrier. Indicates whether the carrier connection is pending approval or has been approved for use.
+             * @enum {string}
+             */
+            readonly connection_status?: "pending_approval" | "approved";
         };
         /**
          * add_funds_to_carrier_request_body
@@ -4882,6 +4989,8 @@ export interface components {
                 readonly international?: boolean;
                 /** @description Carrier supports multiple packages per shipment */
                 readonly is_multi_package_supported?: boolean;
+                /** @description This service supports return shipments. */
+                readonly is_return_supported?: boolean;
             }[];
         };
         /**
@@ -6327,6 +6436,17 @@ export interface components {
                  */
                 value: string;
             }[];
+            /**
+             * @description The name of the webhook
+             * @example My Webhook
+             */
+            name?: string;
+            /**
+             * Format: int32
+             * @description Store ID
+             * @example 123456
+             */
+            store_id?: number;
         }[];
         /**
          * webhook
@@ -6356,10 +6476,21 @@ export interface components {
                  */
                 value: string;
             }[];
+            /**
+             * @description The name of the webhook
+             * @example My Webhook
+             */
+            name?: string;
+            /**
+             * Format: int32
+             * @description Store ID
+             * @example 123456
+             */
+            store_id?: number;
         };
         /**
          * webhook_event
-         * @description The possible webook event values
+         * @description The possible webhook event values
          * @enum {string}
          */
         webhook_event: "batch" | "carrier_connected" | "order_source_refresh_complete" | "rate" | "report_complete" | "sales_orders_imported" | "track";
@@ -6419,6 +6550,17 @@ export interface components {
                  */
                 value: string;
             }[];
+            /**
+             * @description The name of the webhook
+             * @example My New Webhook
+             */
+            name?: string;
+            /**
+             * Format: int32
+             * @description Store ID
+             * @example 123456
+             */
+            store_id?: number;
         };
         /**
          * create_webhook_response_body
@@ -6448,6 +6590,17 @@ export interface components {
                  */
                 value: string;
             }[];
+            /**
+             * @description The name of the webhook
+             * @example My Webhook
+             */
+            name?: string;
+            /**
+             * Format: int32
+             * @description Store ID
+             * @example 123456
+             */
+            store_id?: number;
         };
         /**
          * get_webhook_by_id_response_body
@@ -6477,6 +6630,17 @@ export interface components {
                  */
                 value: string;
             }[];
+            /**
+             * @description The name of the webhook
+             * @example My Webhook
+             */
+            name?: string;
+            /**
+             * Format: int32
+             * @description Store ID
+             * @example 123456
+             */
+            store_id?: number;
         };
         /**
          * update_webhook_request_body
@@ -6503,6 +6667,17 @@ export interface components {
                  */
                 value: string;
             }[];
+            /**
+             * @description The name of the webhook
+             * @example My Updated Webhook
+             */
+            name?: string;
+            /**
+             * Format: int32
+             * @description Store ID
+             * @example 123456
+             */
+            store_id?: number;
         };
         /**
          * add_funds_to_insurance_request_body
@@ -6567,6 +6742,11 @@ export interface components {
                 /** @description The shipment that this label is for.  ShipEngine can create a shipment for you automatically when you [create a label](https://www.shipengine.com/docs/labels/create-a-label/), or you can [create your own shipment](https://www.shipengine.com/docs/shipping/create-a-shipment/) and then [use it to print a label](https://www.shipengine.com/docs/labels/create-from-shipment/)
                  *      */
                 readonly shipment_id?: string;
+                /** @description A unique user-defined key to identify a shipment.  This can be used to retrieve the shipment.
+                 *      */
+                readonly external_shipment_id?: string | null;
+                /** @description ID that the Order Source assigned */
+                readonly external_order_id?: string | null;
                 /** @description The shipment information used to generate the label */
                 shipment?: {
                     /** @description A string that uniquely identifies the shipment */
@@ -6887,7 +7067,7 @@ export interface components {
                      * @description The type of delivery confirmation that is required for this shipment.
                      * @default none
                      */
-                    confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                    confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                     /**
                      * @description Customs information.  This is usually only needed for international shipments.
                      *
@@ -7229,6 +7409,26 @@ export interface components {
                          * @example 784515
                          */
                         certificate_number: string | null;
+                        /**
+                         * @description Indicates that the contents of the package are fragile and should be handled with care.
+                         * @default false
+                         */
+                        fragile: boolean;
+                        /**
+                         * @description Instructs the carrier to deliver the package only to the exact address provided.
+                         * @default false
+                         */
+                        "delivery-as-addressed": boolean;
+                        /**
+                         * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                         * @default false
+                         */
+                        "return-after-first-attempt": boolean;
+                        /**
+                         * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                         * @default null
+                         */
+                        regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
                     } & {
                         [key: string]: unknown;
                     };
@@ -7581,8 +7781,6 @@ export interface components {
                     /** @description If applicable, contains additional data about a rate detail of a specific type, e.g. VAT */
                     rate_detail_attributes?: {
                         tax_type?: "vat";
-                        /** @description Code for a specific tax type */
-                        tax_code?: string;
                         /** @description Tax percentage, e.g. 20 for 20%, added to the shipping cost */
                         tax_percentage?: number;
                     };
@@ -7648,7 +7846,7 @@ export interface components {
                  * @description The display format that the label should be shown in.
                  * @default label
                  */
-                display_scheme: "label" | "qr_code" | "label_and_qr_code" | "paperless" | "label_and_paperless";
+                display_scheme: "label" | "paperless" | "label_and_paperless";
                 /**
                  * @description The layout (size) that you want the label to be in.  The `label_format` determines which sizes are allowed.  `4x6` is supported for all label formats, whereas `letter` (8.5" x 11") is only supported for `pdf` format.
                  *
@@ -7666,7 +7864,7 @@ export interface components {
                 /** @description The current status of the package, such as `in_transit` or `delivered` */
                 readonly tracking_status?: "unknown" | "in_transit" | "error" | "delivered";
                 /** @description The type of delivery confirmation that is required for this shipment. */
-                readonly confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                readonly confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                 readonly label_download?: {
                     /** @description The URL of the linked resource, if any */
                     href?: string;
@@ -7682,6 +7880,13 @@ export interface components {
                 readonly form_download?: {
                     /** @description The URL of the linked resource, if any */
                     href: string;
+                    /** @description The type of resource, or the type of relationship to the parent resource */
+                    type?: string;
+                } | null;
+                /** @description The QR code download for the package */
+                readonly qr_code_download?: {
+                    /** @description The URL of the linked resource, if any */
+                    href?: string;
                     /** @description The type of resource, or the type of relationship to the parent resource */
                     type?: string;
                 } | null;
@@ -7889,6 +8094,129 @@ export interface components {
                  * @example https://www.fedex.com/fedextrack/?action=track&trackingnumber=1234
                  */
                 readonly tracking_url?: string | null;
+                /** @description The recipient's mailing address */
+                readonly ship_to?: {
+                    /**
+                     * @description The name of a contact person at this address.  This field may be set instead of - or in addition to - the `company_name` field.
+                     *
+                     * @example John Doe
+                     */
+                    name: string;
+                    /**
+                     * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                     *
+                     * @example +1 204-253-9411 ext. 123
+                     */
+                    phone?: string;
+                    /**
+                     * @description Email for the address owner.
+                     *
+                     * @example example@example.com
+                     */
+                    email?: string | null;
+                    /**
+                     * @description If this is a business address, then the company name should be specified here.
+                     *
+                     * @example The Home Depot
+                     */
+                    company_name?: string | null;
+                    /**
+                     * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                     *
+                     * @example 1999 Bishop Grandin Blvd.
+                     */
+                    address_line1: string;
+                    /**
+                     * @description The second line of the street address.  For some addresses, this line may not be needed.
+                     *
+                     * @example Unit 408
+                     */
+                    address_line2?: string | null;
+                    /**
+                     * @description The third line of the street address.  For some addresses, this line may not be needed.
+                     *
+                     * @example Building #7
+                     */
+                    address_line3?: string | null;
+                    /**
+                     * @description The name of the city or locality
+                     * @example Winnipeg
+                     */
+                    city_locality: string;
+                    /**
+                     * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                     *
+                     * @example Manitoba
+                     */
+                    state_province: string;
+                    postal_code: string;
+                    /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                     *      */
+                    country_code?: string;
+                    /**
+                     * @description Indicates whether this is a residential address.
+                     * @default unknown
+                     * @example no
+                     */
+                    address_residential_indicator: "unknown" | "yes" | "no";
+                } & {
+                    /** @description Additional text about how to handle the shipment at this address.
+                     *      */
+                    instructions?: string | null;
+                    geolocation?: {
+                        /**
+                         * @description Enum of available type of geolocation items:
+                         *       - 'what3words' functionality allows to specify a location by providing 3 words that have been assign to the specific location see [link](https://what3words.com/business) for more details.
+                         *
+                         * @example what3words
+                         * @enum {string}
+                         */
+                        type?: "what3words";
+                        /**
+                         * @description value of the geolocation item
+                         * @example cats.with.thumbs
+                         */
+                        value?: string;
+                    }[];
+                };
+                /**
+                 * @description Indicates how the label was voided. This field is `null` if the label has not been voided.
+                 *
+                 * @example manual
+                 */
+                readonly void_type?: ("refund_assist" | "manual") | null;
+                /** @description Information about the Refund Assist request for this label. This field is `null` if the label is not eligible for Refund Assist.
+                 *      */
+                readonly refund_details?: {
+                    /** @description The current status of the refund request */
+                    readonly refund_status?: "request_scheduled" | "pending" | "approved" | "rejected" | "excluded";
+                    /** @description The date and time when the refund request was submitted */
+                    readonly request_date?: string;
+                    /** @description The amount that was originally paid for the label */
+                    readonly amount_paid?: {
+                        currency: string;
+                        /** @description The monetary amount, in the specified currency. */
+                        amount: number;
+                    } | null;
+                    /** @description The amount requested to be refunded */
+                    readonly amount_requested?: {
+                        currency: string;
+                        /** @description The monetary amount, in the specified currency. */
+                        amount: number;
+                    } | null;
+                    /** @description The amount approved for refund by the carrier */
+                    readonly amount_approved?: {
+                        currency: string;
+                        /** @description The monetary amount, in the specified currency. */
+                        amount: number;
+                    } | null;
+                    /** @description The amount that has been credited back to the account */
+                    readonly amount_credited?: {
+                        currency: string;
+                        /** @description The monetary amount, in the specified currency. */
+                        amount: number;
+                    } | null;
+                } | null;
             }[];
         } & ({
             /**
@@ -8268,7 +8596,7 @@ export interface components {
                  * @description The type of delivery confirmation that is required for this shipment.
                  * @default none
                  */
-                confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                 /**
                  * @description Customs information.  This is usually only needed for international shipments.
                  *
@@ -8610,6 +8938,26 @@ export interface components {
                      * @example 784515
                      */
                     certificate_number: string | null;
+                    /**
+                     * @description Indicates that the contents of the package are fragile and should be handled with care.
+                     * @default false
+                     */
+                    fragile: boolean;
+                    /**
+                     * @description Instructs the carrier to deliver the package only to the exact address provided.
+                     * @default false
+                     */
+                    "delivery-as-addressed": boolean;
+                    /**
+                     * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                     * @default false
+                     */
+                    "return-after-first-attempt": boolean;
+                    /**
+                     * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                     * @default null
+                     */
+                    regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
                 } & {
                     [key: string]: unknown;
                 };
@@ -8913,7 +9261,7 @@ export interface components {
              * @description The display format that the label should be shown in.
              * @default label
              */
-            display_scheme: "label" | "qr_code" | "label_and_qr_code" | "paperless" | "label_and_paperless";
+            display_scheme: "label" | "paperless" | "label_and_paperless";
             /**
              * @description The layout (size) that you want the label to be in.  The `label_format` determines which sizes are allowed.  `4x6` is supported for all label formats, whereas `letter` (8.5" x 11") is only supported for `pdf` format.
              *
@@ -9238,7 +9586,7 @@ export interface components {
                  * @description The type of delivery confirmation that is required for this shipment.
                  * @default none
                  */
-                confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                 /**
                  * @description Customs information.  This is usually only needed for international shipments.
                  *
@@ -9580,6 +9928,26 @@ export interface components {
                      * @example 784515
                      */
                     certificate_number: string | null;
+                    /**
+                     * @description Indicates that the contents of the package are fragile and should be handled with care.
+                     * @default false
+                     */
+                    fragile: boolean;
+                    /**
+                     * @description Instructs the carrier to deliver the package only to the exact address provided.
+                     * @default false
+                     */
+                    "delivery-as-addressed": boolean;
+                    /**
+                     * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                     * @default false
+                     */
+                    "return-after-first-attempt": boolean;
+                    /**
+                     * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                     * @default null
+                     */
+                    regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
                 } & {
                     [key: string]: unknown;
                 };
@@ -9883,7 +10251,7 @@ export interface components {
              * @description The display format that the label should be shown in.
              * @default label
              */
-            display_scheme: "label" | "qr_code" | "label_and_qr_code" | "paperless" | "label_and_paperless";
+            display_scheme: "label" | "paperless" | "label_and_paperless";
             /**
              * @description The layout (size) that you want the label to be in.  The `label_format` determines which sizes are allowed.  `4x6` is supported for all label formats, whereas `letter` (8.5" x 11") is only supported for `pdf` format.
              *
@@ -10208,7 +10576,7 @@ export interface components {
              * @description The type of delivery confirmation that is required for this shipment.
              * @default none
              */
-            confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+            confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
             /**
              * @description Customs information.  This is usually only needed for international shipments.
              *
@@ -10550,6 +10918,26 @@ export interface components {
                  * @example 784515
                  */
                 certificate_number: string | null;
+                /**
+                 * @description Indicates that the contents of the package are fragile and should be handled with care.
+                 * @default false
+                 */
+                fragile: boolean;
+                /**
+                 * @description Instructs the carrier to deliver the package only to the exact address provided.
+                 * @default false
+                 */
+                "delivery-as-addressed": boolean;
+                /**
+                 * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                 * @default false
+                 */
+                "return-after-first-attempt": boolean;
+                /**
+                 * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                 * @default null
+                 */
+                regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
             } & {
                 [key: string]: unknown;
             };
@@ -11176,7 +11564,7 @@ export interface components {
          * @description The possible delivery confirmation values
          * @enum {string}
          */
-        delivery_confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+        delivery_confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
         /**
          * international_shipment_options
          * @description Options for international shipments, such as customs declarations.
@@ -11732,6 +12120,26 @@ export interface components {
              * @example 784515
              */
             certificate_number: string | null;
+            /**
+             * @description Indicates that the contents of the package are fragile and should be handled with care.
+             * @default false
+             */
+            fragile: boolean;
+            /**
+             * @description Instructs the carrier to deliver the package only to the exact address provided.
+             * @default false
+             */
+            "delivery-as-addressed": boolean;
+            /**
+             * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+             * @default false
+             */
+            "return-after-first-attempt": boolean;
+            /**
+             * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+             * @default null
+             */
+            regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
         } & {
             [key: string]: unknown;
         };
@@ -11770,6 +12178,12 @@ export interface components {
             currency?: string;
             amount?: number;
         };
+        /**
+         * regulated_content_type
+         * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+         * @enum {string}
+         */
+        regulated_content_type: "day_old_poultry" | "other_live_animal";
         /**
          * insurance_provider
          * @description The possible insurance provider values
@@ -12409,6 +12823,11 @@ export interface components {
             /** @description The shipment that this label is for.  ShipEngine can create a shipment for you automatically when you [create a label](https://www.shipengine.com/docs/labels/create-a-label/), or you can [create your own shipment](https://www.shipengine.com/docs/shipping/create-a-shipment/) and then [use it to print a label](https://www.shipengine.com/docs/labels/create-from-shipment/)
              *      */
             readonly shipment_id: string;
+            /** @description A unique user-defined key to identify a shipment.  This can be used to retrieve the shipment.
+             *      */
+            readonly external_shipment_id: string | null;
+            /** @description ID that the Order Source assigned */
+            readonly external_order_id: string | null;
             /** @description The shipment information used to generate the label */
             shipment?: {
                 /** @description A string that uniquely identifies the shipment */
@@ -12729,7 +13148,7 @@ export interface components {
                  * @description The type of delivery confirmation that is required for this shipment.
                  * @default none
                  */
-                confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                 /**
                  * @description Customs information.  This is usually only needed for international shipments.
                  *
@@ -13071,6 +13490,26 @@ export interface components {
                      * @example 784515
                      */
                     certificate_number: string | null;
+                    /**
+                     * @description Indicates that the contents of the package are fragile and should be handled with care.
+                     * @default false
+                     */
+                    fragile: boolean;
+                    /**
+                     * @description Instructs the carrier to deliver the package only to the exact address provided.
+                     * @default false
+                     */
+                    "delivery-as-addressed": boolean;
+                    /**
+                     * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                     * @default false
+                     */
+                    "return-after-first-attempt": boolean;
+                    /**
+                     * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                     * @default null
+                     */
+                    regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
                 } & {
                     [key: string]: unknown;
                 };
@@ -13423,8 +13862,6 @@ export interface components {
                 /** @description If applicable, contains additional data about a rate detail of a specific type, e.g. VAT */
                 rate_detail_attributes?: {
                     tax_type?: "vat";
-                    /** @description Code for a specific tax type */
-                    tax_code?: string;
                     /** @description Tax percentage, e.g. 20 for 20%, added to the shipping cost */
                     tax_percentage?: number;
                 };
@@ -13490,7 +13927,7 @@ export interface components {
              * @description The display format that the label should be shown in.
              * @default label
              */
-            display_scheme: "label" | "qr_code" | "label_and_qr_code" | "paperless" | "label_and_paperless";
+            display_scheme: "label" | "paperless" | "label_and_paperless";
             /**
              * @description The layout (size) that you want the label to be in.  The `label_format` determines which sizes are allowed.  `4x6` is supported for all label formats, whereas `letter` (8.5" x 11") is only supported for `pdf` format.
              *
@@ -13508,7 +13945,7 @@ export interface components {
             /** @description The current status of the package, such as `in_transit` or `delivered` */
             readonly tracking_status: "unknown" | "in_transit" | "error" | "delivered";
             /** @description The type of delivery confirmation that is required for this shipment. */
-            readonly confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+            readonly confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
             readonly label_download: {
                 /** @description The URL of the linked resource, if any */
                 href?: string;
@@ -13524,6 +13961,13 @@ export interface components {
             readonly form_download: {
                 /** @description The URL of the linked resource, if any */
                 href: string;
+                /** @description The type of resource, or the type of relationship to the parent resource */
+                type?: string;
+            } | null;
+            /** @description The QR code download for the package */
+            readonly qr_code_download: {
+                /** @description The URL of the linked resource, if any */
+                href?: string;
                 /** @description The type of resource, or the type of relationship to the parent resource */
                 type?: string;
             } | null;
@@ -13731,6 +14175,129 @@ export interface components {
              * @example https://www.fedex.com/fedextrack/?action=track&trackingnumber=1234
              */
             readonly tracking_url?: string | null;
+            /** @description The recipient's mailing address */
+            readonly ship_to: {
+                /**
+                 * @description The name of a contact person at this address.  This field may be set instead of - or in addition to - the `company_name` field.
+                 *
+                 * @example John Doe
+                 */
+                name: string;
+                /**
+                 * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                 *
+                 * @example +1 204-253-9411 ext. 123
+                 */
+                phone?: string;
+                /**
+                 * @description Email for the address owner.
+                 *
+                 * @example example@example.com
+                 */
+                email?: string | null;
+                /**
+                 * @description If this is a business address, then the company name should be specified here.
+                 *
+                 * @example The Home Depot
+                 */
+                company_name?: string | null;
+                /**
+                 * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                 *
+                 * @example 1999 Bishop Grandin Blvd.
+                 */
+                address_line1: string;
+                /**
+                 * @description The second line of the street address.  For some addresses, this line may not be needed.
+                 *
+                 * @example Unit 408
+                 */
+                address_line2?: string | null;
+                /**
+                 * @description The third line of the street address.  For some addresses, this line may not be needed.
+                 *
+                 * @example Building #7
+                 */
+                address_line3?: string | null;
+                /**
+                 * @description The name of the city or locality
+                 * @example Winnipeg
+                 */
+                city_locality: string;
+                /**
+                 * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                 *
+                 * @example Manitoba
+                 */
+                state_province: string;
+                postal_code: string;
+                /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                 *      */
+                country_code?: string;
+                /**
+                 * @description Indicates whether this is a residential address.
+                 * @default unknown
+                 * @example no
+                 */
+                address_residential_indicator: "unknown" | "yes" | "no";
+            } & {
+                /** @description Additional text about how to handle the shipment at this address.
+                 *      */
+                instructions?: string | null;
+                geolocation?: {
+                    /**
+                     * @description Enum of available type of geolocation items:
+                     *       - 'what3words' functionality allows to specify a location by providing 3 words that have been assign to the specific location see [link](https://what3words.com/business) for more details.
+                     *
+                     * @example what3words
+                     * @enum {string}
+                     */
+                    type?: "what3words";
+                    /**
+                     * @description value of the geolocation item
+                     * @example cats.with.thumbs
+                     */
+                    value?: string;
+                }[];
+            };
+            /**
+             * @description Indicates how the label was voided. This field is `null` if the label has not been voided.
+             *
+             * @example manual
+             */
+            readonly void_type?: ("refund_assist" | "manual") | null;
+            /** @description Information about the Refund Assist request for this label. This field is `null` if the label is not eligible for Refund Assist.
+             *      */
+            readonly refund_details?: {
+                /** @description The current status of the refund request */
+                readonly refund_status?: "request_scheduled" | "pending" | "approved" | "rejected" | "excluded";
+                /** @description The date and time when the refund request was submitted */
+                readonly request_date?: string;
+                /** @description The amount that was originally paid for the label */
+                readonly amount_paid?: {
+                    currency: string;
+                    /** @description The monetary amount, in the specified currency. */
+                    amount: number;
+                } | null;
+                /** @description The amount requested to be refunded */
+                readonly amount_requested?: {
+                    currency: string;
+                    /** @description The monetary amount, in the specified currency. */
+                    amount: number;
+                } | null;
+                /** @description The amount approved for refund by the carrier */
+                readonly amount_approved?: {
+                    currency: string;
+                    /** @description The monetary amount, in the specified currency. */
+                    amount: number;
+                } | null;
+                /** @description The amount that has been credited back to the account */
+                readonly amount_credited?: {
+                    currency: string;
+                    /** @description The monetary amount, in the specified currency. */
+                    amount: number;
+                } | null;
+            } | null;
         };
         /**
          * label
@@ -13745,6 +14312,11 @@ export interface components {
             /** @description The shipment that this label is for.  ShipEngine can create a shipment for you automatically when you [create a label](https://www.shipengine.com/docs/labels/create-a-label/), or you can [create your own shipment](https://www.shipengine.com/docs/shipping/create-a-shipment/) and then [use it to print a label](https://www.shipengine.com/docs/labels/create-from-shipment/)
              *      */
             readonly shipment_id?: string;
+            /** @description A unique user-defined key to identify a shipment.  This can be used to retrieve the shipment.
+             *      */
+            readonly external_shipment_id?: string | null;
+            /** @description ID that the Order Source assigned */
+            readonly external_order_id?: string | null;
             /** @description The shipment information used to generate the label */
             shipment?: {
                 /** @description A string that uniquely identifies the shipment */
@@ -14065,7 +14637,7 @@ export interface components {
                  * @description The type of delivery confirmation that is required for this shipment.
                  * @default none
                  */
-                confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                 /**
                  * @description Customs information.  This is usually only needed for international shipments.
                  *
@@ -14407,6 +14979,26 @@ export interface components {
                      * @example 784515
                      */
                     certificate_number: string | null;
+                    /**
+                     * @description Indicates that the contents of the package are fragile and should be handled with care.
+                     * @default false
+                     */
+                    fragile: boolean;
+                    /**
+                     * @description Instructs the carrier to deliver the package only to the exact address provided.
+                     * @default false
+                     */
+                    "delivery-as-addressed": boolean;
+                    /**
+                     * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                     * @default false
+                     */
+                    "return-after-first-attempt": boolean;
+                    /**
+                     * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                     * @default null
+                     */
+                    regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
                 } & {
                     [key: string]: unknown;
                 };
@@ -14759,8 +15351,6 @@ export interface components {
                 /** @description If applicable, contains additional data about a rate detail of a specific type, e.g. VAT */
                 rate_detail_attributes?: {
                     tax_type?: "vat";
-                    /** @description Code for a specific tax type */
-                    tax_code?: string;
                     /** @description Tax percentage, e.g. 20 for 20%, added to the shipping cost */
                     tax_percentage?: number;
                 };
@@ -14826,7 +15416,7 @@ export interface components {
              * @description The display format that the label should be shown in.
              * @default label
              */
-            display_scheme: "label" | "qr_code" | "label_and_qr_code" | "paperless" | "label_and_paperless";
+            display_scheme: "label" | "paperless" | "label_and_paperless";
             /**
              * @description The layout (size) that you want the label to be in.  The `label_format` determines which sizes are allowed.  `4x6` is supported for all label formats, whereas `letter` (8.5" x 11") is only supported for `pdf` format.
              *
@@ -14844,7 +15434,7 @@ export interface components {
             /** @description The current status of the package, such as `in_transit` or `delivered` */
             readonly tracking_status?: "unknown" | "in_transit" | "error" | "delivered";
             /** @description The type of delivery confirmation that is required for this shipment. */
-            readonly confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+            readonly confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
             readonly label_download?: {
                 /** @description The URL of the linked resource, if any */
                 href?: string;
@@ -14860,6 +15450,13 @@ export interface components {
             readonly form_download?: {
                 /** @description The URL of the linked resource, if any */
                 href: string;
+                /** @description The type of resource, or the type of relationship to the parent resource */
+                type?: string;
+            } | null;
+            /** @description The QR code download for the package */
+            readonly qr_code_download?: {
+                /** @description The URL of the linked resource, if any */
+                href?: string;
                 /** @description The type of resource, or the type of relationship to the parent resource */
                 type?: string;
             } | null;
@@ -15067,6 +15664,129 @@ export interface components {
              * @example https://www.fedex.com/fedextrack/?action=track&trackingnumber=1234
              */
             readonly tracking_url?: string | null;
+            /** @description The recipient's mailing address */
+            readonly ship_to?: {
+                /**
+                 * @description The name of a contact person at this address.  This field may be set instead of - or in addition to - the `company_name` field.
+                 *
+                 * @example John Doe
+                 */
+                name: string;
+                /**
+                 * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                 *
+                 * @example +1 204-253-9411 ext. 123
+                 */
+                phone?: string;
+                /**
+                 * @description Email for the address owner.
+                 *
+                 * @example example@example.com
+                 */
+                email?: string | null;
+                /**
+                 * @description If this is a business address, then the company name should be specified here.
+                 *
+                 * @example The Home Depot
+                 */
+                company_name?: string | null;
+                /**
+                 * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                 *
+                 * @example 1999 Bishop Grandin Blvd.
+                 */
+                address_line1: string;
+                /**
+                 * @description The second line of the street address.  For some addresses, this line may not be needed.
+                 *
+                 * @example Unit 408
+                 */
+                address_line2?: string | null;
+                /**
+                 * @description The third line of the street address.  For some addresses, this line may not be needed.
+                 *
+                 * @example Building #7
+                 */
+                address_line3?: string | null;
+                /**
+                 * @description The name of the city or locality
+                 * @example Winnipeg
+                 */
+                city_locality: string;
+                /**
+                 * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                 *
+                 * @example Manitoba
+                 */
+                state_province: string;
+                postal_code: string;
+                /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                 *      */
+                country_code?: string;
+                /**
+                 * @description Indicates whether this is a residential address.
+                 * @default unknown
+                 * @example no
+                 */
+                address_residential_indicator: "unknown" | "yes" | "no";
+            } & {
+                /** @description Additional text about how to handle the shipment at this address.
+                 *      */
+                instructions?: string | null;
+                geolocation?: {
+                    /**
+                     * @description Enum of available type of geolocation items:
+                     *       - 'what3words' functionality allows to specify a location by providing 3 words that have been assign to the specific location see [link](https://what3words.com/business) for more details.
+                     *
+                     * @example what3words
+                     * @enum {string}
+                     */
+                    type?: "what3words";
+                    /**
+                     * @description value of the geolocation item
+                     * @example cats.with.thumbs
+                     */
+                    value?: string;
+                }[];
+            };
+            /**
+             * @description Indicates how the label was voided. This field is `null` if the label has not been voided.
+             *
+             * @example manual
+             */
+            readonly void_type?: ("refund_assist" | "manual") | null;
+            /** @description Information about the Refund Assist request for this label. This field is `null` if the label is not eligible for Refund Assist.
+             *      */
+            readonly refund_details?: {
+                /** @description The current status of the refund request */
+                readonly refund_status?: "request_scheduled" | "pending" | "approved" | "rejected" | "excluded";
+                /** @description The date and time when the refund request was submitted */
+                readonly request_date?: string;
+                /** @description The amount that was originally paid for the label */
+                readonly amount_paid?: {
+                    currency: string;
+                    /** @description The monetary amount, in the specified currency. */
+                    amount: number;
+                } | null;
+                /** @description The amount requested to be refunded */
+                readonly amount_requested?: {
+                    currency: string;
+                    /** @description The monetary amount, in the specified currency. */
+                    amount: number;
+                } | null;
+                /** @description The amount approved for refund by the carrier */
+                readonly amount_approved?: {
+                    currency: string;
+                    /** @description The monetary amount, in the specified currency. */
+                    amount: number;
+                } | null;
+                /** @description The amount that has been credited back to the account */
+                readonly amount_credited?: {
+                    currency: string;
+                    /** @description The monetary amount, in the specified currency. */
+                    amount: number;
+                } | null;
+            } | null;
         };
         /**
          * shipment
@@ -15394,7 +16114,7 @@ export interface components {
              * @description The type of delivery confirmation that is required for this shipment.
              * @default none
              */
-            confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+            confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
             /**
              * @description Customs information.  This is usually only needed for international shipments.
              *
@@ -15736,6 +16456,26 @@ export interface components {
                  * @example 784515
                  */
                 certificate_number: string | null;
+                /**
+                 * @description Indicates that the contents of the package are fragile and should be handled with care.
+                 * @default false
+                 */
+                fragile: boolean;
+                /**
+                 * @description Instructs the carrier to deliver the package only to the exact address provided.
+                 * @default false
+                 */
+                "delivery-as-addressed": boolean;
+                /**
+                 * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                 * @default false
+                 */
+                "return-after-first-attempt": boolean;
+                /**
+                 * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                 * @default null
+                 */
+                regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
             } & {
                 [key: string]: unknown;
             };
@@ -16367,7 +17107,7 @@ export interface components {
              * @description The type of delivery confirmation that is required for this shipment.
              * @default none
              */
-            confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+            confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
             /**
              * @description Customs information.  This is usually only needed for international shipments.
              *
@@ -16709,6 +17449,26 @@ export interface components {
                  * @example 784515
                  */
                 certificate_number: string | null;
+                /**
+                 * @description Indicates that the contents of the package are fragile and should be handled with care.
+                 * @default false
+                 */
+                fragile: boolean;
+                /**
+                 * @description Instructs the carrier to deliver the package only to the exact address provided.
+                 * @default false
+                 */
+                "delivery-as-addressed": boolean;
+                /**
+                 * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                 * @default false
+                 */
+                "return-after-first-attempt": boolean;
+                /**
+                 * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                 * @default null
+                 */
+                regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
             } & {
                 [key: string]: unknown;
             };
@@ -17066,8 +17826,6 @@ export interface components {
             /** @description If applicable, contains additional data about a rate detail of a specific type, e.g. VAT */
             rate_detail_attributes?: {
                 tax_type?: "vat";
-                /** @description Code for a specific tax type */
-                tax_code?: string;
                 /** @description Tax percentage, e.g. 20 for 20%, added to the shipping cost */
                 tax_percentage?: number;
             };
@@ -17087,8 +17845,6 @@ export interface components {
          */
         rate_detail_attributes: {
             tax_type?: "vat";
-            /** @description Code for a specific tax type */
-            tax_code?: string;
             /** @description Tax percentage, e.g. 20 for 20%, added to the shipping cost */
             tax_percentage?: number;
         };
@@ -17283,6 +18039,62 @@ export interface components {
             value?: string;
         };
         /**
+         * void_type
+         * @description Indicates how a label was voided. `refund_assist` means the label was voided through the Refund Assist program, while `manual` means it was voided manually by the user.
+         * @enum {string}
+         */
+        void_type: "refund_assist" | "manual";
+        /**
+         * refund_details
+         * @description Information about a Refund Assist label. This object contains details about the refund request status and associated monetary amounts.
+         *
+         */
+        refund_details: {
+            /** @description The current status of the refund request */
+            readonly refund_status?: "request_scheduled" | "pending" | "approved" | "rejected" | "excluded";
+            /** @description The date and time when the refund request was submitted */
+            readonly request_date?: string;
+            /** @description The amount that was originally paid for the label */
+            readonly amount_paid?: {
+                currency: string;
+                /** @description The monetary amount, in the specified currency. */
+                amount: number;
+            } | null;
+            /** @description The amount requested to be refunded */
+            readonly amount_requested?: {
+                currency: string;
+                /** @description The monetary amount, in the specified currency. */
+                amount: number;
+            } | null;
+            /** @description The amount approved for refund by the carrier */
+            readonly amount_approved?: {
+                currency: string;
+                /** @description The monetary amount, in the specified currency. */
+                amount: number;
+            } | null;
+            /** @description The amount that has been credited back to the account */
+            readonly amount_credited?: {
+                currency: string;
+                /** @description The monetary amount, in the specified currency. */
+                amount: number;
+            } | null;
+        };
+        /**
+         * refund_status
+         * @description The status of a Refund Assist request for eligible labels.
+         *
+         *     |Status              |Description
+         *     |:-------------------|:-----------------------------------------------------
+         *     |`request_scheduled` |The refund request has been scheduled but not yet submitted
+         *     |`pending`           |The refund request has been submitted and is awaiting approval
+         *     |`approved`          |The refund request has been approved by the carrier
+         *     |`rejected`          |The refund request has been rejected by the carrier
+         *     |`excluded`          |The refund request has been excluded by the user. Labels in this status were not sent to the carrier for a refund request.
+         *
+         * @enum {string}
+         */
+        refund_status: "request_scheduled" | "pending" | "approved" | "rejected" | "excluded";
+        /**
          * get_label_by_external_shipment_id_response_body
          * @description A get label by external shipment id response body
          */
@@ -17294,6 +18106,11 @@ export interface components {
             /** @description The shipment that this label is for.  ShipEngine can create a shipment for you automatically when you [create a label](https://www.shipengine.com/docs/labels/create-a-label/), or you can [create your own shipment](https://www.shipengine.com/docs/shipping/create-a-shipment/) and then [use it to print a label](https://www.shipengine.com/docs/labels/create-from-shipment/)
              *      */
             readonly shipment_id?: string;
+            /** @description A unique user-defined key to identify a shipment.  This can be used to retrieve the shipment.
+             *      */
+            readonly external_shipment_id?: string | null;
+            /** @description ID that the Order Source assigned */
+            readonly external_order_id?: string | null;
             /** @description The shipment information used to generate the label */
             shipment?: {
                 /** @description A string that uniquely identifies the shipment */
@@ -17614,7 +18431,7 @@ export interface components {
                  * @description The type of delivery confirmation that is required for this shipment.
                  * @default none
                  */
-                confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                 /**
                  * @description Customs information.  This is usually only needed for international shipments.
                  *
@@ -17956,6 +18773,26 @@ export interface components {
                      * @example 784515
                      */
                     certificate_number: string | null;
+                    /**
+                     * @description Indicates that the contents of the package are fragile and should be handled with care.
+                     * @default false
+                     */
+                    fragile: boolean;
+                    /**
+                     * @description Instructs the carrier to deliver the package only to the exact address provided.
+                     * @default false
+                     */
+                    "delivery-as-addressed": boolean;
+                    /**
+                     * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                     * @default false
+                     */
+                    "return-after-first-attempt": boolean;
+                    /**
+                     * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                     * @default null
+                     */
+                    regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
                 } & {
                     [key: string]: unknown;
                 };
@@ -18308,8 +19145,6 @@ export interface components {
                 /** @description If applicable, contains additional data about a rate detail of a specific type, e.g. VAT */
                 rate_detail_attributes?: {
                     tax_type?: "vat";
-                    /** @description Code for a specific tax type */
-                    tax_code?: string;
                     /** @description Tax percentage, e.g. 20 for 20%, added to the shipping cost */
                     tax_percentage?: number;
                 };
@@ -18375,7 +19210,7 @@ export interface components {
              * @description The display format that the label should be shown in.
              * @default label
              */
-            display_scheme: "label" | "qr_code" | "label_and_qr_code" | "paperless" | "label_and_paperless";
+            display_scheme: "label" | "paperless" | "label_and_paperless";
             /**
              * @description The layout (size) that you want the label to be in.  The `label_format` determines which sizes are allowed.  `4x6` is supported for all label formats, whereas `letter` (8.5" x 11") is only supported for `pdf` format.
              *
@@ -18393,7 +19228,7 @@ export interface components {
             /** @description The current status of the package, such as `in_transit` or `delivered` */
             readonly tracking_status?: "unknown" | "in_transit" | "error" | "delivered";
             /** @description The type of delivery confirmation that is required for this shipment. */
-            readonly confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+            readonly confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
             readonly label_download?: {
                 /** @description The URL of the linked resource, if any */
                 href?: string;
@@ -18409,6 +19244,13 @@ export interface components {
             readonly form_download?: {
                 /** @description The URL of the linked resource, if any */
                 href: string;
+                /** @description The type of resource, or the type of relationship to the parent resource */
+                type?: string;
+            } | null;
+            /** @description The QR code download for the package */
+            readonly qr_code_download?: {
+                /** @description The URL of the linked resource, if any */
+                href?: string;
                 /** @description The type of resource, or the type of relationship to the parent resource */
                 type?: string;
             } | null;
@@ -18616,6 +19458,129 @@ export interface components {
              * @example https://www.fedex.com/fedextrack/?action=track&trackingnumber=1234
              */
             readonly tracking_url?: string | null;
+            /** @description The recipient's mailing address */
+            readonly ship_to?: {
+                /**
+                 * @description The name of a contact person at this address.  This field may be set instead of - or in addition to - the `company_name` field.
+                 *
+                 * @example John Doe
+                 */
+                name: string;
+                /**
+                 * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                 *
+                 * @example +1 204-253-9411 ext. 123
+                 */
+                phone?: string;
+                /**
+                 * @description Email for the address owner.
+                 *
+                 * @example example@example.com
+                 */
+                email?: string | null;
+                /**
+                 * @description If this is a business address, then the company name should be specified here.
+                 *
+                 * @example The Home Depot
+                 */
+                company_name?: string | null;
+                /**
+                 * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                 *
+                 * @example 1999 Bishop Grandin Blvd.
+                 */
+                address_line1: string;
+                /**
+                 * @description The second line of the street address.  For some addresses, this line may not be needed.
+                 *
+                 * @example Unit 408
+                 */
+                address_line2?: string | null;
+                /**
+                 * @description The third line of the street address.  For some addresses, this line may not be needed.
+                 *
+                 * @example Building #7
+                 */
+                address_line3?: string | null;
+                /**
+                 * @description The name of the city or locality
+                 * @example Winnipeg
+                 */
+                city_locality: string;
+                /**
+                 * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                 *
+                 * @example Manitoba
+                 */
+                state_province: string;
+                postal_code: string;
+                /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                 *      */
+                country_code?: string;
+                /**
+                 * @description Indicates whether this is a residential address.
+                 * @default unknown
+                 * @example no
+                 */
+                address_residential_indicator: "unknown" | "yes" | "no";
+            } & {
+                /** @description Additional text about how to handle the shipment at this address.
+                 *      */
+                instructions?: string | null;
+                geolocation?: {
+                    /**
+                     * @description Enum of available type of geolocation items:
+                     *       - 'what3words' functionality allows to specify a location by providing 3 words that have been assign to the specific location see [link](https://what3words.com/business) for more details.
+                     *
+                     * @example what3words
+                     * @enum {string}
+                     */
+                    type?: "what3words";
+                    /**
+                     * @description value of the geolocation item
+                     * @example cats.with.thumbs
+                     */
+                    value?: string;
+                }[];
+            };
+            /**
+             * @description Indicates how the label was voided. This field is `null` if the label has not been voided.
+             *
+             * @example manual
+             */
+            readonly void_type?: ("refund_assist" | "manual") | null;
+            /** @description Information about the Refund Assist request for this label. This field is `null` if the label is not eligible for Refund Assist.
+             *      */
+            readonly refund_details?: {
+                /** @description The current status of the refund request */
+                readonly refund_status?: "request_scheduled" | "pending" | "approved" | "rejected" | "excluded";
+                /** @description The date and time when the refund request was submitted */
+                readonly request_date?: string;
+                /** @description The amount that was originally paid for the label */
+                readonly amount_paid?: {
+                    currency: string;
+                    /** @description The monetary amount, in the specified currency. */
+                    amount: number;
+                } | null;
+                /** @description The amount requested to be refunded */
+                readonly amount_requested?: {
+                    currency: string;
+                    /** @description The monetary amount, in the specified currency. */
+                    amount: number;
+                } | null;
+                /** @description The amount approved for refund by the carrier */
+                readonly amount_approved?: {
+                    currency: string;
+                    /** @description The monetary amount, in the specified currency. */
+                    amount: number;
+                } | null;
+                /** @description The amount that has been credited back to the account */
+                readonly amount_credited?: {
+                    currency: string;
+                    /** @description The monetary amount, in the specified currency. */
+                    amount: number;
+                } | null;
+            } | null;
         };
         /**
          * create_label_from_rate_request_body
@@ -18640,7 +19605,7 @@ export interface components {
              * @description The display format that the label should be shown in.
              * @default label
              */
-            display_scheme: "label" | "qr_code" | "label_and_qr_code" | "paperless" | "label_and_paperless";
+            display_scheme: "label" | "paperless" | "label_and_paperless";
         };
         /**
          * purchase_label_without_shipment
@@ -18658,7 +19623,7 @@ export interface components {
              * @description The display format that the label should be shown in.
              * @default label
              */
-            display_scheme: "label" | "qr_code" | "label_and_qr_code" | "paperless" | "label_and_paperless";
+            display_scheme: "label" | "paperless" | "label_and_paperless";
         };
         /**
          * create_label_from_rate_response_body
@@ -18672,6 +19637,11 @@ export interface components {
             /** @description The shipment that this label is for.  ShipEngine can create a shipment for you automatically when you [create a label](https://www.shipengine.com/docs/labels/create-a-label/), or you can [create your own shipment](https://www.shipengine.com/docs/shipping/create-a-shipment/) and then [use it to print a label](https://www.shipengine.com/docs/labels/create-from-shipment/)
              *      */
             readonly shipment_id?: string;
+            /** @description A unique user-defined key to identify a shipment.  This can be used to retrieve the shipment.
+             *      */
+            readonly external_shipment_id?: string | null;
+            /** @description ID that the Order Source assigned */
+            readonly external_order_id?: string | null;
             /** @description The shipment information used to generate the label */
             shipment?: {
                 /** @description A string that uniquely identifies the shipment */
@@ -18992,7 +19962,7 @@ export interface components {
                  * @description The type of delivery confirmation that is required for this shipment.
                  * @default none
                  */
-                confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                 /**
                  * @description Customs information.  This is usually only needed for international shipments.
                  *
@@ -19334,6 +20304,26 @@ export interface components {
                      * @example 784515
                      */
                     certificate_number: string | null;
+                    /**
+                     * @description Indicates that the contents of the package are fragile and should be handled with care.
+                     * @default false
+                     */
+                    fragile: boolean;
+                    /**
+                     * @description Instructs the carrier to deliver the package only to the exact address provided.
+                     * @default false
+                     */
+                    "delivery-as-addressed": boolean;
+                    /**
+                     * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                     * @default false
+                     */
+                    "return-after-first-attempt": boolean;
+                    /**
+                     * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                     * @default null
+                     */
+                    regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
                 } & {
                     [key: string]: unknown;
                 };
@@ -19686,8 +20676,6 @@ export interface components {
                 /** @description If applicable, contains additional data about a rate detail of a specific type, e.g. VAT */
                 rate_detail_attributes?: {
                     tax_type?: "vat";
-                    /** @description Code for a specific tax type */
-                    tax_code?: string;
                     /** @description Tax percentage, e.g. 20 for 20%, added to the shipping cost */
                     tax_percentage?: number;
                 };
@@ -19753,7 +20741,7 @@ export interface components {
              * @description The display format that the label should be shown in.
              * @default label
              */
-            display_scheme: "label" | "qr_code" | "label_and_qr_code" | "paperless" | "label_and_paperless";
+            display_scheme: "label" | "paperless" | "label_and_paperless";
             /**
              * @description The layout (size) that you want the label to be in.  The `label_format` determines which sizes are allowed.  `4x6` is supported for all label formats, whereas `letter` (8.5" x 11") is only supported for `pdf` format.
              *
@@ -19771,7 +20759,7 @@ export interface components {
             /** @description The current status of the package, such as `in_transit` or `delivered` */
             readonly tracking_status?: "unknown" | "in_transit" | "error" | "delivered";
             /** @description The type of delivery confirmation that is required for this shipment. */
-            readonly confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+            readonly confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
             readonly label_download?: {
                 /** @description The URL of the linked resource, if any */
                 href?: string;
@@ -19787,6 +20775,13 @@ export interface components {
             readonly form_download?: {
                 /** @description The URL of the linked resource, if any */
                 href: string;
+                /** @description The type of resource, or the type of relationship to the parent resource */
+                type?: string;
+            } | null;
+            /** @description The QR code download for the package */
+            readonly qr_code_download?: {
+                /** @description The URL of the linked resource, if any */
+                href?: string;
                 /** @description The type of resource, or the type of relationship to the parent resource */
                 type?: string;
             } | null;
@@ -19994,6 +20989,3659 @@ export interface components {
              * @example https://www.fedex.com/fedextrack/?action=track&trackingnumber=1234
              */
             readonly tracking_url?: string | null;
+            /** @description The recipient's mailing address */
+            readonly ship_to?: {
+                /**
+                 * @description The name of a contact person at this address.  This field may be set instead of - or in addition to - the `company_name` field.
+                 *
+                 * @example John Doe
+                 */
+                name: string;
+                /**
+                 * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                 *
+                 * @example +1 204-253-9411 ext. 123
+                 */
+                phone?: string;
+                /**
+                 * @description Email for the address owner.
+                 *
+                 * @example example@example.com
+                 */
+                email?: string | null;
+                /**
+                 * @description If this is a business address, then the company name should be specified here.
+                 *
+                 * @example The Home Depot
+                 */
+                company_name?: string | null;
+                /**
+                 * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                 *
+                 * @example 1999 Bishop Grandin Blvd.
+                 */
+                address_line1: string;
+                /**
+                 * @description The second line of the street address.  For some addresses, this line may not be needed.
+                 *
+                 * @example Unit 408
+                 */
+                address_line2?: string | null;
+                /**
+                 * @description The third line of the street address.  For some addresses, this line may not be needed.
+                 *
+                 * @example Building #7
+                 */
+                address_line3?: string | null;
+                /**
+                 * @description The name of the city or locality
+                 * @example Winnipeg
+                 */
+                city_locality: string;
+                /**
+                 * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                 *
+                 * @example Manitoba
+                 */
+                state_province: string;
+                postal_code: string;
+                /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                 *      */
+                country_code?: string;
+                /**
+                 * @description Indicates whether this is a residential address.
+                 * @default unknown
+                 * @example no
+                 */
+                address_residential_indicator: "unknown" | "yes" | "no";
+            } & {
+                /** @description Additional text about how to handle the shipment at this address.
+                 *      */
+                instructions?: string | null;
+                geolocation?: {
+                    /**
+                     * @description Enum of available type of geolocation items:
+                     *       - 'what3words' functionality allows to specify a location by providing 3 words that have been assign to the specific location see [link](https://what3words.com/business) for more details.
+                     *
+                     * @example what3words
+                     * @enum {string}
+                     */
+                    type?: "what3words";
+                    /**
+                     * @description value of the geolocation item
+                     * @example cats.with.thumbs
+                     */
+                    value?: string;
+                }[];
+            };
+            /**
+             * @description Indicates how the label was voided. This field is `null` if the label has not been voided.
+             *
+             * @example manual
+             */
+            readonly void_type?: ("refund_assist" | "manual") | null;
+            /** @description Information about the Refund Assist request for this label. This field is `null` if the label is not eligible for Refund Assist.
+             *      */
+            readonly refund_details?: {
+                /** @description The current status of the refund request */
+                readonly refund_status?: "request_scheduled" | "pending" | "approved" | "rejected" | "excluded";
+                /** @description The date and time when the refund request was submitted */
+                readonly request_date?: string;
+                /** @description The amount that was originally paid for the label */
+                readonly amount_paid?: {
+                    currency: string;
+                    /** @description The monetary amount, in the specified currency. */
+                    amount: number;
+                } | null;
+                /** @description The amount requested to be refunded */
+                readonly amount_requested?: {
+                    currency: string;
+                    /** @description The monetary amount, in the specified currency. */
+                    amount: number;
+                } | null;
+                /** @description The amount approved for refund by the carrier */
+                readonly amount_approved?: {
+                    currency: string;
+                    /** @description The monetary amount, in the specified currency. */
+                    amount: number;
+                } | null;
+                /** @description The amount that has been credited back to the account */
+                readonly amount_credited?: {
+                    currency: string;
+                    /** @description The monetary amount, in the specified currency. */
+                    amount: number;
+                } | null;
+            } | null;
+        };
+        /**
+         * rate_attributes
+         * @description Optional attributes that indicate the most profitable rates
+         * @enum {string}
+         */
+        rate_attributes: "best_value" | "cheapest" | "fastest";
+        /**
+         * create_label_rate_shopper_request_body
+         * @description Request body for creating a label using the Rate Shopper. The Rate Shopper
+         *     automatically selects the carrier and service based on your specified strategy.
+         *
+         *     **Important Constraints:**
+         *     - You MUST provide shipment details inline in the `shipment` object
+         *     - You MUST NOT set `shipment_id` (inline shipment only)
+         *     - You MUST NOT include `carrier_id`, `service_code`, or `shipping_rule_id`
+         *       in the shipment (Rate Shopper selects these automatically)
+         *     - Only carriers configured in your wallet will be considered
+         *     - This endpoint is not available in sandbox mode
+         *
+         */
+        create_label_rate_shopper_request_body: {
+            /** @description The shipment details for which to create a label. Must be provided inline.
+             *     The carrier_id, service_code, and shipping_rule_id are not included as these
+             *     will be automatically determined by the Rate Shopper based on your strategy.
+             *      */
+            shipment: {
+                /** @description A string that uniquely identifies the shipment */
+                readonly shipment_id?: string;
+                /** @description ID that the Order Source assigned */
+                external_order_id?: string | null;
+                /**
+                 * @description Describe the packages included in this shipment as related to potential metadata that was imported from
+                 *     external order sources
+                 *
+                 * @default []
+                 */
+                items: {
+                    /** @description item name */
+                    name?: string;
+                    /** @description sales order id */
+                    sales_order_id?: string | null;
+                    /** @description sales order item id */
+                    sales_order_item_id?: string | null;
+                    /**
+                     * Format: int32
+                     * @description The quantity of this item included in the shipment
+                     */
+                    quantity?: number;
+                    /** @description Item Stock Keeping Unit */
+                    sku?: string | null;
+                    /** @description Item Stock Keeping Unit of the product bundle */
+                    readonly bundle_sku?: string | null;
+                    /** @description external order id */
+                    external_order_id?: string | null;
+                    /** @description external order item id */
+                    external_order_item_id?: string | null;
+                    /**
+                     * @description Amazon Standard Identification Number
+                     * @example B00005N5PF
+                     */
+                    asin?: string | null;
+                    order_source_code?: "amazon_ca" | "amazon_us" | "brightpearl" | "channel_advisor" | "cratejoy" | "ebay" | "etsy" | "jane" | "groupon_goods" | "magento" | "paypal" | "seller_active" | "shopify" | "stitch_labs" | "squarespace" | "three_dcart" | "tophatter" | "walmart" | "woo_commerce" | "volusion";
+                }[];
+                tax_identifiers?: {
+                    taxable_entity_type: "shipper" | "recipient" | "ior";
+                    identifier_type: "vat" | "eori" | "ssn" | "ein" | "tin" | "ioss" | "pan" | "voec" | "pccc" | "oss" | "passport" | "abn" | "ukims";
+                    /** @description The authority that issued this tax. This must be a valid 2 character ISO 3166 Alpha 2 country code. */
+                    issuing_authority: string;
+                    /** @description The value of the identifier */
+                    value: string;
+                }[] | null;
+                /** @description A unique user-defined key to identify a shipment.  This can be used to retrieve the shipment.
+                 *
+                 *     > **Warning:** The `external_shipment_id` is limited to 50 characters. Any additional characters will be truncated.
+                 *      */
+                external_shipment_id?: string | null;
+                /** @description A non-unique user-defined number used to identify a shipment.  If undefined, this will match the external_shipment_id of the shipment.
+                 *
+                 *     > **Warning:** The `shipment_number` is limited to 50 characters. Any additional characters will be truncated.
+                 *      */
+                shipment_number?: string | null;
+                /** @description The date that the shipment was (or will be) shipped.  ShipEngine will take the day of week into consideration. For example, if the carrier does not operate on Sundays, then a package that would have shipped on Sunday will ship on Monday instead.
+                 *      */
+                ship_date?: string;
+                /** @description The date and time that the shipment was created in ShipEngine. */
+                readonly created_at?: string;
+                /** @description The date and time that the shipment was created or last modified. */
+                readonly modified_at?: string;
+                /**
+                 * @description The current status of the shipment
+                 * @default pending
+                 */
+                readonly shipment_status: "pending" | "processing" | "label_purchased" | "cancelled";
+                /** @description The recipient's mailing address */
+                ship_to?: {
+                    /**
+                     * @description The name of a contact person at this address.  This field may be set instead of - or in addition to - the `company_name` field.
+                     *
+                     * @example John Doe
+                     */
+                    name: string;
+                    /**
+                     * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                     *
+                     * @example +1 204-253-9411 ext. 123
+                     */
+                    phone?: string;
+                    /**
+                     * @description Email for the address owner.
+                     *
+                     * @example example@example.com
+                     */
+                    email?: string | null;
+                    /**
+                     * @description If this is a business address, then the company name should be specified here.
+                     *
+                     * @example The Home Depot
+                     */
+                    company_name?: string | null;
+                    /**
+                     * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                     *
+                     * @example 1999 Bishop Grandin Blvd.
+                     */
+                    address_line1: string;
+                    /**
+                     * @description The second line of the street address.  For some addresses, this line may not be needed.
+                     *
+                     * @example Unit 408
+                     */
+                    address_line2?: string | null;
+                    /**
+                     * @description The third line of the street address.  For some addresses, this line may not be needed.
+                     *
+                     * @example Building #7
+                     */
+                    address_line3?: string | null;
+                    /**
+                     * @description The name of the city or locality
+                     * @example Winnipeg
+                     */
+                    city_locality: string;
+                    /**
+                     * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                     *
+                     * @example Manitoba
+                     */
+                    state_province: string;
+                    postal_code: string;
+                    /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                     *      */
+                    country_code?: string;
+                    /**
+                     * @description Indicates whether this is a residential address.
+                     * @default unknown
+                     * @example no
+                     */
+                    address_residential_indicator: "unknown" | "yes" | "no";
+                } & {
+                    /** @description Additional text about how to handle the shipment at this address.
+                     *      */
+                    instructions?: string | null;
+                    geolocation?: {
+                        /**
+                         * @description Enum of available type of geolocation items:
+                         *       - 'what3words' functionality allows to specify a location by providing 3 words that have been assign to the specific location see [link](https://what3words.com/business) for more details.
+                         *
+                         * @example what3words
+                         * @enum {string}
+                         */
+                        type?: "what3words";
+                        /**
+                         * @description value of the geolocation item
+                         * @example cats.with.thumbs
+                         */
+                        value?: string;
+                    }[];
+                };
+                /** @description The shipment's origin address. If you frequently ship from the same location, consider [creating a warehouse](https://www.shipengine.com/docs/reference/create-warehouse/).  Then you can simply specify the `warehouse_id` rather than the complete address each time.
+                 *      */
+                ship_from?: {
+                    /**
+                     * @description The name of a contact person at this address.  This field may be set instead of - or in addition to - the `company_name` field.
+                     *
+                     * @example John Doe
+                     */
+                    name: string;
+                    /**
+                     * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                     *
+                     * @example +1 204-253-9411 ext. 123
+                     */
+                    phone?: string;
+                    /**
+                     * @description Email for the address owner.
+                     *
+                     * @example example@example.com
+                     */
+                    email?: string | null;
+                    /**
+                     * @description If this is a business address, then the company name should be specified here.
+                     *
+                     * @example The Home Depot
+                     */
+                    company_name?: string | null;
+                    /**
+                     * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                     *
+                     * @example 1999 Bishop Grandin Blvd.
+                     */
+                    address_line1: string;
+                    /**
+                     * @description The second line of the street address.  For some addresses, this line may not be needed.
+                     *
+                     * @example Unit 408
+                     */
+                    address_line2?: string | null;
+                    /**
+                     * @description The third line of the street address.  For some addresses, this line may not be needed.
+                     *
+                     * @example Building #7
+                     */
+                    address_line3?: string | null;
+                    /**
+                     * @description The name of the city or locality
+                     * @example Winnipeg
+                     */
+                    city_locality: string;
+                    /**
+                     * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                     *
+                     * @example Manitoba
+                     */
+                    state_province: string;
+                    postal_code: string;
+                    /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                     *      */
+                    country_code?: string;
+                    /**
+                     * @description Indicates whether this is a residential address.
+                     * @default unknown
+                     * @example no
+                     */
+                    address_residential_indicator: "unknown" | "yes" | "no";
+                } & {
+                    /** @description Additional text about how to handle the shipment at this address.
+                     *      */
+                    instructions?: string | null;
+                };
+                /**
+                 * @description The [warehouse](https://www.shipengine.com/docs/shipping/ship-from-a-warehouse/) that the shipment is being shipped from.  Either `warehouse_id` or `ship_from` must be specified.
+                 *
+                 * @default null
+                 */
+                warehouse_id: string | null;
+                /** @description The return address for this shipment.  Defaults to the `ship_from` address.
+                 *      */
+                return_to?: {
+                    /**
+                     * @description The name of a contact person at this address.  This field may be set instead of - or in addition to - the `company_name` field.
+                     *
+                     * @example John Doe
+                     */
+                    name: string;
+                    /**
+                     * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                     *
+                     * @example +1 204-253-9411 ext. 123
+                     */
+                    phone?: string;
+                    /**
+                     * @description Email for the address owner.
+                     *
+                     * @example example@example.com
+                     */
+                    email?: string | null;
+                    /**
+                     * @description If this is a business address, then the company name should be specified here.
+                     *
+                     * @example The Home Depot
+                     */
+                    company_name?: string | null;
+                    /**
+                     * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                     *
+                     * @example 1999 Bishop Grandin Blvd.
+                     */
+                    address_line1: string;
+                    /**
+                     * @description The second line of the street address.  For some addresses, this line may not be needed.
+                     *
+                     * @example Unit 408
+                     */
+                    address_line2?: string | null;
+                    /**
+                     * @description The third line of the street address.  For some addresses, this line may not be needed.
+                     *
+                     * @example Building #7
+                     */
+                    address_line3?: string | null;
+                    /**
+                     * @description The name of the city or locality
+                     * @example Winnipeg
+                     */
+                    city_locality: string;
+                    /**
+                     * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                     *
+                     * @example Manitoba
+                     */
+                    state_province: string;
+                    postal_code: string;
+                    /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                     *      */
+                    country_code?: string;
+                    /**
+                     * @description Indicates whether this is a residential address.
+                     * @default unknown
+                     * @example no
+                     */
+                    address_residential_indicator: "unknown" | "yes" | "no";
+                } & {
+                    /** @description Additional text about how to handle the shipment at this address.
+                     *      */
+                    instructions?: string | null;
+                };
+                /**
+                 * @description An optional indicator if the shipment is intended to be a return. Defaults to false if not provided.
+                 *
+                 * @default false
+                 */
+                is_return: boolean | null;
+                /**
+                 * @description The type of delivery confirmation that is required for this shipment.
+                 * @default none
+                 */
+                confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
+                /**
+                 * @description Customs information.  This is usually only needed for international shipments.
+                 *
+                 * @default null
+                 */
+                customs: {
+                    /**
+                     * @description The type of contents in this shipment.  This may impact import duties or customs treatment.
+                     * @default merchandise
+                     */
+                    contents: "merchandise" | "documents" | "gift" | "returned_goods" | "sample" | "other";
+                    /** @description Explanation for contents (required if the `contents` is provided as `other`) */
+                    contents_explanation?: string;
+                    /**
+                     * @description Indicates what to do if a package is unable to be delivered.
+                     * @default return_to_sender
+                     */
+                    non_delivery: "return_to_sender" | "treat_as_abandoned";
+                    /** @description Specifies the supported terms of trade code (incoterms) */
+                    terms_of_trade_code?: string & ("exw" | "fca" | "cpt" | "cip" | "dpu" | "dap" | "ddp" | "fas" | "fob" | "cfr" | "cif" | "ddu" | "daf" | "deq" | "des");
+                    /** @description Declaration statement to be placed on the commercial invoice */
+                    declaration?: string;
+                    invoice_additional_details?: {
+                        /** @description Freight Charge for shipment. */
+                        freight_charge?: {
+                            currency: string;
+                            /** @description The monetary amount, in the specified currency. */
+                            amount: number;
+                        };
+                        /** @description Insurance Charge for shipment. */
+                        insurance_charge?: {
+                            currency: string;
+                            /** @description The monetary amount, in the specified currency. */
+                            amount: number;
+                        };
+                        /** @description Discount for shipment. */
+                        discount?: {
+                            currency: string;
+                            /** @description The monetary amount, in the specified currency. */
+                            amount: number;
+                        };
+                        /** @description Estimated import charges for commercial invoices for international shipments. */
+                        estimated_import_charges?: {
+                            /** @description Estimated import taxes. */
+                            taxes?: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            };
+                            /** @description Estimated import duties. */
+                            duties?: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            };
+                        };
+                        /** @description Other charge for shipment. */
+                        other_charge?: {
+                            currency: string;
+                            /** @description The monetary amount, in the specified currency. */
+                            amount: number;
+                        };
+                        /** @description Description for the other charge (if provided). */
+                        other_charge_description?: string;
+                        /** @description The invoice number to be used in the customs. */
+                        invoice_number?: string;
+                    };
+                    importer_of_record?: {
+                        /**
+                         * @description The name of a contact person at this address. Either `name` or the `company_name` field should always be set.
+                         *
+                         * @example John Doe
+                         */
+                        name: string;
+                        /**
+                         * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                         *
+                         * @example +1 204-253-9411 ext. 123
+                         */
+                        phone?: string;
+                        /**
+                         * @description Email for the address owner.
+                         *
+                         * @example example@example.com
+                         */
+                        email?: string | null;
+                        /**
+                         * @description If this is a business address, then the company name should be specified here. Either `name` or the `company_name` field should always be set.
+                         *
+                         * @example The Home Depot
+                         */
+                        company_name?: string | null;
+                        /**
+                         * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                         *
+                         * @example 1999 Bishop Grandin Blvd.
+                         */
+                        address_line1: string;
+                        /**
+                         * @description The second line of the street address.  For some addresses, this line may not be needed.
+                         *
+                         * @example Unit 408
+                         */
+                        address_line2?: string | null;
+                        /**
+                         * @description The third line of the street address.  For some addresses, this line may not be needed.
+                         *
+                         * @example Building #7
+                         */
+                        address_line3?: string | null;
+                        /**
+                         * @description The name of the city or locality
+                         * @example Winnipeg
+                         */
+                        city_locality: string;
+                        /**
+                         * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                         *
+                         * @example Manitoba
+                         */
+                        state_province?: string;
+                        postal_code: string;
+                        /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                         *      */
+                        country_code: string;
+                    };
+                    /** @description The license number to be used in the customs. */
+                    license_number?: string;
+                    /** @description The certificate number to be used in the customs. */
+                    certificate_number?: string;
+                    /**
+                     * @deprecated
+                     * @description Customs declarations for each item in the shipment. (Please provide this information under `products` inside `packages`)
+                     * @default []
+                     */
+                    customs_items: {
+                        /** @description A string that uniquely identifies the customs item */
+                        readonly customs_item_id: string;
+                        /**
+                         * @description A description of the item
+                         * @default null
+                         */
+                        description: string | null;
+                        /**
+                         * Format: int32
+                         * @description The quantity of this item in the shipment.
+                         * @default 0
+                         */
+                        quantity: number;
+                        /** @description The monetary amount, in the specified currency. */
+                        value?: number;
+                        /** @description The currencies that are supported by ShipEngine are the ones that specified by ISO 4217: https://www.iso.org/iso-4217-currency-codes.html
+                         *      */
+                        value_currency?: string;
+                        /** @description The item weight */
+                        weight?: {
+                            /** @description The weight, in the specified unit */
+                            value: number;
+                            unit: "pound" | "ounce" | "gram" | "kilogram";
+                        };
+                        /**
+                         * @description The [Harmonized Tariff Code](https://en.wikipedia.org/wiki/Harmonized_System) of this item.
+                         * @default null
+                         * @example 3926.1
+                         */
+                        harmonized_tariff_code: string | null;
+                        /**
+                         * @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1) where this item originated
+                         *
+                         * @default null
+                         */
+                        country_of_origin: string | null;
+                        unit_of_measure?: string | null;
+                        /** @description The SKU (Stock Keeping Unit) of the customs item */
+                        sku?: string | null;
+                        /** @description Description of the Custom Item's SKU */
+                        sku_description?: string | null;
+                    }[];
+                } | null;
+                /** @description Advanced shipment options.  These are entirely optional. */
+                advanced_options?: {
+                    /**
+                     * @description This field is used to [bill shipping costs to a third party](https://www.shipengine.com/docs/shipping/bill-to-third-party/).  This field must be used in conjunction with the `bill_to_country_code`, `bill_to_party`, and `bill_to_postal_code` fields.
+                     *
+                     * @default null
+                     */
+                    bill_to_account: string | null;
+                    /**
+                     * @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1) of the third-party that is responsible for shipping costs.
+                     *
+                     * @default null
+                     */
+                    bill_to_country_code: string | null;
+                    /**
+                     * @description Indicates whether to bill shipping costs to the recipient or to a third-party.  When billing to a third-party, the `bill_to_account`, `bill_to_country_code`, and `bill_to_postal_code` fields must also be set.
+                     *
+                     * @default null
+                     */
+                    bill_to_party: ("recipient" | "third_party") | null;
+                    /**
+                     * @description The postal code of the third-party that is responsible for shipping costs.
+                     *
+                     * @default null
+                     */
+                    bill_to_postal_code: string | null;
+                    /**
+                     * @description Indicates that the shipment contains alcohol.
+                     * @default false
+                     */
+                    contains_alcohol: boolean;
+                    /**
+                     * @description Indicates that the shipper is paying the international delivery duties for this shipment.  This option is supported by UPS, FedEx, and DHL Express.
+                     *
+                     * @default false
+                     */
+                    delivered_duty_paid: boolean;
+                    /**
+                     * @description Indicates if the shipment contain dry ice
+                     * @default false
+                     */
+                    dry_ice: boolean;
+                    /** @description The weight of the dry ice in the shipment */
+                    dry_ice_weight?: {
+                        /** @description The weight, in the specified unit */
+                        value: number;
+                        unit: "pound" | "ounce" | "gram" | "kilogram";
+                    } | null;
+                    /**
+                     * @description Indicates that the package cannot be processed automatically because it is too large or irregularly shaped. This is primarily for USPS shipments.  See [Section 1.2 of the USPS parcel standards](https://pe.usps.com/text/dmm300/101.htm#ep1047495) for details.
+                     *
+                     * @default false
+                     */
+                    non_machinable: boolean;
+                    /**
+                     * @description Enables Saturday delivery, if supported by the carrier.
+                     * @default false
+                     */
+                    saturday_delivery: boolean;
+                    /** @description Provide details for the Fedex freight service */
+                    fedex_freight?: {
+                        shipper_load_and_count?: string;
+                        booking_confirmation?: string;
+                    };
+                    /**
+                     * @description Whether to use [UPS Ground Freight pricing](https://www.shipengine.com/docs/shipping/ups-ground-freight/).  If enabled, then a `freight_class` must also be specified.
+                     *
+                     * @default null
+                     */
+                    use_ups_ground_freight_pricing: boolean | null;
+                    /**
+                     * @description The National Motor Freight Traffic Association [freight class](http://www.nmfta.org/pages/nmfc?AspxAutoDetectCookieSupport=1), such as "77.5", "110", or "250".
+                     *
+                     * @default null
+                     * @example 77.5
+                     */
+                    freight_class: string | null;
+                    /**
+                     * @description An arbitrary field that can be used to store information about the shipment.
+                     *
+                     * @default null
+                     */
+                    custom_field1: string | null;
+                    /**
+                     * @description An arbitrary field that can be used to store information about the shipment.
+                     *
+                     * @default null
+                     */
+                    custom_field2: string | null;
+                    /**
+                     * @description An arbitrary field that can be used to store information about the shipment.
+                     *
+                     * @default null
+                     */
+                    custom_field3: string | null;
+                    /** @default null */
+                    origin_type: ("pickup" | "drop_off") | null;
+                    /**
+                     * @description Indicate to the carrier that this shipment requires additional handling.
+                     *
+                     * @default null
+                     */
+                    additional_handling: boolean | null;
+                    /** @default null */
+                    shipper_release: boolean | null;
+                    /**
+                     * collect_on_delivery
+                     * @description Defer payment until package is delivered, instead of when it is ordered.
+                     */
+                    collect_on_delivery?: {
+                        payment_type?: "any" | "cash" | "cash_equivalent" | "none";
+                        /** payment_amount */
+                        payment_amount?: {
+                            currency?: string;
+                            amount?: number;
+                        };
+                    };
+                    /**
+                     * @description Third Party Consignee option is a value-added service that allows the shipper to supply goods without commercial invoices being attached
+                     * @default false
+                     */
+                    third_party_consignee: boolean;
+                    /**
+                     * @description Indicates if the Dangerous goods are present in the shipment
+                     * @default false
+                     */
+                    dangerous_goods: boolean;
+                    /** @description Contact information for Dangerous goods */
+                    dangerous_goods_contact?: {
+                        /** @description Name of the contact */
+                        name?: string;
+                        /** @description Phone number of the contact */
+                        phone?: string;
+                    };
+                    /** @description The Windsor framework is a new regulation in the UK that simplifies customs procedures for goods moved from the UK mainland to Northern Ireland. */
+                    windsor_framework_details?: {
+                        /**
+                         * @description An indicator that will tell the carrier and HMRC the type of movement for the shipment.
+                         * @enum {string}
+                         */
+                        movement_indicator?: "c2c" | "b2c" | "c2b" | "b2b";
+                        /** @description An indicator that allows a shipper to declare the shipment as not-at-risk. */
+                        not_at_risk?: boolean;
+                    };
+                    /**
+                     * @description license_number - This field was part of a historical implementation for passing customs-related data. For new integrations, please use the corresponding parameters within the shipment.customs object.
+                     * @default null
+                     * @example 514785
+                     */
+                    license_number: string | null;
+                    /**
+                     * @description invoice_number - This field was part of a historical implementation for passing customs-related data. For new integrations, please use the corresponding parameters within the shipment.customs object.
+                     * @default null
+                     * @example IOC56888
+                     */
+                    invoice_number: string | null;
+                    /**
+                     * @description certificate_number - This field was part of a historical implementation for passing customs-related data. For new integrations, please use the corresponding parameters within the shipment.customs object.
+                     * @default null
+                     * @example 784515
+                     */
+                    certificate_number: string | null;
+                    /**
+                     * @description Indicates that the contents of the package are fragile and should be handled with care.
+                     * @default false
+                     */
+                    fragile: boolean;
+                    /**
+                     * @description Instructs the carrier to deliver the package only to the exact address provided.
+                     * @default false
+                     */
+                    "delivery-as-addressed": boolean;
+                    /**
+                     * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                     * @default false
+                     */
+                    "return-after-first-attempt": boolean;
+                    /**
+                     * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                     * @default null
+                     */
+                    regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
+                } & {
+                    [key: string]: unknown;
+                };
+                /**
+                 * @description The insurance provider to use for any insured packages in the shipment.
+                 *
+                 * @default none
+                 */
+                insurance_provider: "none" | "shipsurance" | "carrier" | "third_party";
+                /**
+                 * @description Arbitrary tags associated with this shipment.  Tags can be used to categorize shipments, and shipments can be queried by their tags.
+                 *
+                 * @default []
+                 */
+                readonly tags: {
+                    /**
+                     * Format: int32
+                     * @description An integer uniquely identifying a tag.
+                     * @example 8712
+                     */
+                    readonly tag_id?: number;
+                    /**
+                     * @description The tag name.
+                     * @example Fragile
+                     */
+                    name: string;
+                    /**
+                     * @description A hex-coded string identifying the color of the tag.
+                     * @example #FF0000
+                     */
+                    color?: string;
+                }[];
+                order_source_code?: "amazon_ca" | "amazon_us" | "brightpearl" | "channel_advisor" | "cratejoy" | "ebay" | "etsy" | "jane" | "groupon_goods" | "magento" | "paypal" | "seller_active" | "shopify" | "stitch_labs" | "squarespace" | "three_dcart" | "tophatter" | "walmart" | "woo_commerce" | "volusion";
+                /** @description The packages in the shipment.
+                 *
+                 *     > **Note:** Some carriers only allow one package per shipment.  If you attempt to create a multi-package shipment for a carrier that doesn't allow it, an error will be returned.
+                 *      */
+                packages?: {
+                    /** @description A string that uniquely identifies this shipment package */
+                    readonly shipment_package_id?: string;
+                    /** @description A string that uniquely identifies this [package type](https://www.shipengine.com/docs/reference/list-carrier-packages/) */
+                    package_id?: string;
+                    /** @description The [package type](https://www.shipengine.com/docs/reference/list-carrier-packages/), such as `thick_envelope`, `small_flat_rate_box`, `large_package`, etc.  The code `package` indicates a custom or unknown package type.
+                     *      */
+                    package_code?: string;
+                    /** @description The name of the of the [package type](https://www.shipengine.com/docs/reference/list-carrier-packages/) */
+                    package_name?: string;
+                    /** @description The package weight */
+                    weight: {
+                        /** @description The weight, in the specified unit */
+                        value: number;
+                        unit: "pound" | "ounce" | "gram" | "kilogram";
+                    };
+                    /** @description The package dimensions */
+                    dimensions?: {
+                        /** @default inch */
+                        unit: "inch" | "centimeter";
+                        /**
+                         * @description The length of the package, in the specified unit
+                         * @default 0
+                         */
+                        length: number;
+                        /**
+                         * @description The width of the package, in the specified unit
+                         * @default 0
+                         */
+                        width: number;
+                        /**
+                         * @description The height of the package, in the specified unit
+                         * @default 0
+                         */
+                        height: number;
+                    };
+                    /**
+                     * @description The insured value of the package.  Requires the `insurance_provider` field of the shipment to be set.
+                     *
+                     * @default {
+                     *       "currency": "USD",
+                     *       "amount": 0
+                     *     }
+                     */
+                    insured_value: {
+                        currency: string;
+                        /** @description The monetary amount, in the specified currency. */
+                        amount: number;
+                    };
+                    label_messages?: {
+                        /**
+                         * @description The first line of the custom label message.  Some carriers may prefix this line with something like "REF", "Reference", "Trx Ref No.", etc.
+                         *
+                         * @default null
+                         */
+                        reference1: string | null;
+                        /**
+                         * @description The second line of the custom label message.  Some carriers may prefix this line with something like "INV", "Reference 2", "Trx Ref No.", etc.
+                         *
+                         * @default null
+                         */
+                        reference2: string | null;
+                        /**
+                         * @description The third line of the custom label message.  Some carriers may prefix this line with something like "PO", "Reference 3", etc.
+                         *
+                         * @default null
+                         */
+                        reference3: string | null;
+                    };
+                    /** @description An external package id. */
+                    external_package_id?: string;
+                    /** @description The tracking number for the package.  The format depends on the carrier.
+                     *      */
+                    readonly tracking_number?: string;
+                    /**
+                     * @description A short description of the package content. Required for shipments moving to, from, and through Mexico.
+                     *
+                     * @example Hand knitted wool socks
+                     */
+                    content_description?: string | null;
+                    /**
+                     * @description Details about products inside packages (Information provided would be used on custom documentation)
+                     * @default []
+                     */
+                    products: {
+                        /**
+                         * @description A description of the item
+                         * @default null
+                         */
+                        description: string | null;
+                        /**
+                         * Format: int32
+                         * @description The quantity of this item in the shipment.
+                         * @default 0
+                         */
+                        quantity: number;
+                        /** @description The declared value of each item */
+                        value?: {
+                            currency: string;
+                            /** @description The monetary amount, in the specified currency. */
+                            amount: number;
+                        };
+                        /** @description The item weight */
+                        weight?: {
+                            /** @description The weight, in the specified unit */
+                            value: number;
+                            unit: "pound" | "ounce" | "gram" | "kilogram";
+                        };
+                        /**
+                         * @description The [Harmonized Tariff Code](https://en.wikipedia.org/wiki/Harmonized_System) of this item.
+                         * @default null
+                         * @example 3926.1
+                         */
+                        harmonized_tariff_code: string | null;
+                        /**
+                         * @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1) where this item originated
+                         *
+                         * @default null
+                         */
+                        country_of_origin: string | null;
+                        unit_of_measure?: string | null;
+                        /** @description The SKU (Stock Keeping Unit) of the item */
+                        sku?: string | null;
+                        /** @description Description of the Custom Item's SKU */
+                        sku_description?: string | null;
+                        /** @description Manufacturers Identification code */
+                        mid_code?: string | null;
+                        /** @description link to the item on the seller website */
+                        product_url?: string | null;
+                        /**
+                         * @description VAT rate applicable to the item
+                         * @example 0.2
+                         */
+                        vat_rate?: number | null;
+                        /**
+                         * @description Details about dangerous goods inside products
+                         * @default []
+                         */
+                        dangerous_goods: {
+                            /**
+                             * @description UN number to identify the dangerous goods.
+                             * @default null
+                             */
+                            id_number: string | null;
+                            /**
+                             * @description Trade description of the dangerous goods.
+                             * @default null
+                             */
+                            shipping_name: string | null;
+                            /**
+                             * @description Recognized Technical or chemical name of dangerous goods.
+                             * @default null
+                             */
+                            technical_name: string | null;
+                            /**
+                             * @description Dangerous goods product class based on regulation.
+                             * @default null
+                             */
+                            product_class: string | null;
+                            /**
+                             * @description A secondary of product class for substances presenting more than one particular hazard
+                             * @default null
+                             */
+                            product_class_subsidiary: string | null;
+                            /**
+                             * packaging_group
+                             * @enum {string}
+                             */
+                            packaging_group?: "i" | "ii" | "iii";
+                            /** @description This model represents the amount of the dangerous goods. */
+                            dangerous_amount?: {
+                                /**
+                                 * @description The amount of dangerous goods.
+                                 * @default 0
+                                 */
+                                amount: number;
+                                /**
+                                 * @description The unit of dangerous goods.
+                                 * @default null
+                                 */
+                                unit: string | null;
+                            };
+                            /**
+                             * Format: int32
+                             * @description Quantity of dangerous goods.
+                             * @default 0
+                             */
+                            quantity: number;
+                            /**
+                             * @description The specific standardized packaging instructions from the relevant regulatory agency that have been applied to the parcel/container.
+                             * @default null
+                             */
+                            packaging_instruction: string | null;
+                            /**
+                             * packaging_instruction_section
+                             * @enum {string}
+                             */
+                            packaging_instruction_section?: "section_1" | "section_2" | "section_1a" | "section_1b";
+                            /**
+                             * @description The type of exterior packaging used to contain the dangerous good.
+                             * @default null
+                             */
+                            packaging_type: string | null;
+                            /**
+                             * transport_mean
+                             * @enum {string}
+                             */
+                            transport_mean?: "ground" | "water" | "cargo_aircraft_only" | "passenger_aircraft";
+                            /**
+                             * @description Transport category assign to dangerous goods for the transport purpose.
+                             * @default null
+                             */
+                            transport_category: string | null;
+                            /**
+                             * @description Name of the regulatory authority.
+                             * @default null
+                             */
+                            regulation_authority: string | null;
+                            /**
+                             * regulation_level
+                             * @enum {string}
+                             */
+                            regulation_level?: "lightly_regulated" | "fully_regulated" | "limited_quantities" | "excepted_quantity";
+                            /**
+                             * @description Indication if the substance is radioactive.
+                             * @example false
+                             */
+                            radioactive?: boolean | null;
+                            /**
+                             * @description Indication if the substance needs to be reported to regulatory authority based on the quantity.
+                             * @example false
+                             */
+                            reportable_quantity?: boolean | null;
+                            /**
+                             * @description Defines which types of tunnels the shipment is allowed to go through
+                             * @default null
+                             */
+                            tunnel_code: string | null;
+                            /**
+                             * @description Provider additonal description regarding the dangerous goods. This is used as a placed holder to provider additional context and varies by carrier
+                             * @default null
+                             */
+                            additional_description: string | null;
+                        }[];
+                        /** @description Additional details about products */
+                        extended_details?: {
+                            [key: string]: unknown;
+                        };
+                    }[];
+                }[];
+                /** @description The combined weight of all packages in the shipment */
+                readonly total_weight?: {
+                    /** @description The weight, in the specified unit */
+                    value: number;
+                    unit: "pound" | "ounce" | "gram" | "kilogram";
+                };
+                /**
+                 * @description Calculate a rate for this shipment with the requested carrier using a ratecard that differs from the default.  Only supported for UPS and USPS.
+                 * @example retail
+                 */
+                comparison_rate_type?: string | null;
+                /**
+                 * Format: int32
+                 * @description Certain carriers base [their rates](https://blog.stamps.com/2017/09/08/usps-postal-zones/) off of
+                 *     custom zones that vary depending upon the ship_to and ship_from location
+                 *
+                 * @example 6
+                 */
+                readonly zone?: number | null;
+            };
+            /** @description Indicates whether this is a return label.  You may also want to set the `rma_number` so you know what is being returned.
+             *      */
+            is_return_label?: boolean;
+            /** @description An optional Return Merchandise Authorization number.  This field is useful for return labels.  You can set it to any string value.
+             *      */
+            rma_number?: string | null;
+            /** @description The label charge event.
+             *      */
+            charge_event?: "carrier_default" | "on_creation" | "on_carrier_acceptance";
+            /** @description The `label_id` of the original (outgoing) label that the return label is for. This associates the two labels together, which is
+             *     required by some carriers.
+             *      */
+            outbound_label_id?: string;
+            /**
+             * @deprecated
+             * @description Indicate if this label is being used only for testing purposes. If true, then no charge will be added to your account.
+             * @default false
+             */
+            test_label: boolean;
+            /** @default no_validation */
+            validate_address: "no_validation" | "validate_only" | "validate_and_clean";
+            /** @default url */
+            label_download_type: "url" | "inline";
+            /**
+             * @description The file format that you want the label to be in.  We recommend `pdf` format because it is supported by all carriers, whereas some carriers do not support the `png` or `zpl` formats.
+             *
+             * @default pdf
+             */
+            label_format: "pdf" | "png" | "zpl";
+            /**
+             * @description The display format that the label should be shown in.
+             * @default label
+             */
+            display_scheme: "label" | "paperless" | "label_and_paperless";
+            /**
+             * @description The layout (size) that you want the label to be in.  The `label_format` determines which sizes are allowed.  `4x6` is supported for all label formats, whereas `letter` (8.5" x 11") is only supported for `pdf` format.
+             *
+             * @default 4x6
+             */
+            label_layout: "4x6" | "letter" | "A4" | "A6";
+            /** @description The label image resource that was used to create a custom label image. */
+            label_image_id?: string | null;
+        };
+        /**
+         * partial_shipment_for_rate_shopper
+         * @description The information necessary to ship a package for Rate Shopper, such as the origin, the destination, and the package dimensions and weight.
+         *
+         *     **Note:** This schema excludes carrier_id, service_code, and shipping_rule_id as these are automatically selected by the Rate Shopper based on your chosen strategy.
+         *
+         */
+        partial_shipment_for_rate_shopper: {
+            /** @description A string that uniquely identifies the shipment */
+            readonly shipment_id?: string;
+            /** @description ID that the Order Source assigned */
+            external_order_id?: string | null;
+            /**
+             * @description Describe the packages included in this shipment as related to potential metadata that was imported from
+             *     external order sources
+             *
+             * @default []
+             */
+            items: {
+                /** @description item name */
+                name?: string;
+                /** @description sales order id */
+                sales_order_id?: string | null;
+                /** @description sales order item id */
+                sales_order_item_id?: string | null;
+                /**
+                 * Format: int32
+                 * @description The quantity of this item included in the shipment
+                 */
+                quantity?: number;
+                /** @description Item Stock Keeping Unit */
+                sku?: string | null;
+                /** @description Item Stock Keeping Unit of the product bundle */
+                readonly bundle_sku?: string | null;
+                /** @description external order id */
+                external_order_id?: string | null;
+                /** @description external order item id */
+                external_order_item_id?: string | null;
+                /**
+                 * @description Amazon Standard Identification Number
+                 * @example B00005N5PF
+                 */
+                asin?: string | null;
+                order_source_code?: "amazon_ca" | "amazon_us" | "brightpearl" | "channel_advisor" | "cratejoy" | "ebay" | "etsy" | "jane" | "groupon_goods" | "magento" | "paypal" | "seller_active" | "shopify" | "stitch_labs" | "squarespace" | "three_dcart" | "tophatter" | "walmart" | "woo_commerce" | "volusion";
+            }[];
+            tax_identifiers?: {
+                taxable_entity_type: "shipper" | "recipient" | "ior";
+                identifier_type: "vat" | "eori" | "ssn" | "ein" | "tin" | "ioss" | "pan" | "voec" | "pccc" | "oss" | "passport" | "abn" | "ukims";
+                /** @description The authority that issued this tax. This must be a valid 2 character ISO 3166 Alpha 2 country code. */
+                issuing_authority: string;
+                /** @description The value of the identifier */
+                value: string;
+            }[] | null;
+            /** @description A unique user-defined key to identify a shipment.  This can be used to retrieve the shipment.
+             *
+             *     > **Warning:** The `external_shipment_id` is limited to 50 characters. Any additional characters will be truncated.
+             *      */
+            external_shipment_id?: string | null;
+            /** @description A non-unique user-defined number used to identify a shipment.  If undefined, this will match the external_shipment_id of the shipment.
+             *
+             *     > **Warning:** The `shipment_number` is limited to 50 characters. Any additional characters will be truncated.
+             *      */
+            shipment_number?: string | null;
+            /** @description The date that the shipment was (or will be) shipped.  ShipEngine will take the day of week into consideration. For example, if the carrier does not operate on Sundays, then a package that would have shipped on Sunday will ship on Monday instead.
+             *      */
+            ship_date?: string;
+            /** @description The date and time that the shipment was created in ShipEngine. */
+            readonly created_at?: string;
+            /** @description The date and time that the shipment was created or last modified. */
+            readonly modified_at?: string;
+            /**
+             * @description The current status of the shipment
+             * @default pending
+             */
+            readonly shipment_status: "pending" | "processing" | "label_purchased" | "cancelled";
+            /** @description The recipient's mailing address */
+            ship_to?: {
+                /**
+                 * @description The name of a contact person at this address.  This field may be set instead of - or in addition to - the `company_name` field.
+                 *
+                 * @example John Doe
+                 */
+                name: string;
+                /**
+                 * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                 *
+                 * @example +1 204-253-9411 ext. 123
+                 */
+                phone?: string;
+                /**
+                 * @description Email for the address owner.
+                 *
+                 * @example example@example.com
+                 */
+                email?: string | null;
+                /**
+                 * @description If this is a business address, then the company name should be specified here.
+                 *
+                 * @example The Home Depot
+                 */
+                company_name?: string | null;
+                /**
+                 * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                 *
+                 * @example 1999 Bishop Grandin Blvd.
+                 */
+                address_line1: string;
+                /**
+                 * @description The second line of the street address.  For some addresses, this line may not be needed.
+                 *
+                 * @example Unit 408
+                 */
+                address_line2?: string | null;
+                /**
+                 * @description The third line of the street address.  For some addresses, this line may not be needed.
+                 *
+                 * @example Building #7
+                 */
+                address_line3?: string | null;
+                /**
+                 * @description The name of the city or locality
+                 * @example Winnipeg
+                 */
+                city_locality: string;
+                /**
+                 * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                 *
+                 * @example Manitoba
+                 */
+                state_province: string;
+                postal_code: string;
+                /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                 *      */
+                country_code?: string;
+                /**
+                 * @description Indicates whether this is a residential address.
+                 * @default unknown
+                 * @example no
+                 */
+                address_residential_indicator: "unknown" | "yes" | "no";
+            } & {
+                /** @description Additional text about how to handle the shipment at this address.
+                 *      */
+                instructions?: string | null;
+                geolocation?: {
+                    /**
+                     * @description Enum of available type of geolocation items:
+                     *       - 'what3words' functionality allows to specify a location by providing 3 words that have been assign to the specific location see [link](https://what3words.com/business) for more details.
+                     *
+                     * @example what3words
+                     * @enum {string}
+                     */
+                    type?: "what3words";
+                    /**
+                     * @description value of the geolocation item
+                     * @example cats.with.thumbs
+                     */
+                    value?: string;
+                }[];
+            };
+            /** @description The shipment's origin address. If you frequently ship from the same location, consider [creating a warehouse](https://www.shipengine.com/docs/reference/create-warehouse/).  Then you can simply specify the `warehouse_id` rather than the complete address each time.
+             *      */
+            ship_from?: {
+                /**
+                 * @description The name of a contact person at this address.  This field may be set instead of - or in addition to - the `company_name` field.
+                 *
+                 * @example John Doe
+                 */
+                name: string;
+                /**
+                 * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                 *
+                 * @example +1 204-253-9411 ext. 123
+                 */
+                phone?: string;
+                /**
+                 * @description Email for the address owner.
+                 *
+                 * @example example@example.com
+                 */
+                email?: string | null;
+                /**
+                 * @description If this is a business address, then the company name should be specified here.
+                 *
+                 * @example The Home Depot
+                 */
+                company_name?: string | null;
+                /**
+                 * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                 *
+                 * @example 1999 Bishop Grandin Blvd.
+                 */
+                address_line1: string;
+                /**
+                 * @description The second line of the street address.  For some addresses, this line may not be needed.
+                 *
+                 * @example Unit 408
+                 */
+                address_line2?: string | null;
+                /**
+                 * @description The third line of the street address.  For some addresses, this line may not be needed.
+                 *
+                 * @example Building #7
+                 */
+                address_line3?: string | null;
+                /**
+                 * @description The name of the city or locality
+                 * @example Winnipeg
+                 */
+                city_locality: string;
+                /**
+                 * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                 *
+                 * @example Manitoba
+                 */
+                state_province: string;
+                postal_code: string;
+                /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                 *      */
+                country_code?: string;
+                /**
+                 * @description Indicates whether this is a residential address.
+                 * @default unknown
+                 * @example no
+                 */
+                address_residential_indicator: "unknown" | "yes" | "no";
+            } & {
+                /** @description Additional text about how to handle the shipment at this address.
+                 *      */
+                instructions?: string | null;
+            };
+            /**
+             * @description The [warehouse](https://www.shipengine.com/docs/shipping/ship-from-a-warehouse/) that the shipment is being shipped from.  Either `warehouse_id` or `ship_from` must be specified.
+             *
+             * @default null
+             */
+            warehouse_id: string | null;
+            /** @description The return address for this shipment.  Defaults to the `ship_from` address.
+             *      */
+            return_to?: {
+                /**
+                 * @description The name of a contact person at this address.  This field may be set instead of - or in addition to - the `company_name` field.
+                 *
+                 * @example John Doe
+                 */
+                name: string;
+                /**
+                 * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                 *
+                 * @example +1 204-253-9411 ext. 123
+                 */
+                phone?: string;
+                /**
+                 * @description Email for the address owner.
+                 *
+                 * @example example@example.com
+                 */
+                email?: string | null;
+                /**
+                 * @description If this is a business address, then the company name should be specified here.
+                 *
+                 * @example The Home Depot
+                 */
+                company_name?: string | null;
+                /**
+                 * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                 *
+                 * @example 1999 Bishop Grandin Blvd.
+                 */
+                address_line1: string;
+                /**
+                 * @description The second line of the street address.  For some addresses, this line may not be needed.
+                 *
+                 * @example Unit 408
+                 */
+                address_line2?: string | null;
+                /**
+                 * @description The third line of the street address.  For some addresses, this line may not be needed.
+                 *
+                 * @example Building #7
+                 */
+                address_line3?: string | null;
+                /**
+                 * @description The name of the city or locality
+                 * @example Winnipeg
+                 */
+                city_locality: string;
+                /**
+                 * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                 *
+                 * @example Manitoba
+                 */
+                state_province: string;
+                postal_code: string;
+                /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                 *      */
+                country_code?: string;
+                /**
+                 * @description Indicates whether this is a residential address.
+                 * @default unknown
+                 * @example no
+                 */
+                address_residential_indicator: "unknown" | "yes" | "no";
+            } & {
+                /** @description Additional text about how to handle the shipment at this address.
+                 *      */
+                instructions?: string | null;
+            };
+            /**
+             * @description An optional indicator if the shipment is intended to be a return. Defaults to false if not provided.
+             *
+             * @default false
+             */
+            is_return: boolean | null;
+            /**
+             * @description The type of delivery confirmation that is required for this shipment.
+             * @default none
+             */
+            confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
+            /**
+             * @description Customs information.  This is usually only needed for international shipments.
+             *
+             * @default null
+             */
+            customs: {
+                /**
+                 * @description The type of contents in this shipment.  This may impact import duties or customs treatment.
+                 * @default merchandise
+                 */
+                contents: "merchandise" | "documents" | "gift" | "returned_goods" | "sample" | "other";
+                /** @description Explanation for contents (required if the `contents` is provided as `other`) */
+                contents_explanation?: string;
+                /**
+                 * @description Indicates what to do if a package is unable to be delivered.
+                 * @default return_to_sender
+                 */
+                non_delivery: "return_to_sender" | "treat_as_abandoned";
+                /** @description Specifies the supported terms of trade code (incoterms) */
+                terms_of_trade_code?: string & ("exw" | "fca" | "cpt" | "cip" | "dpu" | "dap" | "ddp" | "fas" | "fob" | "cfr" | "cif" | "ddu" | "daf" | "deq" | "des");
+                /** @description Declaration statement to be placed on the commercial invoice */
+                declaration?: string;
+                invoice_additional_details?: {
+                    /** @description Freight Charge for shipment. */
+                    freight_charge?: {
+                        currency: string;
+                        /** @description The monetary amount, in the specified currency. */
+                        amount: number;
+                    };
+                    /** @description Insurance Charge for shipment. */
+                    insurance_charge?: {
+                        currency: string;
+                        /** @description The monetary amount, in the specified currency. */
+                        amount: number;
+                    };
+                    /** @description Discount for shipment. */
+                    discount?: {
+                        currency: string;
+                        /** @description The monetary amount, in the specified currency. */
+                        amount: number;
+                    };
+                    /** @description Estimated import charges for commercial invoices for international shipments. */
+                    estimated_import_charges?: {
+                        /** @description Estimated import taxes. */
+                        taxes?: {
+                            currency: string;
+                            /** @description The monetary amount, in the specified currency. */
+                            amount: number;
+                        };
+                        /** @description Estimated import duties. */
+                        duties?: {
+                            currency: string;
+                            /** @description The monetary amount, in the specified currency. */
+                            amount: number;
+                        };
+                    };
+                    /** @description Other charge for shipment. */
+                    other_charge?: {
+                        currency: string;
+                        /** @description The monetary amount, in the specified currency. */
+                        amount: number;
+                    };
+                    /** @description Description for the other charge (if provided). */
+                    other_charge_description?: string;
+                    /** @description The invoice number to be used in the customs. */
+                    invoice_number?: string;
+                };
+                importer_of_record?: {
+                    /**
+                     * @description The name of a contact person at this address. Either `name` or the `company_name` field should always be set.
+                     *
+                     * @example John Doe
+                     */
+                    name: string;
+                    /**
+                     * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                     *
+                     * @example +1 204-253-9411 ext. 123
+                     */
+                    phone?: string;
+                    /**
+                     * @description Email for the address owner.
+                     *
+                     * @example example@example.com
+                     */
+                    email?: string | null;
+                    /**
+                     * @description If this is a business address, then the company name should be specified here. Either `name` or the `company_name` field should always be set.
+                     *
+                     * @example The Home Depot
+                     */
+                    company_name?: string | null;
+                    /**
+                     * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                     *
+                     * @example 1999 Bishop Grandin Blvd.
+                     */
+                    address_line1: string;
+                    /**
+                     * @description The second line of the street address.  For some addresses, this line may not be needed.
+                     *
+                     * @example Unit 408
+                     */
+                    address_line2?: string | null;
+                    /**
+                     * @description The third line of the street address.  For some addresses, this line may not be needed.
+                     *
+                     * @example Building #7
+                     */
+                    address_line3?: string | null;
+                    /**
+                     * @description The name of the city or locality
+                     * @example Winnipeg
+                     */
+                    city_locality: string;
+                    /**
+                     * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                     *
+                     * @example Manitoba
+                     */
+                    state_province?: string;
+                    postal_code: string;
+                    /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                     *      */
+                    country_code: string;
+                };
+                /** @description The license number to be used in the customs. */
+                license_number?: string;
+                /** @description The certificate number to be used in the customs. */
+                certificate_number?: string;
+                /**
+                 * @deprecated
+                 * @description Customs declarations for each item in the shipment. (Please provide this information under `products` inside `packages`)
+                 * @default []
+                 */
+                customs_items: {
+                    /** @description A string that uniquely identifies the customs item */
+                    readonly customs_item_id: string;
+                    /**
+                     * @description A description of the item
+                     * @default null
+                     */
+                    description: string | null;
+                    /**
+                     * Format: int32
+                     * @description The quantity of this item in the shipment.
+                     * @default 0
+                     */
+                    quantity: number;
+                    /** @description The monetary amount, in the specified currency. */
+                    value?: number;
+                    /** @description The currencies that are supported by ShipEngine are the ones that specified by ISO 4217: https://www.iso.org/iso-4217-currency-codes.html
+                     *      */
+                    value_currency?: string;
+                    /** @description The item weight */
+                    weight?: {
+                        /** @description The weight, in the specified unit */
+                        value: number;
+                        unit: "pound" | "ounce" | "gram" | "kilogram";
+                    };
+                    /**
+                     * @description The [Harmonized Tariff Code](https://en.wikipedia.org/wiki/Harmonized_System) of this item.
+                     * @default null
+                     * @example 3926.1
+                     */
+                    harmonized_tariff_code: string | null;
+                    /**
+                     * @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1) where this item originated
+                     *
+                     * @default null
+                     */
+                    country_of_origin: string | null;
+                    unit_of_measure?: string | null;
+                    /** @description The SKU (Stock Keeping Unit) of the customs item */
+                    sku?: string | null;
+                    /** @description Description of the Custom Item's SKU */
+                    sku_description?: string | null;
+                }[];
+            } | null;
+            /** @description Advanced shipment options.  These are entirely optional. */
+            advanced_options?: {
+                /**
+                 * @description This field is used to [bill shipping costs to a third party](https://www.shipengine.com/docs/shipping/bill-to-third-party/).  This field must be used in conjunction with the `bill_to_country_code`, `bill_to_party`, and `bill_to_postal_code` fields.
+                 *
+                 * @default null
+                 */
+                bill_to_account: string | null;
+                /**
+                 * @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1) of the third-party that is responsible for shipping costs.
+                 *
+                 * @default null
+                 */
+                bill_to_country_code: string | null;
+                /**
+                 * @description Indicates whether to bill shipping costs to the recipient or to a third-party.  When billing to a third-party, the `bill_to_account`, `bill_to_country_code`, and `bill_to_postal_code` fields must also be set.
+                 *
+                 * @default null
+                 */
+                bill_to_party: ("recipient" | "third_party") | null;
+                /**
+                 * @description The postal code of the third-party that is responsible for shipping costs.
+                 *
+                 * @default null
+                 */
+                bill_to_postal_code: string | null;
+                /**
+                 * @description Indicates that the shipment contains alcohol.
+                 * @default false
+                 */
+                contains_alcohol: boolean;
+                /**
+                 * @description Indicates that the shipper is paying the international delivery duties for this shipment.  This option is supported by UPS, FedEx, and DHL Express.
+                 *
+                 * @default false
+                 */
+                delivered_duty_paid: boolean;
+                /**
+                 * @description Indicates if the shipment contain dry ice
+                 * @default false
+                 */
+                dry_ice: boolean;
+                /** @description The weight of the dry ice in the shipment */
+                dry_ice_weight?: {
+                    /** @description The weight, in the specified unit */
+                    value: number;
+                    unit: "pound" | "ounce" | "gram" | "kilogram";
+                } | null;
+                /**
+                 * @description Indicates that the package cannot be processed automatically because it is too large or irregularly shaped. This is primarily for USPS shipments.  See [Section 1.2 of the USPS parcel standards](https://pe.usps.com/text/dmm300/101.htm#ep1047495) for details.
+                 *
+                 * @default false
+                 */
+                non_machinable: boolean;
+                /**
+                 * @description Enables Saturday delivery, if supported by the carrier.
+                 * @default false
+                 */
+                saturday_delivery: boolean;
+                /** @description Provide details for the Fedex freight service */
+                fedex_freight?: {
+                    shipper_load_and_count?: string;
+                    booking_confirmation?: string;
+                };
+                /**
+                 * @description Whether to use [UPS Ground Freight pricing](https://www.shipengine.com/docs/shipping/ups-ground-freight/).  If enabled, then a `freight_class` must also be specified.
+                 *
+                 * @default null
+                 */
+                use_ups_ground_freight_pricing: boolean | null;
+                /**
+                 * @description The National Motor Freight Traffic Association [freight class](http://www.nmfta.org/pages/nmfc?AspxAutoDetectCookieSupport=1), such as "77.5", "110", or "250".
+                 *
+                 * @default null
+                 * @example 77.5
+                 */
+                freight_class: string | null;
+                /**
+                 * @description An arbitrary field that can be used to store information about the shipment.
+                 *
+                 * @default null
+                 */
+                custom_field1: string | null;
+                /**
+                 * @description An arbitrary field that can be used to store information about the shipment.
+                 *
+                 * @default null
+                 */
+                custom_field2: string | null;
+                /**
+                 * @description An arbitrary field that can be used to store information about the shipment.
+                 *
+                 * @default null
+                 */
+                custom_field3: string | null;
+                /** @default null */
+                origin_type: ("pickup" | "drop_off") | null;
+                /**
+                 * @description Indicate to the carrier that this shipment requires additional handling.
+                 *
+                 * @default null
+                 */
+                additional_handling: boolean | null;
+                /** @default null */
+                shipper_release: boolean | null;
+                /**
+                 * collect_on_delivery
+                 * @description Defer payment until package is delivered, instead of when it is ordered.
+                 */
+                collect_on_delivery?: {
+                    payment_type?: "any" | "cash" | "cash_equivalent" | "none";
+                    /** payment_amount */
+                    payment_amount?: {
+                        currency?: string;
+                        amount?: number;
+                    };
+                };
+                /**
+                 * @description Third Party Consignee option is a value-added service that allows the shipper to supply goods without commercial invoices being attached
+                 * @default false
+                 */
+                third_party_consignee: boolean;
+                /**
+                 * @description Indicates if the Dangerous goods are present in the shipment
+                 * @default false
+                 */
+                dangerous_goods: boolean;
+                /** @description Contact information for Dangerous goods */
+                dangerous_goods_contact?: {
+                    /** @description Name of the contact */
+                    name?: string;
+                    /** @description Phone number of the contact */
+                    phone?: string;
+                };
+                /** @description The Windsor framework is a new regulation in the UK that simplifies customs procedures for goods moved from the UK mainland to Northern Ireland. */
+                windsor_framework_details?: {
+                    /**
+                     * @description An indicator that will tell the carrier and HMRC the type of movement for the shipment.
+                     * @enum {string}
+                     */
+                    movement_indicator?: "c2c" | "b2c" | "c2b" | "b2b";
+                    /** @description An indicator that allows a shipper to declare the shipment as not-at-risk. */
+                    not_at_risk?: boolean;
+                };
+                /**
+                 * @description license_number - This field was part of a historical implementation for passing customs-related data. For new integrations, please use the corresponding parameters within the shipment.customs object.
+                 * @default null
+                 * @example 514785
+                 */
+                license_number: string | null;
+                /**
+                 * @description invoice_number - This field was part of a historical implementation for passing customs-related data. For new integrations, please use the corresponding parameters within the shipment.customs object.
+                 * @default null
+                 * @example IOC56888
+                 */
+                invoice_number: string | null;
+                /**
+                 * @description certificate_number - This field was part of a historical implementation for passing customs-related data. For new integrations, please use the corresponding parameters within the shipment.customs object.
+                 * @default null
+                 * @example 784515
+                 */
+                certificate_number: string | null;
+                /**
+                 * @description Indicates that the contents of the package are fragile and should be handled with care.
+                 * @default false
+                 */
+                fragile: boolean;
+                /**
+                 * @description Instructs the carrier to deliver the package only to the exact address provided.
+                 * @default false
+                 */
+                "delivery-as-addressed": boolean;
+                /**
+                 * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                 * @default false
+                 */
+                "return-after-first-attempt": boolean;
+                /**
+                 * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                 * @default null
+                 */
+                regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
+            } & {
+                [key: string]: unknown;
+            };
+            /**
+             * @description The insurance provider to use for any insured packages in the shipment.
+             *
+             * @default none
+             */
+            insurance_provider: "none" | "shipsurance" | "carrier" | "third_party";
+            /**
+             * @description Arbitrary tags associated with this shipment.  Tags can be used to categorize shipments, and shipments can be queried by their tags.
+             *
+             * @default []
+             */
+            readonly tags: {
+                /**
+                 * Format: int32
+                 * @description An integer uniquely identifying a tag.
+                 * @example 8712
+                 */
+                readonly tag_id?: number;
+                /**
+                 * @description The tag name.
+                 * @example Fragile
+                 */
+                name: string;
+                /**
+                 * @description A hex-coded string identifying the color of the tag.
+                 * @example #FF0000
+                 */
+                color?: string;
+            }[];
+            order_source_code?: "amazon_ca" | "amazon_us" | "brightpearl" | "channel_advisor" | "cratejoy" | "ebay" | "etsy" | "jane" | "groupon_goods" | "magento" | "paypal" | "seller_active" | "shopify" | "stitch_labs" | "squarespace" | "three_dcart" | "tophatter" | "walmart" | "woo_commerce" | "volusion";
+            /** @description The packages in the shipment.
+             *
+             *     > **Note:** Some carriers only allow one package per shipment.  If you attempt to create a multi-package shipment for a carrier that doesn't allow it, an error will be returned.
+             *      */
+            packages?: {
+                /** @description A string that uniquely identifies this shipment package */
+                readonly shipment_package_id?: string;
+                /** @description A string that uniquely identifies this [package type](https://www.shipengine.com/docs/reference/list-carrier-packages/) */
+                package_id?: string;
+                /** @description The [package type](https://www.shipengine.com/docs/reference/list-carrier-packages/), such as `thick_envelope`, `small_flat_rate_box`, `large_package`, etc.  The code `package` indicates a custom or unknown package type.
+                 *      */
+                package_code?: string;
+                /** @description The name of the of the [package type](https://www.shipengine.com/docs/reference/list-carrier-packages/) */
+                package_name?: string;
+                /** @description The package weight */
+                weight: {
+                    /** @description The weight, in the specified unit */
+                    value: number;
+                    unit: "pound" | "ounce" | "gram" | "kilogram";
+                };
+                /** @description The package dimensions */
+                dimensions?: {
+                    /** @default inch */
+                    unit: "inch" | "centimeter";
+                    /**
+                     * @description The length of the package, in the specified unit
+                     * @default 0
+                     */
+                    length: number;
+                    /**
+                     * @description The width of the package, in the specified unit
+                     * @default 0
+                     */
+                    width: number;
+                    /**
+                     * @description The height of the package, in the specified unit
+                     * @default 0
+                     */
+                    height: number;
+                };
+                /**
+                 * @description The insured value of the package.  Requires the `insurance_provider` field of the shipment to be set.
+                 *
+                 * @default {
+                 *       "currency": "USD",
+                 *       "amount": 0
+                 *     }
+                 */
+                insured_value: {
+                    currency: string;
+                    /** @description The monetary amount, in the specified currency. */
+                    amount: number;
+                };
+                label_messages?: {
+                    /**
+                     * @description The first line of the custom label message.  Some carriers may prefix this line with something like "REF", "Reference", "Trx Ref No.", etc.
+                     *
+                     * @default null
+                     */
+                    reference1: string | null;
+                    /**
+                     * @description The second line of the custom label message.  Some carriers may prefix this line with something like "INV", "Reference 2", "Trx Ref No.", etc.
+                     *
+                     * @default null
+                     */
+                    reference2: string | null;
+                    /**
+                     * @description The third line of the custom label message.  Some carriers may prefix this line with something like "PO", "Reference 3", etc.
+                     *
+                     * @default null
+                     */
+                    reference3: string | null;
+                };
+                /** @description An external package id. */
+                external_package_id?: string;
+                /** @description The tracking number for the package.  The format depends on the carrier.
+                 *      */
+                readonly tracking_number?: string;
+                /**
+                 * @description A short description of the package content. Required for shipments moving to, from, and through Mexico.
+                 *
+                 * @example Hand knitted wool socks
+                 */
+                content_description?: string | null;
+                /**
+                 * @description Details about products inside packages (Information provided would be used on custom documentation)
+                 * @default []
+                 */
+                products: {
+                    /**
+                     * @description A description of the item
+                     * @default null
+                     */
+                    description: string | null;
+                    /**
+                     * Format: int32
+                     * @description The quantity of this item in the shipment.
+                     * @default 0
+                     */
+                    quantity: number;
+                    /** @description The declared value of each item */
+                    value?: {
+                        currency: string;
+                        /** @description The monetary amount, in the specified currency. */
+                        amount: number;
+                    };
+                    /** @description The item weight */
+                    weight?: {
+                        /** @description The weight, in the specified unit */
+                        value: number;
+                        unit: "pound" | "ounce" | "gram" | "kilogram";
+                    };
+                    /**
+                     * @description The [Harmonized Tariff Code](https://en.wikipedia.org/wiki/Harmonized_System) of this item.
+                     * @default null
+                     * @example 3926.1
+                     */
+                    harmonized_tariff_code: string | null;
+                    /**
+                     * @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1) where this item originated
+                     *
+                     * @default null
+                     */
+                    country_of_origin: string | null;
+                    unit_of_measure?: string | null;
+                    /** @description The SKU (Stock Keeping Unit) of the item */
+                    sku?: string | null;
+                    /** @description Description of the Custom Item's SKU */
+                    sku_description?: string | null;
+                    /** @description Manufacturers Identification code */
+                    mid_code?: string | null;
+                    /** @description link to the item on the seller website */
+                    product_url?: string | null;
+                    /**
+                     * @description VAT rate applicable to the item
+                     * @example 0.2
+                     */
+                    vat_rate?: number | null;
+                    /**
+                     * @description Details about dangerous goods inside products
+                     * @default []
+                     */
+                    dangerous_goods: {
+                        /**
+                         * @description UN number to identify the dangerous goods.
+                         * @default null
+                         */
+                        id_number: string | null;
+                        /**
+                         * @description Trade description of the dangerous goods.
+                         * @default null
+                         */
+                        shipping_name: string | null;
+                        /**
+                         * @description Recognized Technical or chemical name of dangerous goods.
+                         * @default null
+                         */
+                        technical_name: string | null;
+                        /**
+                         * @description Dangerous goods product class based on regulation.
+                         * @default null
+                         */
+                        product_class: string | null;
+                        /**
+                         * @description A secondary of product class for substances presenting more than one particular hazard
+                         * @default null
+                         */
+                        product_class_subsidiary: string | null;
+                        /**
+                         * packaging_group
+                         * @enum {string}
+                         */
+                        packaging_group?: "i" | "ii" | "iii";
+                        /** @description This model represents the amount of the dangerous goods. */
+                        dangerous_amount?: {
+                            /**
+                             * @description The amount of dangerous goods.
+                             * @default 0
+                             */
+                            amount: number;
+                            /**
+                             * @description The unit of dangerous goods.
+                             * @default null
+                             */
+                            unit: string | null;
+                        };
+                        /**
+                         * Format: int32
+                         * @description Quantity of dangerous goods.
+                         * @default 0
+                         */
+                        quantity: number;
+                        /**
+                         * @description The specific standardized packaging instructions from the relevant regulatory agency that have been applied to the parcel/container.
+                         * @default null
+                         */
+                        packaging_instruction: string | null;
+                        /**
+                         * packaging_instruction_section
+                         * @enum {string}
+                         */
+                        packaging_instruction_section?: "section_1" | "section_2" | "section_1a" | "section_1b";
+                        /**
+                         * @description The type of exterior packaging used to contain the dangerous good.
+                         * @default null
+                         */
+                        packaging_type: string | null;
+                        /**
+                         * transport_mean
+                         * @enum {string}
+                         */
+                        transport_mean?: "ground" | "water" | "cargo_aircraft_only" | "passenger_aircraft";
+                        /**
+                         * @description Transport category assign to dangerous goods for the transport purpose.
+                         * @default null
+                         */
+                        transport_category: string | null;
+                        /**
+                         * @description Name of the regulatory authority.
+                         * @default null
+                         */
+                        regulation_authority: string | null;
+                        /**
+                         * regulation_level
+                         * @enum {string}
+                         */
+                        regulation_level?: "lightly_regulated" | "fully_regulated" | "limited_quantities" | "excepted_quantity";
+                        /**
+                         * @description Indication if the substance is radioactive.
+                         * @example false
+                         */
+                        radioactive?: boolean | null;
+                        /**
+                         * @description Indication if the substance needs to be reported to regulatory authority based on the quantity.
+                         * @example false
+                         */
+                        reportable_quantity?: boolean | null;
+                        /**
+                         * @description Defines which types of tunnels the shipment is allowed to go through
+                         * @default null
+                         */
+                        tunnel_code: string | null;
+                        /**
+                         * @description Provider additonal description regarding the dangerous goods. This is used as a placed holder to provider additional context and varies by carrier
+                         * @default null
+                         */
+                        additional_description: string | null;
+                    }[];
+                    /** @description Additional details about products */
+                    extended_details?: {
+                        [key: string]: unknown;
+                    };
+                }[];
+            }[];
+            /** @description The combined weight of all packages in the shipment */
+            readonly total_weight?: {
+                /** @description The weight, in the specified unit */
+                value: number;
+                unit: "pound" | "ounce" | "gram" | "kilogram";
+            };
+            /**
+             * @description Calculate a rate for this shipment with the requested carrier using a ratecard that differs from the default.  Only supported for UPS and USPS.
+             * @example retail
+             */
+            comparison_rate_type?: string | null;
+            /**
+             * Format: int32
+             * @description Certain carriers base [their rates](https://blog.stamps.com/2017/09/08/usps-postal-zones/) off of
+             *     custom zones that vary depending upon the ship_to and ship_from location
+             *
+             * @example 6
+             */
+            readonly zone?: number | null;
+        };
+        /**
+         * create_label_rate_shopper_response_body
+         * @description The response from creating a label using the Rate Shopper. Includes all standard
+         *     label information plus the rate_shopper_id indicating which strategy was used.
+         *
+         */
+        create_label_rate_shopper_response_body: {
+            /** @description The rate selection strategy that was used to create this label. This will
+             *     match the rate_shopper_id provided in the request path.
+             *      */
+            readonly rate_shopper_id?: "best_value" | "cheapest" | "fastest";
+        } & {
+            /** @description A string that uniquely identifies the label. This ID is generated by ShipEngine when the label is created.
+             *      */
+            readonly label_id?: string;
+            readonly status?: "processing" | "completed" | "error" | "voided";
+            /** @description The shipment that this label is for.  ShipEngine can create a shipment for you automatically when you [create a label](https://www.shipengine.com/docs/labels/create-a-label/), or you can [create your own shipment](https://www.shipengine.com/docs/shipping/create-a-shipment/) and then [use it to print a label](https://www.shipengine.com/docs/labels/create-from-shipment/)
+             *      */
+            readonly shipment_id?: string;
+            /** @description A unique user-defined key to identify a shipment.  This can be used to retrieve the shipment.
+             *      */
+            readonly external_shipment_id?: string | null;
+            /** @description ID that the Order Source assigned */
+            readonly external_order_id?: string | null;
+            /** @description The shipment information used to generate the label */
+            shipment?: {
+                /** @description A string that uniquely identifies the shipment */
+                readonly shipment_id: string;
+                /** @description The carrier account that is billed for the shipping charges */
+                carrier_id: string;
+                /** @description The [carrier service](https://www.shipengine.com/docs/shipping/use-a-carrier-service/) used to ship the package, such as `fedex_ground`, `usps_first_class_mail`, `flat_rate_envelope`, etc.
+                 *      */
+                service_code: string;
+                /** @description ID of the shipping rule, which you want to use to automate carrier/carrier service selection for the shipment
+                 *      */
+                shipping_rule_id?: string;
+                /** @description ID that the Order Source assigned */
+                external_order_id?: string | null;
+                /**
+                 * @description Describe the packages included in this shipment as related to potential metadata that was imported from
+                 *     external order sources
+                 *
+                 * @default []
+                 */
+                items: {
+                    /** @description item name */
+                    name?: string;
+                    /** @description sales order id */
+                    sales_order_id?: string | null;
+                    /** @description sales order item id */
+                    sales_order_item_id?: string | null;
+                    /**
+                     * Format: int32
+                     * @description The quantity of this item included in the shipment
+                     */
+                    quantity?: number;
+                    /** @description Item Stock Keeping Unit */
+                    sku?: string | null;
+                    /** @description Item Stock Keeping Unit of the product bundle */
+                    readonly bundle_sku?: string | null;
+                    /** @description external order id */
+                    external_order_id?: string | null;
+                    /** @description external order item id */
+                    external_order_item_id?: string | null;
+                    /**
+                     * @description Amazon Standard Identification Number
+                     * @example B00005N5PF
+                     */
+                    asin?: string | null;
+                    order_source_code?: "amazon_ca" | "amazon_us" | "brightpearl" | "channel_advisor" | "cratejoy" | "ebay" | "etsy" | "jane" | "groupon_goods" | "magento" | "paypal" | "seller_active" | "shopify" | "stitch_labs" | "squarespace" | "three_dcart" | "tophatter" | "walmart" | "woo_commerce" | "volusion";
+                }[];
+                tax_identifiers?: {
+                    taxable_entity_type: "shipper" | "recipient" | "ior";
+                    identifier_type: "vat" | "eori" | "ssn" | "ein" | "tin" | "ioss" | "pan" | "voec" | "pccc" | "oss" | "passport" | "abn" | "ukims";
+                    /** @description The authority that issued this tax. This must be a valid 2 character ISO 3166 Alpha 2 country code. */
+                    issuing_authority: string;
+                    /** @description The value of the identifier */
+                    value: string;
+                }[] | null;
+                /** @description A unique user-defined key to identify a shipment.  This can be used to retrieve the shipment.
+                 *
+                 *     > **Warning:** The `external_shipment_id` is limited to 50 characters. Any additional characters will be truncated.
+                 *      */
+                external_shipment_id?: string | null;
+                /** @description A non-unique user-defined number used to identify a shipment.  If undefined, this will match the external_shipment_id of the shipment.
+                 *
+                 *     > **Warning:** The `shipment_number` is limited to 50 characters. Any additional characters will be truncated.
+                 *      */
+                shipment_number?: string | null;
+                /** @description The date that the shipment was (or will be) shipped.  ShipEngine will take the day of week into consideration. For example, if the carrier does not operate on Sundays, then a package that would have shipped on Sunday will ship on Monday instead.
+                 *      */
+                ship_date: string;
+                /** @description The date and time that the shipment was created in ShipEngine. */
+                readonly created_at: string;
+                /** @description The date and time that the shipment was created or last modified. */
+                readonly modified_at: string;
+                /**
+                 * @description The current status of the shipment
+                 * @default pending
+                 */
+                readonly shipment_status: "pending" | "processing" | "label_purchased" | "cancelled";
+                /** @description The recipient's mailing address */
+                ship_to: {
+                    /**
+                     * @description The name of a contact person at this address.  This field may be set instead of - or in addition to - the `company_name` field.
+                     *
+                     * @example John Doe
+                     */
+                    name: string;
+                    /**
+                     * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                     *
+                     * @example +1 204-253-9411 ext. 123
+                     */
+                    phone?: string;
+                    /**
+                     * @description Email for the address owner.
+                     *
+                     * @example example@example.com
+                     */
+                    email?: string | null;
+                    /**
+                     * @description If this is a business address, then the company name should be specified here.
+                     *
+                     * @example The Home Depot
+                     */
+                    company_name?: string | null;
+                    /**
+                     * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                     *
+                     * @example 1999 Bishop Grandin Blvd.
+                     */
+                    address_line1: string;
+                    /**
+                     * @description The second line of the street address.  For some addresses, this line may not be needed.
+                     *
+                     * @example Unit 408
+                     */
+                    address_line2?: string | null;
+                    /**
+                     * @description The third line of the street address.  For some addresses, this line may not be needed.
+                     *
+                     * @example Building #7
+                     */
+                    address_line3?: string | null;
+                    /**
+                     * @description The name of the city or locality
+                     * @example Winnipeg
+                     */
+                    city_locality: string;
+                    /**
+                     * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                     *
+                     * @example Manitoba
+                     */
+                    state_province: string;
+                    postal_code: string;
+                    /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                     *      */
+                    country_code?: string;
+                    /**
+                     * @description Indicates whether this is a residential address.
+                     * @default unknown
+                     * @example no
+                     */
+                    address_residential_indicator: "unknown" | "yes" | "no";
+                } & {
+                    /** @description Additional text about how to handle the shipment at this address.
+                     *      */
+                    instructions?: string | null;
+                    geolocation?: {
+                        /**
+                         * @description Enum of available type of geolocation items:
+                         *       - 'what3words' functionality allows to specify a location by providing 3 words that have been assign to the specific location see [link](https://what3words.com/business) for more details.
+                         *
+                         * @example what3words
+                         * @enum {string}
+                         */
+                        type?: "what3words";
+                        /**
+                         * @description value of the geolocation item
+                         * @example cats.with.thumbs
+                         */
+                        value?: string;
+                    }[];
+                };
+                /** @description The shipment's origin address. If you frequently ship from the same location, consider [creating a warehouse](https://www.shipengine.com/docs/reference/create-warehouse/).  Then you can simply specify the `warehouse_id` rather than the complete address each time.
+                 *      */
+                ship_from: {
+                    /**
+                     * @description The name of a contact person at this address.  This field may be set instead of - or in addition to - the `company_name` field.
+                     *
+                     * @example John Doe
+                     */
+                    name: string;
+                    /**
+                     * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                     *
+                     * @example +1 204-253-9411 ext. 123
+                     */
+                    phone?: string;
+                    /**
+                     * @description Email for the address owner.
+                     *
+                     * @example example@example.com
+                     */
+                    email?: string | null;
+                    /**
+                     * @description If this is a business address, then the company name should be specified here.
+                     *
+                     * @example The Home Depot
+                     */
+                    company_name?: string | null;
+                    /**
+                     * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                     *
+                     * @example 1999 Bishop Grandin Blvd.
+                     */
+                    address_line1: string;
+                    /**
+                     * @description The second line of the street address.  For some addresses, this line may not be needed.
+                     *
+                     * @example Unit 408
+                     */
+                    address_line2?: string | null;
+                    /**
+                     * @description The third line of the street address.  For some addresses, this line may not be needed.
+                     *
+                     * @example Building #7
+                     */
+                    address_line3?: string | null;
+                    /**
+                     * @description The name of the city or locality
+                     * @example Winnipeg
+                     */
+                    city_locality: string;
+                    /**
+                     * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                     *
+                     * @example Manitoba
+                     */
+                    state_province: string;
+                    postal_code: string;
+                    /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                     *      */
+                    country_code?: string;
+                    /**
+                     * @description Indicates whether this is a residential address.
+                     * @default unknown
+                     * @example no
+                     */
+                    address_residential_indicator: "unknown" | "yes" | "no";
+                } & {
+                    /** @description Additional text about how to handle the shipment at this address.
+                     *      */
+                    instructions?: string | null;
+                };
+                /**
+                 * @description The [warehouse](https://www.shipengine.com/docs/shipping/ship-from-a-warehouse/) that the shipment is being shipped from.  Either `warehouse_id` or `ship_from` must be specified.
+                 *
+                 * @default null
+                 */
+                warehouse_id: string | null;
+                /** @description The return address for this shipment.  Defaults to the `ship_from` address.
+                 *      */
+                return_to: {
+                    /**
+                     * @description The name of a contact person at this address.  This field may be set instead of - or in addition to - the `company_name` field.
+                     *
+                     * @example John Doe
+                     */
+                    name: string;
+                    /**
+                     * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                     *
+                     * @example +1 204-253-9411 ext. 123
+                     */
+                    phone?: string;
+                    /**
+                     * @description Email for the address owner.
+                     *
+                     * @example example@example.com
+                     */
+                    email?: string | null;
+                    /**
+                     * @description If this is a business address, then the company name should be specified here.
+                     *
+                     * @example The Home Depot
+                     */
+                    company_name?: string | null;
+                    /**
+                     * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                     *
+                     * @example 1999 Bishop Grandin Blvd.
+                     */
+                    address_line1: string;
+                    /**
+                     * @description The second line of the street address.  For some addresses, this line may not be needed.
+                     *
+                     * @example Unit 408
+                     */
+                    address_line2?: string | null;
+                    /**
+                     * @description The third line of the street address.  For some addresses, this line may not be needed.
+                     *
+                     * @example Building #7
+                     */
+                    address_line3?: string | null;
+                    /**
+                     * @description The name of the city or locality
+                     * @example Winnipeg
+                     */
+                    city_locality: string;
+                    /**
+                     * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                     *
+                     * @example Manitoba
+                     */
+                    state_province: string;
+                    postal_code: string;
+                    /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                     *      */
+                    country_code?: string;
+                    /**
+                     * @description Indicates whether this is a residential address.
+                     * @default unknown
+                     * @example no
+                     */
+                    address_residential_indicator: "unknown" | "yes" | "no";
+                } & {
+                    /** @description Additional text about how to handle the shipment at this address.
+                     *      */
+                    instructions?: string | null;
+                };
+                /**
+                 * @description An optional indicator if the shipment is intended to be a return. Defaults to false if not provided.
+                 *
+                 * @default false
+                 */
+                is_return: boolean | null;
+                /**
+                 * @description The type of delivery confirmation that is required for this shipment.
+                 * @default none
+                 */
+                confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
+                /**
+                 * @description Customs information.  This is usually only needed for international shipments.
+                 *
+                 * @default null
+                 */
+                customs: {
+                    /**
+                     * @description The type of contents in this shipment.  This may impact import duties or customs treatment.
+                     * @default merchandise
+                     */
+                    contents: "merchandise" | "documents" | "gift" | "returned_goods" | "sample" | "other";
+                    /** @description Explanation for contents (required if the `contents` is provided as `other`) */
+                    contents_explanation?: string;
+                    /**
+                     * @description Indicates what to do if a package is unable to be delivered.
+                     * @default return_to_sender
+                     */
+                    non_delivery: "return_to_sender" | "treat_as_abandoned";
+                    /** @description Specifies the supported terms of trade code (incoterms) */
+                    terms_of_trade_code?: string & ("exw" | "fca" | "cpt" | "cip" | "dpu" | "dap" | "ddp" | "fas" | "fob" | "cfr" | "cif" | "ddu" | "daf" | "deq" | "des");
+                    /** @description Declaration statement to be placed on the commercial invoice */
+                    declaration?: string;
+                    invoice_additional_details?: {
+                        /** @description Freight Charge for shipment. */
+                        freight_charge?: {
+                            currency: string;
+                            /** @description The monetary amount, in the specified currency. */
+                            amount: number;
+                        };
+                        /** @description Insurance Charge for shipment. */
+                        insurance_charge?: {
+                            currency: string;
+                            /** @description The monetary amount, in the specified currency. */
+                            amount: number;
+                        };
+                        /** @description Discount for shipment. */
+                        discount?: {
+                            currency: string;
+                            /** @description The monetary amount, in the specified currency. */
+                            amount: number;
+                        };
+                        /** @description Estimated import charges for commercial invoices for international shipments. */
+                        estimated_import_charges?: {
+                            /** @description Estimated import taxes. */
+                            taxes?: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            };
+                            /** @description Estimated import duties. */
+                            duties?: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            };
+                        };
+                        /** @description Other charge for shipment. */
+                        other_charge?: {
+                            currency: string;
+                            /** @description The monetary amount, in the specified currency. */
+                            amount: number;
+                        };
+                        /** @description Description for the other charge (if provided). */
+                        other_charge_description?: string;
+                        /** @description The invoice number to be used in the customs. */
+                        invoice_number?: string;
+                    };
+                    importer_of_record?: {
+                        /**
+                         * @description The name of a contact person at this address. Either `name` or the `company_name` field should always be set.
+                         *
+                         * @example John Doe
+                         */
+                        name: string;
+                        /**
+                         * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                         *
+                         * @example +1 204-253-9411 ext. 123
+                         */
+                        phone?: string;
+                        /**
+                         * @description Email for the address owner.
+                         *
+                         * @example example@example.com
+                         */
+                        email?: string | null;
+                        /**
+                         * @description If this is a business address, then the company name should be specified here. Either `name` or the `company_name` field should always be set.
+                         *
+                         * @example The Home Depot
+                         */
+                        company_name?: string | null;
+                        /**
+                         * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                         *
+                         * @example 1999 Bishop Grandin Blvd.
+                         */
+                        address_line1: string;
+                        /**
+                         * @description The second line of the street address.  For some addresses, this line may not be needed.
+                         *
+                         * @example Unit 408
+                         */
+                        address_line2?: string | null;
+                        /**
+                         * @description The third line of the street address.  For some addresses, this line may not be needed.
+                         *
+                         * @example Building #7
+                         */
+                        address_line3?: string | null;
+                        /**
+                         * @description The name of the city or locality
+                         * @example Winnipeg
+                         */
+                        city_locality: string;
+                        /**
+                         * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                         *
+                         * @example Manitoba
+                         */
+                        state_province?: string;
+                        postal_code: string;
+                        /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                         *      */
+                        country_code: string;
+                    };
+                    /** @description The license number to be used in the customs. */
+                    license_number?: string;
+                    /** @description The certificate number to be used in the customs. */
+                    certificate_number?: string;
+                    /**
+                     * @deprecated
+                     * @description Customs declarations for each item in the shipment. (Please provide this information under `products` inside `packages`)
+                     * @default []
+                     */
+                    customs_items: {
+                        /** @description A string that uniquely identifies the customs item */
+                        readonly customs_item_id: string;
+                        /**
+                         * @description A description of the item
+                         * @default null
+                         */
+                        description: string | null;
+                        /**
+                         * Format: int32
+                         * @description The quantity of this item in the shipment.
+                         * @default 0
+                         */
+                        quantity: number;
+                        /** @description The monetary amount, in the specified currency. */
+                        value?: number;
+                        /** @description The currencies that are supported by ShipEngine are the ones that specified by ISO 4217: https://www.iso.org/iso-4217-currency-codes.html
+                         *      */
+                        value_currency?: string;
+                        /** @description The item weight */
+                        weight?: {
+                            /** @description The weight, in the specified unit */
+                            value: number;
+                            unit: "pound" | "ounce" | "gram" | "kilogram";
+                        };
+                        /**
+                         * @description The [Harmonized Tariff Code](https://en.wikipedia.org/wiki/Harmonized_System) of this item.
+                         * @default null
+                         * @example 3926.1
+                         */
+                        harmonized_tariff_code: string | null;
+                        /**
+                         * @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1) where this item originated
+                         *
+                         * @default null
+                         */
+                        country_of_origin: string | null;
+                        unit_of_measure?: string | null;
+                        /** @description The SKU (Stock Keeping Unit) of the customs item */
+                        sku?: string | null;
+                        /** @description Description of the Custom Item's SKU */
+                        sku_description?: string | null;
+                    }[];
+                } | null;
+                /** @description Advanced shipment options.  These are entirely optional. */
+                advanced_options: {
+                    /**
+                     * @description This field is used to [bill shipping costs to a third party](https://www.shipengine.com/docs/shipping/bill-to-third-party/).  This field must be used in conjunction with the `bill_to_country_code`, `bill_to_party`, and `bill_to_postal_code` fields.
+                     *
+                     * @default null
+                     */
+                    bill_to_account: string | null;
+                    /**
+                     * @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1) of the third-party that is responsible for shipping costs.
+                     *
+                     * @default null
+                     */
+                    bill_to_country_code: string | null;
+                    /**
+                     * @description Indicates whether to bill shipping costs to the recipient or to a third-party.  When billing to a third-party, the `bill_to_account`, `bill_to_country_code`, and `bill_to_postal_code` fields must also be set.
+                     *
+                     * @default null
+                     */
+                    bill_to_party: ("recipient" | "third_party") | null;
+                    /**
+                     * @description The postal code of the third-party that is responsible for shipping costs.
+                     *
+                     * @default null
+                     */
+                    bill_to_postal_code: string | null;
+                    /**
+                     * @description Indicates that the shipment contains alcohol.
+                     * @default false
+                     */
+                    contains_alcohol: boolean;
+                    /**
+                     * @description Indicates that the shipper is paying the international delivery duties for this shipment.  This option is supported by UPS, FedEx, and DHL Express.
+                     *
+                     * @default false
+                     */
+                    delivered_duty_paid: boolean;
+                    /**
+                     * @description Indicates if the shipment contain dry ice
+                     * @default false
+                     */
+                    dry_ice: boolean;
+                    /** @description The weight of the dry ice in the shipment */
+                    dry_ice_weight?: {
+                        /** @description The weight, in the specified unit */
+                        value: number;
+                        unit: "pound" | "ounce" | "gram" | "kilogram";
+                    } | null;
+                    /**
+                     * @description Indicates that the package cannot be processed automatically because it is too large or irregularly shaped. This is primarily for USPS shipments.  See [Section 1.2 of the USPS parcel standards](https://pe.usps.com/text/dmm300/101.htm#ep1047495) for details.
+                     *
+                     * @default false
+                     */
+                    non_machinable: boolean;
+                    /**
+                     * @description Enables Saturday delivery, if supported by the carrier.
+                     * @default false
+                     */
+                    saturday_delivery: boolean;
+                    /** @description Provide details for the Fedex freight service */
+                    fedex_freight?: {
+                        shipper_load_and_count?: string;
+                        booking_confirmation?: string;
+                    };
+                    /**
+                     * @description Whether to use [UPS Ground Freight pricing](https://www.shipengine.com/docs/shipping/ups-ground-freight/).  If enabled, then a `freight_class` must also be specified.
+                     *
+                     * @default null
+                     */
+                    use_ups_ground_freight_pricing: boolean | null;
+                    /**
+                     * @description The National Motor Freight Traffic Association [freight class](http://www.nmfta.org/pages/nmfc?AspxAutoDetectCookieSupport=1), such as "77.5", "110", or "250".
+                     *
+                     * @default null
+                     * @example 77.5
+                     */
+                    freight_class: string | null;
+                    /**
+                     * @description An arbitrary field that can be used to store information about the shipment.
+                     *
+                     * @default null
+                     */
+                    custom_field1: string | null;
+                    /**
+                     * @description An arbitrary field that can be used to store information about the shipment.
+                     *
+                     * @default null
+                     */
+                    custom_field2: string | null;
+                    /**
+                     * @description An arbitrary field that can be used to store information about the shipment.
+                     *
+                     * @default null
+                     */
+                    custom_field3: string | null;
+                    /** @default null */
+                    origin_type: ("pickup" | "drop_off") | null;
+                    /**
+                     * @description Indicate to the carrier that this shipment requires additional handling.
+                     *
+                     * @default null
+                     */
+                    additional_handling: boolean | null;
+                    /** @default null */
+                    shipper_release: boolean | null;
+                    /**
+                     * collect_on_delivery
+                     * @description Defer payment until package is delivered, instead of when it is ordered.
+                     */
+                    collect_on_delivery?: {
+                        payment_type?: "any" | "cash" | "cash_equivalent" | "none";
+                        /** payment_amount */
+                        payment_amount?: {
+                            currency?: string;
+                            amount?: number;
+                        };
+                    };
+                    /**
+                     * @description Third Party Consignee option is a value-added service that allows the shipper to supply goods without commercial invoices being attached
+                     * @default false
+                     */
+                    third_party_consignee: boolean;
+                    /**
+                     * @description Indicates if the Dangerous goods are present in the shipment
+                     * @default false
+                     */
+                    dangerous_goods: boolean;
+                    /** @description Contact information for Dangerous goods */
+                    dangerous_goods_contact?: {
+                        /** @description Name of the contact */
+                        name?: string;
+                        /** @description Phone number of the contact */
+                        phone?: string;
+                    };
+                    /** @description The Windsor framework is a new regulation in the UK that simplifies customs procedures for goods moved from the UK mainland to Northern Ireland. */
+                    windsor_framework_details?: {
+                        /**
+                         * @description An indicator that will tell the carrier and HMRC the type of movement for the shipment.
+                         * @enum {string}
+                         */
+                        movement_indicator?: "c2c" | "b2c" | "c2b" | "b2b";
+                        /** @description An indicator that allows a shipper to declare the shipment as not-at-risk. */
+                        not_at_risk?: boolean;
+                    };
+                    /**
+                     * @description license_number - This field was part of a historical implementation for passing customs-related data. For new integrations, please use the corresponding parameters within the shipment.customs object.
+                     * @default null
+                     * @example 514785
+                     */
+                    license_number: string | null;
+                    /**
+                     * @description invoice_number - This field was part of a historical implementation for passing customs-related data. For new integrations, please use the corresponding parameters within the shipment.customs object.
+                     * @default null
+                     * @example IOC56888
+                     */
+                    invoice_number: string | null;
+                    /**
+                     * @description certificate_number - This field was part of a historical implementation for passing customs-related data. For new integrations, please use the corresponding parameters within the shipment.customs object.
+                     * @default null
+                     * @example 784515
+                     */
+                    certificate_number: string | null;
+                    /**
+                     * @description Indicates that the contents of the package are fragile and should be handled with care.
+                     * @default false
+                     */
+                    fragile: boolean;
+                    /**
+                     * @description Instructs the carrier to deliver the package only to the exact address provided.
+                     * @default false
+                     */
+                    "delivery-as-addressed": boolean;
+                    /**
+                     * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                     * @default false
+                     */
+                    "return-after-first-attempt": boolean;
+                    /**
+                     * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                     * @default null
+                     */
+                    regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
+                } & {
+                    [key: string]: unknown;
+                };
+                /**
+                 * @description The insurance provider to use for any insured packages in the shipment.
+                 *
+                 * @default none
+                 */
+                insurance_provider: "none" | "shipsurance" | "carrier" | "third_party";
+                /**
+                 * @description Arbitrary tags associated with this shipment.  Tags can be used to categorize shipments, and shipments can be queried by their tags.
+                 *
+                 * @default []
+                 */
+                readonly tags: {
+                    /**
+                     * Format: int32
+                     * @description An integer uniquely identifying a tag.
+                     * @example 8712
+                     */
+                    readonly tag_id?: number;
+                    /**
+                     * @description The tag name.
+                     * @example Fragile
+                     */
+                    name: string;
+                    /**
+                     * @description A hex-coded string identifying the color of the tag.
+                     * @example #FF0000
+                     */
+                    color?: string;
+                }[];
+                order_source_code?: "amazon_ca" | "amazon_us" | "brightpearl" | "channel_advisor" | "cratejoy" | "ebay" | "etsy" | "jane" | "groupon_goods" | "magento" | "paypal" | "seller_active" | "shopify" | "stitch_labs" | "squarespace" | "three_dcart" | "tophatter" | "walmart" | "woo_commerce" | "volusion";
+                /** @description The packages in the shipment.
+                 *
+                 *     > **Note:** Some carriers only allow one package per shipment.  If you attempt to create a multi-package shipment for a carrier that doesn't allow it, an error will be returned.
+                 *      */
+                packages: {
+                    /** @description A string that uniquely identifies this shipment package */
+                    readonly shipment_package_id?: string;
+                    /** @description A string that uniquely identifies this [package type](https://www.shipengine.com/docs/reference/list-carrier-packages/) */
+                    package_id?: string;
+                    /** @description The [package type](https://www.shipengine.com/docs/reference/list-carrier-packages/), such as `thick_envelope`, `small_flat_rate_box`, `large_package`, etc.  The code `package` indicates a custom or unknown package type.
+                     *      */
+                    package_code?: string;
+                    /** @description The name of the of the [package type](https://www.shipengine.com/docs/reference/list-carrier-packages/) */
+                    package_name?: string;
+                    /** @description The package weight */
+                    weight: {
+                        /** @description The weight, in the specified unit */
+                        value: number;
+                        unit: "pound" | "ounce" | "gram" | "kilogram";
+                    };
+                    /** @description The package dimensions */
+                    dimensions?: {
+                        /** @default inch */
+                        unit: "inch" | "centimeter";
+                        /**
+                         * @description The length of the package, in the specified unit
+                         * @default 0
+                         */
+                        length: number;
+                        /**
+                         * @description The width of the package, in the specified unit
+                         * @default 0
+                         */
+                        width: number;
+                        /**
+                         * @description The height of the package, in the specified unit
+                         * @default 0
+                         */
+                        height: number;
+                    };
+                    /**
+                     * @description The insured value of the package.  Requires the `insurance_provider` field of the shipment to be set.
+                     *
+                     * @default {
+                     *       "currency": "USD",
+                     *       "amount": 0
+                     *     }
+                     */
+                    insured_value: {
+                        currency: string;
+                        /** @description The monetary amount, in the specified currency. */
+                        amount: number;
+                    };
+                    label_messages?: {
+                        /**
+                         * @description The first line of the custom label message.  Some carriers may prefix this line with something like "REF", "Reference", "Trx Ref No.", etc.
+                         *
+                         * @default null
+                         */
+                        reference1: string | null;
+                        /**
+                         * @description The second line of the custom label message.  Some carriers may prefix this line with something like "INV", "Reference 2", "Trx Ref No.", etc.
+                         *
+                         * @default null
+                         */
+                        reference2: string | null;
+                        /**
+                         * @description The third line of the custom label message.  Some carriers may prefix this line with something like "PO", "Reference 3", etc.
+                         *
+                         * @default null
+                         */
+                        reference3: string | null;
+                    };
+                    /** @description An external package id. */
+                    external_package_id?: string;
+                    /** @description The tracking number for the package.  The format depends on the carrier.
+                     *      */
+                    readonly tracking_number?: string;
+                    /**
+                     * @description A short description of the package content. Required for shipments moving to, from, and through Mexico.
+                     *
+                     * @example Hand knitted wool socks
+                     */
+                    content_description?: string | null;
+                    /**
+                     * @description Details about products inside packages (Information provided would be used on custom documentation)
+                     * @default []
+                     */
+                    products: {
+                        /**
+                         * @description A description of the item
+                         * @default null
+                         */
+                        description: string | null;
+                        /**
+                         * Format: int32
+                         * @description The quantity of this item in the shipment.
+                         * @default 0
+                         */
+                        quantity: number;
+                        /** @description The declared value of each item */
+                        value?: {
+                            currency: string;
+                            /** @description The monetary amount, in the specified currency. */
+                            amount: number;
+                        };
+                        /** @description The item weight */
+                        weight?: {
+                            /** @description The weight, in the specified unit */
+                            value: number;
+                            unit: "pound" | "ounce" | "gram" | "kilogram";
+                        };
+                        /**
+                         * @description The [Harmonized Tariff Code](https://en.wikipedia.org/wiki/Harmonized_System) of this item.
+                         * @default null
+                         * @example 3926.1
+                         */
+                        harmonized_tariff_code: string | null;
+                        /**
+                         * @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1) where this item originated
+                         *
+                         * @default null
+                         */
+                        country_of_origin: string | null;
+                        unit_of_measure?: string | null;
+                        /** @description The SKU (Stock Keeping Unit) of the item */
+                        sku?: string | null;
+                        /** @description Description of the Custom Item's SKU */
+                        sku_description?: string | null;
+                        /** @description Manufacturers Identification code */
+                        mid_code?: string | null;
+                        /** @description link to the item on the seller website */
+                        product_url?: string | null;
+                        /**
+                         * @description VAT rate applicable to the item
+                         * @example 0.2
+                         */
+                        vat_rate?: number | null;
+                        /**
+                         * @description Details about dangerous goods inside products
+                         * @default []
+                         */
+                        dangerous_goods: {
+                            /**
+                             * @description UN number to identify the dangerous goods.
+                             * @default null
+                             */
+                            id_number: string | null;
+                            /**
+                             * @description Trade description of the dangerous goods.
+                             * @default null
+                             */
+                            shipping_name: string | null;
+                            /**
+                             * @description Recognized Technical or chemical name of dangerous goods.
+                             * @default null
+                             */
+                            technical_name: string | null;
+                            /**
+                             * @description Dangerous goods product class based on regulation.
+                             * @default null
+                             */
+                            product_class: string | null;
+                            /**
+                             * @description A secondary of product class for substances presenting more than one particular hazard
+                             * @default null
+                             */
+                            product_class_subsidiary: string | null;
+                            /**
+                             * packaging_group
+                             * @enum {string}
+                             */
+                            packaging_group?: "i" | "ii" | "iii";
+                            /** @description This model represents the amount of the dangerous goods. */
+                            dangerous_amount?: {
+                                /**
+                                 * @description The amount of dangerous goods.
+                                 * @default 0
+                                 */
+                                amount: number;
+                                /**
+                                 * @description The unit of dangerous goods.
+                                 * @default null
+                                 */
+                                unit: string | null;
+                            };
+                            /**
+                             * Format: int32
+                             * @description Quantity of dangerous goods.
+                             * @default 0
+                             */
+                            quantity: number;
+                            /**
+                             * @description The specific standardized packaging instructions from the relevant regulatory agency that have been applied to the parcel/container.
+                             * @default null
+                             */
+                            packaging_instruction: string | null;
+                            /**
+                             * packaging_instruction_section
+                             * @enum {string}
+                             */
+                            packaging_instruction_section?: "section_1" | "section_2" | "section_1a" | "section_1b";
+                            /**
+                             * @description The type of exterior packaging used to contain the dangerous good.
+                             * @default null
+                             */
+                            packaging_type: string | null;
+                            /**
+                             * transport_mean
+                             * @enum {string}
+                             */
+                            transport_mean?: "ground" | "water" | "cargo_aircraft_only" | "passenger_aircraft";
+                            /**
+                             * @description Transport category assign to dangerous goods for the transport purpose.
+                             * @default null
+                             */
+                            transport_category: string | null;
+                            /**
+                             * @description Name of the regulatory authority.
+                             * @default null
+                             */
+                            regulation_authority: string | null;
+                            /**
+                             * regulation_level
+                             * @enum {string}
+                             */
+                            regulation_level?: "lightly_regulated" | "fully_regulated" | "limited_quantities" | "excepted_quantity";
+                            /**
+                             * @description Indication if the substance is radioactive.
+                             * @example false
+                             */
+                            radioactive?: boolean | null;
+                            /**
+                             * @description Indication if the substance needs to be reported to regulatory authority based on the quantity.
+                             * @example false
+                             */
+                            reportable_quantity?: boolean | null;
+                            /**
+                             * @description Defines which types of tunnels the shipment is allowed to go through
+                             * @default null
+                             */
+                            tunnel_code: string | null;
+                            /**
+                             * @description Provider additonal description regarding the dangerous goods. This is used as a placed holder to provider additional context and varies by carrier
+                             * @default null
+                             */
+                            additional_description: string | null;
+                        }[];
+                        /** @description Additional details about products */
+                        extended_details?: {
+                            [key: string]: unknown;
+                        };
+                    }[];
+                }[];
+                /** @description The combined weight of all packages in the shipment */
+                readonly total_weight: {
+                    /** @description The weight, in the specified unit */
+                    value: number;
+                    unit: "pound" | "ounce" | "gram" | "kilogram";
+                };
+                /**
+                 * @description Calculate a rate for this shipment with the requested carrier using a ratecard that differs from the default.  Only supported for UPS and USPS.
+                 * @example retail
+                 */
+                comparison_rate_type?: string | null;
+                /**
+                 * Format: int32
+                 * @description Certain carriers base [their rates](https://blog.stamps.com/2017/09/08/usps-postal-zones/) off of
+                 *     custom zones that vary depending upon the ship_to and ship_from location
+                 *
+                 * @example 6
+                 */
+                readonly zone?: number | null;
+            };
+            /** @description The date that the package was (or will be) shipped.  ShipEngine will take the day of week into consideration. For example, if the carrier does not operate on Sundays, then a package that would have shipped on Sunday will ship on Monday instead.
+             *      */
+            readonly ship_date?: string;
+            /** @description The date and time that the label was created in ShipEngine. */
+            readonly created_at?: string;
+            /** @description The cost of shipping, delivery confirmation, and other carrier charges.  This amount **does not** include insurance costs.
+             *      */
+            readonly shipment_cost?: {
+                currency: string;
+                /** @description The monetary amount, in the specified currency. */
+                amount: number;
+            };
+            /** @description The insurance cost for this package.  Add this to the `shipment_cost` field to get the total cost.
+             *      */
+            readonly insurance_cost?: {
+                currency: string;
+                /** @description The monetary amount, in the specified currency. */
+                amount: number;
+            };
+            /** @description The total shipping cost for the specified comparison_rate_type.
+             *      */
+            readonly requested_comparison_amount?: {
+                currency: string;
+                /** @description The monetary amount, in the specified currency. */
+                amount: number;
+            };
+            /** @description A list of rate details that are associated with shipping cost. This is useful for
+             *     displaying a breakdown of the rate to the user.
+             *      */
+            readonly rate_details?: {
+                rate_detail_type?: "uncategorized" | "shipping" | "insurance" | "confirmation" | "discount" | "fuel_charge" | "additional_fees" | "tariff" | "tax" | "delivery" | "handling" | "special_goods" | "pickup" | "location_fee" | "oversize" | "returns" | "notifications" | "tip" | "duties_and_taxes" | "brokerage_fee" | "admin_fee" | "adjustment";
+                /** @description A rate detail description defined by a carrier */
+                carrier_description?: string;
+                /** @description A rate detail code defined by a carrier */
+                carrier_billing_code?: string;
+                /** @description Contains any additional information */
+                carrier_memo?: string;
+                amount?: {
+                    currency: string;
+                    /** @description The monetary amount, in the specified currency. */
+                    amount: number;
+                };
+                /** @description If applicable, contains additional data about a rate detail of a specific type, e.g. VAT */
+                rate_detail_attributes?: {
+                    tax_type?: "vat";
+                    /** @description Tax percentage, e.g. 20 for 20%, added to the shipping cost */
+                    tax_percentage?: number;
+                };
+                /** @description The source of the billing information. This is typically the carrier, but could be a third party, e.g insurance */
+                billing_source?: string;
+            }[];
+            /**
+             * @description The tracking number for the package. Tracking number formats vary across carriers.
+             * @example 782758401696
+             */
+            readonly tracking_number?: string;
+            /** @description Indicates whether this is a return label.  You may also want to set the `rma_number` so you know what is being returned.
+             *      */
+            is_return_label?: boolean;
+            /** @description An optional Return Merchandise Authorization number.  This field is useful for return labels.  You can set it to any string value.
+             *      */
+            rma_number?: string | null;
+            /** @description Indicates whether this is an international shipment.  That is, the originating country and destination country are different.
+             *      */
+            readonly is_international?: boolean;
+            /** @description If this label was created as part of a [batch](https://www.shipengine.com/docs/labels/bulk/), then this is the unique ID of that batch.
+             *      */
+            readonly batch_id?: string;
+            /** @description The unique ID of the [carrier account](https://www.shipengine.com/docs/carriers/setup/) that was used to create this label
+             *      */
+            readonly carrier_id?: string;
+            /** @description The label charge event.
+             *      */
+            charge_event?: "carrier_default" | "on_creation" | "on_carrier_acceptance";
+            /** @description The `label_id` of the original (outgoing) label that the return label is for. This associates the two labels together, which is
+             *     required by some carriers.
+             *      */
+            outbound_label_id?: string;
+            /** @description The [carrier service](https://www.shipengine.com/docs/shipping/use-a-carrier-service/) used to ship the package, such as `fedex_ground`, `usps_first_class_mail`, `flat_rate_envelope`, etc.
+             *      */
+            readonly service_code?: string;
+            /**
+             * @deprecated
+             * @description Indicate if this label is being used only for testing purposes. If true, then no charge will be added to your account.
+             * @default false
+             */
+            test_label: boolean;
+            /** @description The [package type](https://www.shipengine.com/docs/reference/list-carrier-packages/), such as `thick_envelope`, `small_flat_rate_box`, `large_package`, etc.  The code `package` indicates a custom or unknown package type.
+             *      */
+            readonly package_code?: string;
+            /** @default validate_and_clean */
+            validate_address: "no_validation" | "validate_only" | "validate_and_clean";
+            /** @description Indicates whether the label has been [voided](https://www.shipengine.com/docs/labels/voiding/)
+             *      */
+            readonly voided?: boolean;
+            /** @description The date and time that the label was [voided](https://www.shipengine.com/docs/labels/voiding/), or `null` if the label has not been voided
+             *      */
+            readonly voided_at?: string | null;
+            /** @default url */
+            label_download_type: "url" | "inline";
+            /**
+             * @description The file format that you want the label to be in.  We recommend `pdf` format because it is supported by all carriers, whereas some carriers do not support the `png` or `zpl` formats.
+             *
+             * @default pdf
+             */
+            label_format: "pdf" | "png" | "zpl";
+            /**
+             * @description The display format that the label should be shown in.
+             * @default label
+             */
+            display_scheme: "label" | "paperless" | "label_and_paperless";
+            /**
+             * @description The layout (size) that you want the label to be in.  The `label_format` determines which sizes are allowed.  `4x6` is supported for all label formats, whereas `letter` (8.5" x 11") is only supported for `pdf` format.
+             *
+             * @default 4x6
+             */
+            label_layout: "4x6" | "letter" | "A4" | "A6";
+            /** @description Indicates whether the shipment is trackable, in which case the `tracking_status` field will reflect the current status and each package will have a `tracking_number`.
+             *      */
+            readonly trackable?: boolean;
+            /** @description The label image resource that was used to create a custom label image. */
+            label_image_id?: string | null;
+            /** @description The [shipping carrier](https://www.shipengine.com/docs/carriers/setup/) who will ship the package, such as `fedex`, `dhl_express`, `stamps_com`, etc.
+             *      */
+            readonly carrier_code?: string;
+            /** @description The current status of the package, such as `in_transit` or `delivered` */
+            readonly tracking_status?: "unknown" | "in_transit" | "error" | "delivered";
+            /** @description The type of delivery confirmation that is required for this shipment. */
+            readonly confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
+            readonly label_download?: {
+                /** @description The URL of the linked resource, if any */
+                href?: string;
+                /** @description The URL for the pdf generated label */
+                pdf?: string;
+                /** @description The URL for the png generated label */
+                png?: string;
+                /** @description The URL for the zpl generated label */
+                zpl?: string;
+            };
+            /** @description The link to download the customs form (a.k.a. commercial invoice) for this shipment, if any.  Forms are in PDF format. This field is null if the shipment does not require a customs form, or if the carrier does not support it.
+             *      */
+            readonly form_download?: {
+                /** @description The URL of the linked resource, if any */
+                href: string;
+                /** @description The type of resource, or the type of relationship to the parent resource */
+                type?: string;
+            } | null;
+            /** @description The QR code download for the package */
+            readonly qr_code_download?: {
+                /** @description The URL of the linked resource, if any */
+                href?: string;
+                /** @description The type of resource, or the type of relationship to the parent resource */
+                type?: string;
+            } | null;
+            /** @description The paperless details which may contain elements like `href`, `instructions` and `handoff_code`.
+             *      */
+            readonly paperless_download?: {
+                /** @description The URL of the linked resource, if any */
+                href?: string;
+                /**
+                 * @description The instructions for the paperless download.
+                 *
+                 * @default null
+                 */
+                instructions: string | null;
+                /**
+                 * @description The handoff code for the paperless download.
+                 *
+                 * @default null
+                 */
+                handoff_code: string | null;
+            } | null;
+            /** @description The link to submit an insurance claim for the shipment.  This field is null if the shipment is not insured or if the insurance provider does not support online claim submission.
+             *      */
+            readonly insurance_claim?: {
+                /** @description The URL of the linked resource, if any */
+                href: string;
+                /** @description The type of resource, or the type of relationship to the parent resource */
+                type?: string;
+            } | null;
+            /** @description The label's package(s).
+             *
+             *     > **Note:** Some carriers only allow one package per label.  If you attempt to create a multi-package label for a carrier that doesn't allow it, an error will be returned.
+             *      */
+            readonly packages?: ({
+                /**
+                 * Format: int32
+                 * @description The shipment package id
+                 */
+                readonly package_id?: number;
+                /** @description The [package type](https://www.shipengine.com/docs/reference/list-carrier-packages/), such as `thick_envelope`, `small_flat_rate_box`, `large_package`, etc.  The code `package` indicates a custom or unknown package type.
+                 *      */
+                package_code?: string;
+                /** @description The package weight */
+                weight: {
+                    /** @description The weight, in the specified unit */
+                    value: number;
+                    unit: "pound" | "ounce" | "gram" | "kilogram";
+                };
+                /** @description The package dimensions */
+                dimensions?: {
+                    /** @default inch */
+                    unit: "inch" | "centimeter";
+                    /**
+                     * @description The length of the package, in the specified unit
+                     * @default 0
+                     */
+                    length: number;
+                    /**
+                     * @description The width of the package, in the specified unit
+                     * @default 0
+                     */
+                    width: number;
+                    /**
+                     * @description The height of the package, in the specified unit
+                     * @default 0
+                     */
+                    height: number;
+                };
+                /**
+                 * @description The insured value of the package.  Requires the `insurance_provider` field of the shipment to be set.
+                 *
+                 * @default {
+                 *       "currency": "USD",
+                 *       "amount": 0
+                 *     }
+                 */
+                insured_value: {
+                    currency: string;
+                    /** @description The monetary amount, in the specified currency. */
+                    amount: number;
+                };
+                /** @description The tracking number for the package.  The format depends on the carrier.
+                 *      */
+                readonly tracking_number?: string;
+                /** @description The label download for the package */
+                readonly label_download?: {
+                    /** @description The URL of the linked resource, if any */
+                    href?: string;
+                    /** @description The URL for the pdf generated label */
+                    pdf?: string;
+                    /** @description The URL for the png generated label */
+                    png?: string;
+                    /** @description The URL for the zpl generated label */
+                    zpl?: string;
+                };
+                /** @description The form download for any customs that are needed */
+                readonly form_download?: {
+                    /** @description The URL of the linked resource, if any */
+                    href?: string;
+                    /** @description The type of resource, or the type of relationship to the parent resource */
+                    type?: string;
+                };
+                /** @description The QR code download for the package */
+                readonly qr_code_download?: {
+                    /** @description The URL of the linked resource, if any */
+                    href?: string;
+                    /** @description The type of resource, or the type of relationship to the parent resource */
+                    type?: string;
+                };
+                /** @description The paperless details which may contain elements like `href`, `instructions` and `handoff_code`. */
+                readonly paperless_download?: {
+                    /** @description The URL of the linked resource, if any */
+                    href?: string;
+                    /**
+                     * @description The instructions for the paperless download.
+                     *
+                     * @default null
+                     */
+                    instructions: string | null;
+                    /**
+                     * @description The handoff code for the paperless download.
+                     *
+                     * @default null
+                     */
+                    handoff_code: string | null;
+                };
+                label_messages?: {
+                    /**
+                     * @description The first line of the custom label message.  Some carriers may prefix this line with something like "REF", "Reference", "Trx Ref No.", etc.
+                     *
+                     * @default null
+                     */
+                    reference1: string | null;
+                    /**
+                     * @description The second line of the custom label message.  Some carriers may prefix this line with something like "INV", "Reference 2", "Trx Ref No.", etc.
+                     *
+                     * @default null
+                     */
+                    reference2: string | null;
+                    /**
+                     * @description The third line of the custom label message.  Some carriers may prefix this line with something like "PO", "Reference 3", etc.
+                     *
+                     * @default null
+                     */
+                    reference3: string | null;
+                };
+                /** @description An external package id. */
+                external_package_id?: string;
+                /**
+                 * @description A short description of the package content. Required for shipments moving to, from, and through Mexico.
+                 *
+                 * @example Hand knitted wool socks
+                 */
+                content_description?: string | null;
+                /**
+                 * Format: int32
+                 * @description Package sequence
+                 */
+                readonly sequence?: number;
+                /** @description Whether the package has label documents available for download */
+                has_label_documents?: boolean;
+                /** @description Whether the package has form documents available for download */
+                has_form_documents?: boolean;
+                /** @description Whether the package has QR code documents available for download */
+                has_qr_code_documents?: boolean;
+                /** @description Whether the package has paperless documents available for download */
+                has_paperless_label_documents?: boolean;
+            } & {
+                /** @description Alternative identifiers associated with this package.
+                 *      */
+                readonly alternative_identifiers?: {
+                    /**
+                     * @description The type of alternative_identifier that corresponds to the value.
+                     *
+                     * @example last_mile_tracking_number
+                     */
+                    type?: string;
+                    /**
+                     * @description The value of the alternative_identifier.
+                     *
+                     * @example 12345678912345678912
+                     */
+                    value?: string;
+                }[] | null;
+            })[];
+            /** @description Additional information some carriers may provide by which to identify a given label in their system.
+             *      */
+            readonly alternative_identifiers?: {
+                /**
+                 * @description The type of alternative_identifier that corresponds to the value.
+                 *
+                 * @example last_mile_tracking_number
+                 */
+                type?: string;
+                /**
+                 * @description The value of the alternative_identifier.
+                 *
+                 * @example 12345678912345678912
+                 */
+                value?: string;
+            }[] | null;
+            /**
+             * @description The URL to track the package. This URL is provided by the carrier and is unique to the tracking number.
+             *
+             * @example https://www.fedex.com/fedextrack/?action=track&trackingnumber=1234
+             */
+            readonly tracking_url?: string | null;
+            /** @description The recipient's mailing address */
+            readonly ship_to?: {
+                /**
+                 * @description The name of a contact person at this address.  This field may be set instead of - or in addition to - the `company_name` field.
+                 *
+                 * @example John Doe
+                 */
+                name: string;
+                /**
+                 * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                 *
+                 * @example +1 204-253-9411 ext. 123
+                 */
+                phone?: string;
+                /**
+                 * @description Email for the address owner.
+                 *
+                 * @example example@example.com
+                 */
+                email?: string | null;
+                /**
+                 * @description If this is a business address, then the company name should be specified here.
+                 *
+                 * @example The Home Depot
+                 */
+                company_name?: string | null;
+                /**
+                 * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                 *
+                 * @example 1999 Bishop Grandin Blvd.
+                 */
+                address_line1: string;
+                /**
+                 * @description The second line of the street address.  For some addresses, this line may not be needed.
+                 *
+                 * @example Unit 408
+                 */
+                address_line2?: string | null;
+                /**
+                 * @description The third line of the street address.  For some addresses, this line may not be needed.
+                 *
+                 * @example Building #7
+                 */
+                address_line3?: string | null;
+                /**
+                 * @description The name of the city or locality
+                 * @example Winnipeg
+                 */
+                city_locality: string;
+                /**
+                 * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                 *
+                 * @example Manitoba
+                 */
+                state_province: string;
+                postal_code: string;
+                /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                 *      */
+                country_code?: string;
+                /**
+                 * @description Indicates whether this is a residential address.
+                 * @default unknown
+                 * @example no
+                 */
+                address_residential_indicator: "unknown" | "yes" | "no";
+            } & {
+                /** @description Additional text about how to handle the shipment at this address.
+                 *      */
+                instructions?: string | null;
+                geolocation?: {
+                    /**
+                     * @description Enum of available type of geolocation items:
+                     *       - 'what3words' functionality allows to specify a location by providing 3 words that have been assign to the specific location see [link](https://what3words.com/business) for more details.
+                     *
+                     * @example what3words
+                     * @enum {string}
+                     */
+                    type?: "what3words";
+                    /**
+                     * @description value of the geolocation item
+                     * @example cats.with.thumbs
+                     */
+                    value?: string;
+                }[];
+            };
+            /**
+             * @description Indicates how the label was voided. This field is `null` if the label has not been voided.
+             *
+             * @example manual
+             */
+            readonly void_type?: ("refund_assist" | "manual") | null;
+            /** @description Information about the Refund Assist request for this label. This field is `null` if the label is not eligible for Refund Assist.
+             *      */
+            readonly refund_details?: {
+                /** @description The current status of the refund request */
+                readonly refund_status?: "request_scheduled" | "pending" | "approved" | "rejected" | "excluded";
+                /** @description The date and time when the refund request was submitted */
+                readonly request_date?: string;
+                /** @description The amount that was originally paid for the label */
+                readonly amount_paid?: {
+                    currency: string;
+                    /** @description The monetary amount, in the specified currency. */
+                    amount: number;
+                } | null;
+                /** @description The amount requested to be refunded */
+                readonly amount_requested?: {
+                    currency: string;
+                    /** @description The monetary amount, in the specified currency. */
+                    amount: number;
+                } | null;
+                /** @description The amount approved for refund by the carrier */
+                readonly amount_approved?: {
+                    currency: string;
+                    /** @description The monetary amount, in the specified currency. */
+                    amount: number;
+                } | null;
+                /** @description The amount that has been credited back to the account */
+                readonly amount_credited?: {
+                    currency: string;
+                    /** @description The monetary amount, in the specified currency. */
+                    amount: number;
+                } | null;
+            } | null;
         };
         /**
          * create_label_from_shipment_request_body
@@ -20011,7 +24659,7 @@ export interface components {
              * @description The display format that the label should be shown in.
              * @default label
              */
-            display_scheme: "label" | "qr_code" | "label_and_qr_code" | "paperless" | "label_and_paperless";
+            display_scheme: "label" | "paperless" | "label_and_paperless";
         };
         /**
          * create_label_from_shipment_response_body
@@ -20025,6 +24673,11 @@ export interface components {
             /** @description The shipment that this label is for.  ShipEngine can create a shipment for you automatically when you [create a label](https://www.shipengine.com/docs/labels/create-a-label/), or you can [create your own shipment](https://www.shipengine.com/docs/shipping/create-a-shipment/) and then [use it to print a label](https://www.shipengine.com/docs/labels/create-from-shipment/)
              *      */
             readonly shipment_id?: string;
+            /** @description A unique user-defined key to identify a shipment.  This can be used to retrieve the shipment.
+             *      */
+            readonly external_shipment_id?: string | null;
+            /** @description ID that the Order Source assigned */
+            readonly external_order_id?: string | null;
             /** @description The shipment information used to generate the label */
             shipment?: {
                 /** @description A string that uniquely identifies the shipment */
@@ -20345,7 +24998,7 @@ export interface components {
                  * @description The type of delivery confirmation that is required for this shipment.
                  * @default none
                  */
-                confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                 /**
                  * @description Customs information.  This is usually only needed for international shipments.
                  *
@@ -20687,6 +25340,26 @@ export interface components {
                      * @example 784515
                      */
                     certificate_number: string | null;
+                    /**
+                     * @description Indicates that the contents of the package are fragile and should be handled with care.
+                     * @default false
+                     */
+                    fragile: boolean;
+                    /**
+                     * @description Instructs the carrier to deliver the package only to the exact address provided.
+                     * @default false
+                     */
+                    "delivery-as-addressed": boolean;
+                    /**
+                     * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                     * @default false
+                     */
+                    "return-after-first-attempt": boolean;
+                    /**
+                     * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                     * @default null
+                     */
+                    regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
                 } & {
                     [key: string]: unknown;
                 };
@@ -21039,8 +25712,6 @@ export interface components {
                 /** @description If applicable, contains additional data about a rate detail of a specific type, e.g. VAT */
                 rate_detail_attributes?: {
                     tax_type?: "vat";
-                    /** @description Code for a specific tax type */
-                    tax_code?: string;
                     /** @description Tax percentage, e.g. 20 for 20%, added to the shipping cost */
                     tax_percentage?: number;
                 };
@@ -21106,7 +25777,7 @@ export interface components {
              * @description The display format that the label should be shown in.
              * @default label
              */
-            display_scheme: "label" | "qr_code" | "label_and_qr_code" | "paperless" | "label_and_paperless";
+            display_scheme: "label" | "paperless" | "label_and_paperless";
             /**
              * @description The layout (size) that you want the label to be in.  The `label_format` determines which sizes are allowed.  `4x6` is supported for all label formats, whereas `letter` (8.5" x 11") is only supported for `pdf` format.
              *
@@ -21124,7 +25795,7 @@ export interface components {
             /** @description The current status of the package, such as `in_transit` or `delivered` */
             readonly tracking_status?: "unknown" | "in_transit" | "error" | "delivered";
             /** @description The type of delivery confirmation that is required for this shipment. */
-            readonly confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+            readonly confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
             readonly label_download?: {
                 /** @description The URL of the linked resource, if any */
                 href?: string;
@@ -21140,6 +25811,13 @@ export interface components {
             readonly form_download?: {
                 /** @description The URL of the linked resource, if any */
                 href: string;
+                /** @description The type of resource, or the type of relationship to the parent resource */
+                type?: string;
+            } | null;
+            /** @description The QR code download for the package */
+            readonly qr_code_download?: {
+                /** @description The URL of the linked resource, if any */
+                href?: string;
                 /** @description The type of resource, or the type of relationship to the parent resource */
                 type?: string;
             } | null;
@@ -21347,6 +26025,129 @@ export interface components {
              * @example https://www.fedex.com/fedextrack/?action=track&trackingnumber=1234
              */
             readonly tracking_url?: string | null;
+            /** @description The recipient's mailing address */
+            readonly ship_to?: {
+                /**
+                 * @description The name of a contact person at this address.  This field may be set instead of - or in addition to - the `company_name` field.
+                 *
+                 * @example John Doe
+                 */
+                name: string;
+                /**
+                 * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                 *
+                 * @example +1 204-253-9411 ext. 123
+                 */
+                phone?: string;
+                /**
+                 * @description Email for the address owner.
+                 *
+                 * @example example@example.com
+                 */
+                email?: string | null;
+                /**
+                 * @description If this is a business address, then the company name should be specified here.
+                 *
+                 * @example The Home Depot
+                 */
+                company_name?: string | null;
+                /**
+                 * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                 *
+                 * @example 1999 Bishop Grandin Blvd.
+                 */
+                address_line1: string;
+                /**
+                 * @description The second line of the street address.  For some addresses, this line may not be needed.
+                 *
+                 * @example Unit 408
+                 */
+                address_line2?: string | null;
+                /**
+                 * @description The third line of the street address.  For some addresses, this line may not be needed.
+                 *
+                 * @example Building #7
+                 */
+                address_line3?: string | null;
+                /**
+                 * @description The name of the city or locality
+                 * @example Winnipeg
+                 */
+                city_locality: string;
+                /**
+                 * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                 *
+                 * @example Manitoba
+                 */
+                state_province: string;
+                postal_code: string;
+                /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                 *      */
+                country_code?: string;
+                /**
+                 * @description Indicates whether this is a residential address.
+                 * @default unknown
+                 * @example no
+                 */
+                address_residential_indicator: "unknown" | "yes" | "no";
+            } & {
+                /** @description Additional text about how to handle the shipment at this address.
+                 *      */
+                instructions?: string | null;
+                geolocation?: {
+                    /**
+                     * @description Enum of available type of geolocation items:
+                     *       - 'what3words' functionality allows to specify a location by providing 3 words that have been assign to the specific location see [link](https://what3words.com/business) for more details.
+                     *
+                     * @example what3words
+                     * @enum {string}
+                     */
+                    type?: "what3words";
+                    /**
+                     * @description value of the geolocation item
+                     * @example cats.with.thumbs
+                     */
+                    value?: string;
+                }[];
+            };
+            /**
+             * @description Indicates how the label was voided. This field is `null` if the label has not been voided.
+             *
+             * @example manual
+             */
+            readonly void_type?: ("refund_assist" | "manual") | null;
+            /** @description Information about the Refund Assist request for this label. This field is `null` if the label is not eligible for Refund Assist.
+             *      */
+            readonly refund_details?: {
+                /** @description The current status of the refund request */
+                readonly refund_status?: "request_scheduled" | "pending" | "approved" | "rejected" | "excluded";
+                /** @description The date and time when the refund request was submitted */
+                readonly request_date?: string;
+                /** @description The amount that was originally paid for the label */
+                readonly amount_paid?: {
+                    currency: string;
+                    /** @description The monetary amount, in the specified currency. */
+                    amount: number;
+                } | null;
+                /** @description The amount requested to be refunded */
+                readonly amount_requested?: {
+                    currency: string;
+                    /** @description The monetary amount, in the specified currency. */
+                    amount: number;
+                } | null;
+                /** @description The amount approved for refund by the carrier */
+                readonly amount_approved?: {
+                    currency: string;
+                    /** @description The monetary amount, in the specified currency. */
+                    amount: number;
+                } | null;
+                /** @description The amount that has been credited back to the account */
+                readonly amount_credited?: {
+                    currency: string;
+                    /** @description The monetary amount, in the specified currency. */
+                    amount: number;
+                } | null;
+            } | null;
         };
         /**
          * get_label_by_id_response_body
@@ -21360,6 +26161,11 @@ export interface components {
             /** @description The shipment that this label is for.  ShipEngine can create a shipment for you automatically when you [create a label](https://www.shipengine.com/docs/labels/create-a-label/), or you can [create your own shipment](https://www.shipengine.com/docs/shipping/create-a-shipment/) and then [use it to print a label](https://www.shipengine.com/docs/labels/create-from-shipment/)
              *      */
             readonly shipment_id?: string;
+            /** @description A unique user-defined key to identify a shipment.  This can be used to retrieve the shipment.
+             *      */
+            readonly external_shipment_id?: string | null;
+            /** @description ID that the Order Source assigned */
+            readonly external_order_id?: string | null;
             /** @description The shipment information used to generate the label */
             shipment?: {
                 /** @description A string that uniquely identifies the shipment */
@@ -21680,7 +26486,7 @@ export interface components {
                  * @description The type of delivery confirmation that is required for this shipment.
                  * @default none
                  */
-                confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                 /**
                  * @description Customs information.  This is usually only needed for international shipments.
                  *
@@ -22022,6 +26828,26 @@ export interface components {
                      * @example 784515
                      */
                     certificate_number: string | null;
+                    /**
+                     * @description Indicates that the contents of the package are fragile and should be handled with care.
+                     * @default false
+                     */
+                    fragile: boolean;
+                    /**
+                     * @description Instructs the carrier to deliver the package only to the exact address provided.
+                     * @default false
+                     */
+                    "delivery-as-addressed": boolean;
+                    /**
+                     * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                     * @default false
+                     */
+                    "return-after-first-attempt": boolean;
+                    /**
+                     * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                     * @default null
+                     */
+                    regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
                 } & {
                     [key: string]: unknown;
                 };
@@ -22374,8 +27200,6 @@ export interface components {
                 /** @description If applicable, contains additional data about a rate detail of a specific type, e.g. VAT */
                 rate_detail_attributes?: {
                     tax_type?: "vat";
-                    /** @description Code for a specific tax type */
-                    tax_code?: string;
                     /** @description Tax percentage, e.g. 20 for 20%, added to the shipping cost */
                     tax_percentage?: number;
                 };
@@ -22441,7 +27265,7 @@ export interface components {
              * @description The display format that the label should be shown in.
              * @default label
              */
-            display_scheme: "label" | "qr_code" | "label_and_qr_code" | "paperless" | "label_and_paperless";
+            display_scheme: "label" | "paperless" | "label_and_paperless";
             /**
              * @description The layout (size) that you want the label to be in.  The `label_format` determines which sizes are allowed.  `4x6` is supported for all label formats, whereas `letter` (8.5" x 11") is only supported for `pdf` format.
              *
@@ -22459,7 +27283,7 @@ export interface components {
             /** @description The current status of the package, such as `in_transit` or `delivered` */
             readonly tracking_status?: "unknown" | "in_transit" | "error" | "delivered";
             /** @description The type of delivery confirmation that is required for this shipment. */
-            readonly confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+            readonly confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
             readonly label_download?: {
                 /** @description The URL of the linked resource, if any */
                 href?: string;
@@ -22475,6 +27299,13 @@ export interface components {
             readonly form_download?: {
                 /** @description The URL of the linked resource, if any */
                 href: string;
+                /** @description The type of resource, or the type of relationship to the parent resource */
+                type?: string;
+            } | null;
+            /** @description The QR code download for the package */
+            readonly qr_code_download?: {
+                /** @description The URL of the linked resource, if any */
+                href?: string;
                 /** @description The type of resource, or the type of relationship to the parent resource */
                 type?: string;
             } | null;
@@ -22682,6 +27513,129 @@ export interface components {
              * @example https://www.fedex.com/fedextrack/?action=track&trackingnumber=1234
              */
             readonly tracking_url?: string | null;
+            /** @description The recipient's mailing address */
+            readonly ship_to?: {
+                /**
+                 * @description The name of a contact person at this address.  This field may be set instead of - or in addition to - the `company_name` field.
+                 *
+                 * @example John Doe
+                 */
+                name: string;
+                /**
+                 * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                 *
+                 * @example +1 204-253-9411 ext. 123
+                 */
+                phone?: string;
+                /**
+                 * @description Email for the address owner.
+                 *
+                 * @example example@example.com
+                 */
+                email?: string | null;
+                /**
+                 * @description If this is a business address, then the company name should be specified here.
+                 *
+                 * @example The Home Depot
+                 */
+                company_name?: string | null;
+                /**
+                 * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                 *
+                 * @example 1999 Bishop Grandin Blvd.
+                 */
+                address_line1: string;
+                /**
+                 * @description The second line of the street address.  For some addresses, this line may not be needed.
+                 *
+                 * @example Unit 408
+                 */
+                address_line2?: string | null;
+                /**
+                 * @description The third line of the street address.  For some addresses, this line may not be needed.
+                 *
+                 * @example Building #7
+                 */
+                address_line3?: string | null;
+                /**
+                 * @description The name of the city or locality
+                 * @example Winnipeg
+                 */
+                city_locality: string;
+                /**
+                 * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                 *
+                 * @example Manitoba
+                 */
+                state_province: string;
+                postal_code: string;
+                /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                 *      */
+                country_code?: string;
+                /**
+                 * @description Indicates whether this is a residential address.
+                 * @default unknown
+                 * @example no
+                 */
+                address_residential_indicator: "unknown" | "yes" | "no";
+            } & {
+                /** @description Additional text about how to handle the shipment at this address.
+                 *      */
+                instructions?: string | null;
+                geolocation?: {
+                    /**
+                     * @description Enum of available type of geolocation items:
+                     *       - 'what3words' functionality allows to specify a location by providing 3 words that have been assign to the specific location see [link](https://what3words.com/business) for more details.
+                     *
+                     * @example what3words
+                     * @enum {string}
+                     */
+                    type?: "what3words";
+                    /**
+                     * @description value of the geolocation item
+                     * @example cats.with.thumbs
+                     */
+                    value?: string;
+                }[];
+            };
+            /**
+             * @description Indicates how the label was voided. This field is `null` if the label has not been voided.
+             *
+             * @example manual
+             */
+            readonly void_type?: ("refund_assist" | "manual") | null;
+            /** @description Information about the Refund Assist request for this label. This field is `null` if the label is not eligible for Refund Assist.
+             *      */
+            readonly refund_details?: {
+                /** @description The current status of the refund request */
+                readonly refund_status?: "request_scheduled" | "pending" | "approved" | "rejected" | "excluded";
+                /** @description The date and time when the refund request was submitted */
+                readonly request_date?: string;
+                /** @description The amount that was originally paid for the label */
+                readonly amount_paid?: {
+                    currency: string;
+                    /** @description The monetary amount, in the specified currency. */
+                    amount: number;
+                } | null;
+                /** @description The amount requested to be refunded */
+                readonly amount_requested?: {
+                    currency: string;
+                    /** @description The monetary amount, in the specified currency. */
+                    amount: number;
+                } | null;
+                /** @description The amount approved for refund by the carrier */
+                readonly amount_approved?: {
+                    currency: string;
+                    /** @description The monetary amount, in the specified currency. */
+                    amount: number;
+                } | null;
+                /** @description The amount that has been credited back to the account */
+                readonly amount_credited?: {
+                    currency: string;
+                    /** @description The monetary amount, in the specified currency. */
+                    amount: number;
+                } | null;
+            } | null;
         };
         /**
          * create_return_label_request_body
@@ -22709,7 +27663,7 @@ export interface components {
              * @description The display format that the label should be shown in.
              * @default label
              */
-            display_scheme: "label" | "qr_code" | "label_and_qr_code" | "paperless" | "label_and_paperless";
+            display_scheme: "label" | "paperless" | "label_and_paperless";
             /** @description The label image resource that was used to create a custom label image. */
             label_image_id?: string | null;
             /** @description An optional Return Merchandise Authorization number. If provided, this value will be used as the return label's RMA number. If omitted, the system will auto-generate an RMA number (current default behavior). You can set it to any string value.
@@ -22728,6 +27682,11 @@ export interface components {
             /** @description The shipment that this label is for.  ShipEngine can create a shipment for you automatically when you [create a label](https://www.shipengine.com/docs/labels/create-a-label/), or you can [create your own shipment](https://www.shipengine.com/docs/shipping/create-a-shipment/) and then [use it to print a label](https://www.shipengine.com/docs/labels/create-from-shipment/)
              *      */
             readonly shipment_id?: string;
+            /** @description A unique user-defined key to identify a shipment.  This can be used to retrieve the shipment.
+             *      */
+            readonly external_shipment_id?: string | null;
+            /** @description ID that the Order Source assigned */
+            readonly external_order_id?: string | null;
             /** @description The shipment information used to generate the label */
             shipment?: {
                 /** @description A string that uniquely identifies the shipment */
@@ -23048,7 +28007,7 @@ export interface components {
                  * @description The type of delivery confirmation that is required for this shipment.
                  * @default none
                  */
-                confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                 /**
                  * @description Customs information.  This is usually only needed for international shipments.
                  *
@@ -23390,6 +28349,26 @@ export interface components {
                      * @example 784515
                      */
                     certificate_number: string | null;
+                    /**
+                     * @description Indicates that the contents of the package are fragile and should be handled with care.
+                     * @default false
+                     */
+                    fragile: boolean;
+                    /**
+                     * @description Instructs the carrier to deliver the package only to the exact address provided.
+                     * @default false
+                     */
+                    "delivery-as-addressed": boolean;
+                    /**
+                     * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                     * @default false
+                     */
+                    "return-after-first-attempt": boolean;
+                    /**
+                     * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                     * @default null
+                     */
+                    regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
                 } & {
                     [key: string]: unknown;
                 };
@@ -23742,8 +28721,6 @@ export interface components {
                 /** @description If applicable, contains additional data about a rate detail of a specific type, e.g. VAT */
                 rate_detail_attributes?: {
                     tax_type?: "vat";
-                    /** @description Code for a specific tax type */
-                    tax_code?: string;
                     /** @description Tax percentage, e.g. 20 for 20%, added to the shipping cost */
                     tax_percentage?: number;
                 };
@@ -23809,7 +28786,7 @@ export interface components {
              * @description The display format that the label should be shown in.
              * @default label
              */
-            display_scheme: "label" | "qr_code" | "label_and_qr_code" | "paperless" | "label_and_paperless";
+            display_scheme: "label" | "paperless" | "label_and_paperless";
             /**
              * @description The layout (size) that you want the label to be in.  The `label_format` determines which sizes are allowed.  `4x6` is supported for all label formats, whereas `letter` (8.5" x 11") is only supported for `pdf` format.
              *
@@ -23827,7 +28804,7 @@ export interface components {
             /** @description The current status of the package, such as `in_transit` or `delivered` */
             readonly tracking_status?: "unknown" | "in_transit" | "error" | "delivered";
             /** @description The type of delivery confirmation that is required for this shipment. */
-            readonly confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+            readonly confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
             readonly label_download?: {
                 /** @description The URL of the linked resource, if any */
                 href?: string;
@@ -23843,6 +28820,13 @@ export interface components {
             readonly form_download?: {
                 /** @description The URL of the linked resource, if any */
                 href: string;
+                /** @description The type of resource, or the type of relationship to the parent resource */
+                type?: string;
+            } | null;
+            /** @description The QR code download for the package */
+            readonly qr_code_download?: {
+                /** @description The URL of the linked resource, if any */
+                href?: string;
                 /** @description The type of resource, or the type of relationship to the parent resource */
                 type?: string;
             } | null;
@@ -24050,6 +29034,129 @@ export interface components {
              * @example https://www.fedex.com/fedextrack/?action=track&trackingnumber=1234
              */
             readonly tracking_url?: string | null;
+            /** @description The recipient's mailing address */
+            readonly ship_to?: {
+                /**
+                 * @description The name of a contact person at this address.  This field may be set instead of - or in addition to - the `company_name` field.
+                 *
+                 * @example John Doe
+                 */
+                name: string;
+                /**
+                 * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                 *
+                 * @example +1 204-253-9411 ext. 123
+                 */
+                phone?: string;
+                /**
+                 * @description Email for the address owner.
+                 *
+                 * @example example@example.com
+                 */
+                email?: string | null;
+                /**
+                 * @description If this is a business address, then the company name should be specified here.
+                 *
+                 * @example The Home Depot
+                 */
+                company_name?: string | null;
+                /**
+                 * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                 *
+                 * @example 1999 Bishop Grandin Blvd.
+                 */
+                address_line1: string;
+                /**
+                 * @description The second line of the street address.  For some addresses, this line may not be needed.
+                 *
+                 * @example Unit 408
+                 */
+                address_line2?: string | null;
+                /**
+                 * @description The third line of the street address.  For some addresses, this line may not be needed.
+                 *
+                 * @example Building #7
+                 */
+                address_line3?: string | null;
+                /**
+                 * @description The name of the city or locality
+                 * @example Winnipeg
+                 */
+                city_locality: string;
+                /**
+                 * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                 *
+                 * @example Manitoba
+                 */
+                state_province: string;
+                postal_code: string;
+                /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                 *      */
+                country_code?: string;
+                /**
+                 * @description Indicates whether this is a residential address.
+                 * @default unknown
+                 * @example no
+                 */
+                address_residential_indicator: "unknown" | "yes" | "no";
+            } & {
+                /** @description Additional text about how to handle the shipment at this address.
+                 *      */
+                instructions?: string | null;
+                geolocation?: {
+                    /**
+                     * @description Enum of available type of geolocation items:
+                     *       - 'what3words' functionality allows to specify a location by providing 3 words that have been assign to the specific location see [link](https://what3words.com/business) for more details.
+                     *
+                     * @example what3words
+                     * @enum {string}
+                     */
+                    type?: "what3words";
+                    /**
+                     * @description value of the geolocation item
+                     * @example cats.with.thumbs
+                     */
+                    value?: string;
+                }[];
+            };
+            /**
+             * @description Indicates how the label was voided. This field is `null` if the label has not been voided.
+             *
+             * @example manual
+             */
+            readonly void_type?: ("refund_assist" | "manual") | null;
+            /** @description Information about the Refund Assist request for this label. This field is `null` if the label is not eligible for Refund Assist.
+             *      */
+            readonly refund_details?: {
+                /** @description The current status of the refund request */
+                readonly refund_status?: "request_scheduled" | "pending" | "approved" | "rejected" | "excluded";
+                /** @description The date and time when the refund request was submitted */
+                readonly request_date?: string;
+                /** @description The amount that was originally paid for the label */
+                readonly amount_paid?: {
+                    currency: string;
+                    /** @description The monetary amount, in the specified currency. */
+                    amount: number;
+                } | null;
+                /** @description The amount requested to be refunded */
+                readonly amount_requested?: {
+                    currency: string;
+                    /** @description The monetary amount, in the specified currency. */
+                    amount: number;
+                } | null;
+                /** @description The amount approved for refund by the carrier */
+                readonly amount_approved?: {
+                    currency: string;
+                    /** @description The monetary amount, in the specified currency. */
+                    amount: number;
+                } | null;
+                /** @description The amount that has been credited back to the account */
+                readonly amount_credited?: {
+                    currency: string;
+                    /** @description The monetary amount, in the specified currency. */
+                    amount: number;
+                } | null;
+            } | null;
         };
         /**
          * get_tracking_log_from_label_response_body
@@ -24530,6 +29637,1494 @@ export interface components {
          * @enum {string}
          */
         reason_code: "unknown" | "unspecified" | "validation_failed" | "label_not_found_within_void_period" | "label_already_used" | "label_already_voided" | "contact_carrier";
+        /**
+         * cancel_refund_label_response_body
+         * @description A cancel refund label response body
+         */
+        cancel_refund_label_response_body: {
+            /** @description A string that uniquely identifies the label. This ID is generated by ShipEngine when the label is created.
+             *      */
+            readonly label_id?: string;
+            readonly status?: "processing" | "completed" | "error" | "voided";
+            /** @description The shipment that this label is for.  ShipEngine can create a shipment for you automatically when you [create a label](https://www.shipengine.com/docs/labels/create-a-label/), or you can [create your own shipment](https://www.shipengine.com/docs/shipping/create-a-shipment/) and then [use it to print a label](https://www.shipengine.com/docs/labels/create-from-shipment/)
+             *      */
+            readonly shipment_id?: string;
+            /** @description A unique user-defined key to identify a shipment.  This can be used to retrieve the shipment.
+             *      */
+            readonly external_shipment_id?: string | null;
+            /** @description ID that the Order Source assigned */
+            readonly external_order_id?: string | null;
+            /** @description The shipment information used to generate the label */
+            shipment?: {
+                /** @description A string that uniquely identifies the shipment */
+                readonly shipment_id: string;
+                /** @description The carrier account that is billed for the shipping charges */
+                carrier_id: string;
+                /** @description The [carrier service](https://www.shipengine.com/docs/shipping/use-a-carrier-service/) used to ship the package, such as `fedex_ground`, `usps_first_class_mail`, `flat_rate_envelope`, etc.
+                 *      */
+                service_code: string;
+                /** @description ID of the shipping rule, which you want to use to automate carrier/carrier service selection for the shipment
+                 *      */
+                shipping_rule_id?: string;
+                /** @description ID that the Order Source assigned */
+                external_order_id?: string | null;
+                /**
+                 * @description Describe the packages included in this shipment as related to potential metadata that was imported from
+                 *     external order sources
+                 *
+                 * @default []
+                 */
+                items: {
+                    /** @description item name */
+                    name?: string;
+                    /** @description sales order id */
+                    sales_order_id?: string | null;
+                    /** @description sales order item id */
+                    sales_order_item_id?: string | null;
+                    /**
+                     * Format: int32
+                     * @description The quantity of this item included in the shipment
+                     */
+                    quantity?: number;
+                    /** @description Item Stock Keeping Unit */
+                    sku?: string | null;
+                    /** @description Item Stock Keeping Unit of the product bundle */
+                    readonly bundle_sku?: string | null;
+                    /** @description external order id */
+                    external_order_id?: string | null;
+                    /** @description external order item id */
+                    external_order_item_id?: string | null;
+                    /**
+                     * @description Amazon Standard Identification Number
+                     * @example B00005N5PF
+                     */
+                    asin?: string | null;
+                    order_source_code?: "amazon_ca" | "amazon_us" | "brightpearl" | "channel_advisor" | "cratejoy" | "ebay" | "etsy" | "jane" | "groupon_goods" | "magento" | "paypal" | "seller_active" | "shopify" | "stitch_labs" | "squarespace" | "three_dcart" | "tophatter" | "walmart" | "woo_commerce" | "volusion";
+                }[];
+                tax_identifiers?: {
+                    taxable_entity_type: "shipper" | "recipient" | "ior";
+                    identifier_type: "vat" | "eori" | "ssn" | "ein" | "tin" | "ioss" | "pan" | "voec" | "pccc" | "oss" | "passport" | "abn" | "ukims";
+                    /** @description The authority that issued this tax. This must be a valid 2 character ISO 3166 Alpha 2 country code. */
+                    issuing_authority: string;
+                    /** @description The value of the identifier */
+                    value: string;
+                }[] | null;
+                /** @description A unique user-defined key to identify a shipment.  This can be used to retrieve the shipment.
+                 *
+                 *     > **Warning:** The `external_shipment_id` is limited to 50 characters. Any additional characters will be truncated.
+                 *      */
+                external_shipment_id?: string | null;
+                /** @description A non-unique user-defined number used to identify a shipment.  If undefined, this will match the external_shipment_id of the shipment.
+                 *
+                 *     > **Warning:** The `shipment_number` is limited to 50 characters. Any additional characters will be truncated.
+                 *      */
+                shipment_number?: string | null;
+                /** @description The date that the shipment was (or will be) shipped.  ShipEngine will take the day of week into consideration. For example, if the carrier does not operate on Sundays, then a package that would have shipped on Sunday will ship on Monday instead.
+                 *      */
+                ship_date: string;
+                /** @description The date and time that the shipment was created in ShipEngine. */
+                readonly created_at: string;
+                /** @description The date and time that the shipment was created or last modified. */
+                readonly modified_at: string;
+                /**
+                 * @description The current status of the shipment
+                 * @default pending
+                 */
+                readonly shipment_status: "pending" | "processing" | "label_purchased" | "cancelled";
+                /** @description The recipient's mailing address */
+                ship_to: {
+                    /**
+                     * @description The name of a contact person at this address.  This field may be set instead of - or in addition to - the `company_name` field.
+                     *
+                     * @example John Doe
+                     */
+                    name: string;
+                    /**
+                     * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                     *
+                     * @example +1 204-253-9411 ext. 123
+                     */
+                    phone?: string;
+                    /**
+                     * @description Email for the address owner.
+                     *
+                     * @example example@example.com
+                     */
+                    email?: string | null;
+                    /**
+                     * @description If this is a business address, then the company name should be specified here.
+                     *
+                     * @example The Home Depot
+                     */
+                    company_name?: string | null;
+                    /**
+                     * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                     *
+                     * @example 1999 Bishop Grandin Blvd.
+                     */
+                    address_line1: string;
+                    /**
+                     * @description The second line of the street address.  For some addresses, this line may not be needed.
+                     *
+                     * @example Unit 408
+                     */
+                    address_line2?: string | null;
+                    /**
+                     * @description The third line of the street address.  For some addresses, this line may not be needed.
+                     *
+                     * @example Building #7
+                     */
+                    address_line3?: string | null;
+                    /**
+                     * @description The name of the city or locality
+                     * @example Winnipeg
+                     */
+                    city_locality: string;
+                    /**
+                     * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                     *
+                     * @example Manitoba
+                     */
+                    state_province: string;
+                    postal_code: string;
+                    /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                     *      */
+                    country_code?: string;
+                    /**
+                     * @description Indicates whether this is a residential address.
+                     * @default unknown
+                     * @example no
+                     */
+                    address_residential_indicator: "unknown" | "yes" | "no";
+                } & {
+                    /** @description Additional text about how to handle the shipment at this address.
+                     *      */
+                    instructions?: string | null;
+                    geolocation?: {
+                        /**
+                         * @description Enum of available type of geolocation items:
+                         *       - 'what3words' functionality allows to specify a location by providing 3 words that have been assign to the specific location see [link](https://what3words.com/business) for more details.
+                         *
+                         * @example what3words
+                         * @enum {string}
+                         */
+                        type?: "what3words";
+                        /**
+                         * @description value of the geolocation item
+                         * @example cats.with.thumbs
+                         */
+                        value?: string;
+                    }[];
+                };
+                /** @description The shipment's origin address. If you frequently ship from the same location, consider [creating a warehouse](https://www.shipengine.com/docs/reference/create-warehouse/).  Then you can simply specify the `warehouse_id` rather than the complete address each time.
+                 *      */
+                ship_from: {
+                    /**
+                     * @description The name of a contact person at this address.  This field may be set instead of - or in addition to - the `company_name` field.
+                     *
+                     * @example John Doe
+                     */
+                    name: string;
+                    /**
+                     * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                     *
+                     * @example +1 204-253-9411 ext. 123
+                     */
+                    phone?: string;
+                    /**
+                     * @description Email for the address owner.
+                     *
+                     * @example example@example.com
+                     */
+                    email?: string | null;
+                    /**
+                     * @description If this is a business address, then the company name should be specified here.
+                     *
+                     * @example The Home Depot
+                     */
+                    company_name?: string | null;
+                    /**
+                     * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                     *
+                     * @example 1999 Bishop Grandin Blvd.
+                     */
+                    address_line1: string;
+                    /**
+                     * @description The second line of the street address.  For some addresses, this line may not be needed.
+                     *
+                     * @example Unit 408
+                     */
+                    address_line2?: string | null;
+                    /**
+                     * @description The third line of the street address.  For some addresses, this line may not be needed.
+                     *
+                     * @example Building #7
+                     */
+                    address_line3?: string | null;
+                    /**
+                     * @description The name of the city or locality
+                     * @example Winnipeg
+                     */
+                    city_locality: string;
+                    /**
+                     * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                     *
+                     * @example Manitoba
+                     */
+                    state_province: string;
+                    postal_code: string;
+                    /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                     *      */
+                    country_code?: string;
+                    /**
+                     * @description Indicates whether this is a residential address.
+                     * @default unknown
+                     * @example no
+                     */
+                    address_residential_indicator: "unknown" | "yes" | "no";
+                } & {
+                    /** @description Additional text about how to handle the shipment at this address.
+                     *      */
+                    instructions?: string | null;
+                };
+                /**
+                 * @description The [warehouse](https://www.shipengine.com/docs/shipping/ship-from-a-warehouse/) that the shipment is being shipped from.  Either `warehouse_id` or `ship_from` must be specified.
+                 *
+                 * @default null
+                 */
+                warehouse_id: string | null;
+                /** @description The return address for this shipment.  Defaults to the `ship_from` address.
+                 *      */
+                return_to: {
+                    /**
+                     * @description The name of a contact person at this address.  This field may be set instead of - or in addition to - the `company_name` field.
+                     *
+                     * @example John Doe
+                     */
+                    name: string;
+                    /**
+                     * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                     *
+                     * @example +1 204-253-9411 ext. 123
+                     */
+                    phone?: string;
+                    /**
+                     * @description Email for the address owner.
+                     *
+                     * @example example@example.com
+                     */
+                    email?: string | null;
+                    /**
+                     * @description If this is a business address, then the company name should be specified here.
+                     *
+                     * @example The Home Depot
+                     */
+                    company_name?: string | null;
+                    /**
+                     * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                     *
+                     * @example 1999 Bishop Grandin Blvd.
+                     */
+                    address_line1: string;
+                    /**
+                     * @description The second line of the street address.  For some addresses, this line may not be needed.
+                     *
+                     * @example Unit 408
+                     */
+                    address_line2?: string | null;
+                    /**
+                     * @description The third line of the street address.  For some addresses, this line may not be needed.
+                     *
+                     * @example Building #7
+                     */
+                    address_line3?: string | null;
+                    /**
+                     * @description The name of the city or locality
+                     * @example Winnipeg
+                     */
+                    city_locality: string;
+                    /**
+                     * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                     *
+                     * @example Manitoba
+                     */
+                    state_province: string;
+                    postal_code: string;
+                    /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                     *      */
+                    country_code?: string;
+                    /**
+                     * @description Indicates whether this is a residential address.
+                     * @default unknown
+                     * @example no
+                     */
+                    address_residential_indicator: "unknown" | "yes" | "no";
+                } & {
+                    /** @description Additional text about how to handle the shipment at this address.
+                     *      */
+                    instructions?: string | null;
+                };
+                /**
+                 * @description An optional indicator if the shipment is intended to be a return. Defaults to false if not provided.
+                 *
+                 * @default false
+                 */
+                is_return: boolean | null;
+                /**
+                 * @description The type of delivery confirmation that is required for this shipment.
+                 * @default none
+                 */
+                confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
+                /**
+                 * @description Customs information.  This is usually only needed for international shipments.
+                 *
+                 * @default null
+                 */
+                customs: {
+                    /**
+                     * @description The type of contents in this shipment.  This may impact import duties or customs treatment.
+                     * @default merchandise
+                     */
+                    contents: "merchandise" | "documents" | "gift" | "returned_goods" | "sample" | "other";
+                    /** @description Explanation for contents (required if the `contents` is provided as `other`) */
+                    contents_explanation?: string;
+                    /**
+                     * @description Indicates what to do if a package is unable to be delivered.
+                     * @default return_to_sender
+                     */
+                    non_delivery: "return_to_sender" | "treat_as_abandoned";
+                    /** @description Specifies the supported terms of trade code (incoterms) */
+                    terms_of_trade_code?: string & ("exw" | "fca" | "cpt" | "cip" | "dpu" | "dap" | "ddp" | "fas" | "fob" | "cfr" | "cif" | "ddu" | "daf" | "deq" | "des");
+                    /** @description Declaration statement to be placed on the commercial invoice */
+                    declaration?: string;
+                    invoice_additional_details?: {
+                        /** @description Freight Charge for shipment. */
+                        freight_charge?: {
+                            currency: string;
+                            /** @description The monetary amount, in the specified currency. */
+                            amount: number;
+                        };
+                        /** @description Insurance Charge for shipment. */
+                        insurance_charge?: {
+                            currency: string;
+                            /** @description The monetary amount, in the specified currency. */
+                            amount: number;
+                        };
+                        /** @description Discount for shipment. */
+                        discount?: {
+                            currency: string;
+                            /** @description The monetary amount, in the specified currency. */
+                            amount: number;
+                        };
+                        /** @description Estimated import charges for commercial invoices for international shipments. */
+                        estimated_import_charges?: {
+                            /** @description Estimated import taxes. */
+                            taxes?: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            };
+                            /** @description Estimated import duties. */
+                            duties?: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            };
+                        };
+                        /** @description Other charge for shipment. */
+                        other_charge?: {
+                            currency: string;
+                            /** @description The monetary amount, in the specified currency. */
+                            amount: number;
+                        };
+                        /** @description Description for the other charge (if provided). */
+                        other_charge_description?: string;
+                        /** @description The invoice number to be used in the customs. */
+                        invoice_number?: string;
+                    };
+                    importer_of_record?: {
+                        /**
+                         * @description The name of a contact person at this address. Either `name` or the `company_name` field should always be set.
+                         *
+                         * @example John Doe
+                         */
+                        name: string;
+                        /**
+                         * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                         *
+                         * @example +1 204-253-9411 ext. 123
+                         */
+                        phone?: string;
+                        /**
+                         * @description Email for the address owner.
+                         *
+                         * @example example@example.com
+                         */
+                        email?: string | null;
+                        /**
+                         * @description If this is a business address, then the company name should be specified here. Either `name` or the `company_name` field should always be set.
+                         *
+                         * @example The Home Depot
+                         */
+                        company_name?: string | null;
+                        /**
+                         * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                         *
+                         * @example 1999 Bishop Grandin Blvd.
+                         */
+                        address_line1: string;
+                        /**
+                         * @description The second line of the street address.  For some addresses, this line may not be needed.
+                         *
+                         * @example Unit 408
+                         */
+                        address_line2?: string | null;
+                        /**
+                         * @description The third line of the street address.  For some addresses, this line may not be needed.
+                         *
+                         * @example Building #7
+                         */
+                        address_line3?: string | null;
+                        /**
+                         * @description The name of the city or locality
+                         * @example Winnipeg
+                         */
+                        city_locality: string;
+                        /**
+                         * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                         *
+                         * @example Manitoba
+                         */
+                        state_province?: string;
+                        postal_code: string;
+                        /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                         *      */
+                        country_code: string;
+                    };
+                    /** @description The license number to be used in the customs. */
+                    license_number?: string;
+                    /** @description The certificate number to be used in the customs. */
+                    certificate_number?: string;
+                    /**
+                     * @deprecated
+                     * @description Customs declarations for each item in the shipment. (Please provide this information under `products` inside `packages`)
+                     * @default []
+                     */
+                    customs_items: {
+                        /** @description A string that uniquely identifies the customs item */
+                        readonly customs_item_id: string;
+                        /**
+                         * @description A description of the item
+                         * @default null
+                         */
+                        description: string | null;
+                        /**
+                         * Format: int32
+                         * @description The quantity of this item in the shipment.
+                         * @default 0
+                         */
+                        quantity: number;
+                        /** @description The monetary amount, in the specified currency. */
+                        value?: number;
+                        /** @description The currencies that are supported by ShipEngine are the ones that specified by ISO 4217: https://www.iso.org/iso-4217-currency-codes.html
+                         *      */
+                        value_currency?: string;
+                        /** @description The item weight */
+                        weight?: {
+                            /** @description The weight, in the specified unit */
+                            value: number;
+                            unit: "pound" | "ounce" | "gram" | "kilogram";
+                        };
+                        /**
+                         * @description The [Harmonized Tariff Code](https://en.wikipedia.org/wiki/Harmonized_System) of this item.
+                         * @default null
+                         * @example 3926.1
+                         */
+                        harmonized_tariff_code: string | null;
+                        /**
+                         * @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1) where this item originated
+                         *
+                         * @default null
+                         */
+                        country_of_origin: string | null;
+                        unit_of_measure?: string | null;
+                        /** @description The SKU (Stock Keeping Unit) of the customs item */
+                        sku?: string | null;
+                        /** @description Description of the Custom Item's SKU */
+                        sku_description?: string | null;
+                    }[];
+                } | null;
+                /** @description Advanced shipment options.  These are entirely optional. */
+                advanced_options: {
+                    /**
+                     * @description This field is used to [bill shipping costs to a third party](https://www.shipengine.com/docs/shipping/bill-to-third-party/).  This field must be used in conjunction with the `bill_to_country_code`, `bill_to_party`, and `bill_to_postal_code` fields.
+                     *
+                     * @default null
+                     */
+                    bill_to_account: string | null;
+                    /**
+                     * @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1) of the third-party that is responsible for shipping costs.
+                     *
+                     * @default null
+                     */
+                    bill_to_country_code: string | null;
+                    /**
+                     * @description Indicates whether to bill shipping costs to the recipient or to a third-party.  When billing to a third-party, the `bill_to_account`, `bill_to_country_code`, and `bill_to_postal_code` fields must also be set.
+                     *
+                     * @default null
+                     */
+                    bill_to_party: ("recipient" | "third_party") | null;
+                    /**
+                     * @description The postal code of the third-party that is responsible for shipping costs.
+                     *
+                     * @default null
+                     */
+                    bill_to_postal_code: string | null;
+                    /**
+                     * @description Indicates that the shipment contains alcohol.
+                     * @default false
+                     */
+                    contains_alcohol: boolean;
+                    /**
+                     * @description Indicates that the shipper is paying the international delivery duties for this shipment.  This option is supported by UPS, FedEx, and DHL Express.
+                     *
+                     * @default false
+                     */
+                    delivered_duty_paid: boolean;
+                    /**
+                     * @description Indicates if the shipment contain dry ice
+                     * @default false
+                     */
+                    dry_ice: boolean;
+                    /** @description The weight of the dry ice in the shipment */
+                    dry_ice_weight?: {
+                        /** @description The weight, in the specified unit */
+                        value: number;
+                        unit: "pound" | "ounce" | "gram" | "kilogram";
+                    } | null;
+                    /**
+                     * @description Indicates that the package cannot be processed automatically because it is too large or irregularly shaped. This is primarily for USPS shipments.  See [Section 1.2 of the USPS parcel standards](https://pe.usps.com/text/dmm300/101.htm#ep1047495) for details.
+                     *
+                     * @default false
+                     */
+                    non_machinable: boolean;
+                    /**
+                     * @description Enables Saturday delivery, if supported by the carrier.
+                     * @default false
+                     */
+                    saturday_delivery: boolean;
+                    /** @description Provide details for the Fedex freight service */
+                    fedex_freight?: {
+                        shipper_load_and_count?: string;
+                        booking_confirmation?: string;
+                    };
+                    /**
+                     * @description Whether to use [UPS Ground Freight pricing](https://www.shipengine.com/docs/shipping/ups-ground-freight/).  If enabled, then a `freight_class` must also be specified.
+                     *
+                     * @default null
+                     */
+                    use_ups_ground_freight_pricing: boolean | null;
+                    /**
+                     * @description The National Motor Freight Traffic Association [freight class](http://www.nmfta.org/pages/nmfc?AspxAutoDetectCookieSupport=1), such as "77.5", "110", or "250".
+                     *
+                     * @default null
+                     * @example 77.5
+                     */
+                    freight_class: string | null;
+                    /**
+                     * @description An arbitrary field that can be used to store information about the shipment.
+                     *
+                     * @default null
+                     */
+                    custom_field1: string | null;
+                    /**
+                     * @description An arbitrary field that can be used to store information about the shipment.
+                     *
+                     * @default null
+                     */
+                    custom_field2: string | null;
+                    /**
+                     * @description An arbitrary field that can be used to store information about the shipment.
+                     *
+                     * @default null
+                     */
+                    custom_field3: string | null;
+                    /** @default null */
+                    origin_type: ("pickup" | "drop_off") | null;
+                    /**
+                     * @description Indicate to the carrier that this shipment requires additional handling.
+                     *
+                     * @default null
+                     */
+                    additional_handling: boolean | null;
+                    /** @default null */
+                    shipper_release: boolean | null;
+                    /**
+                     * collect_on_delivery
+                     * @description Defer payment until package is delivered, instead of when it is ordered.
+                     */
+                    collect_on_delivery?: {
+                        payment_type?: "any" | "cash" | "cash_equivalent" | "none";
+                        /** payment_amount */
+                        payment_amount?: {
+                            currency?: string;
+                            amount?: number;
+                        };
+                    };
+                    /**
+                     * @description Third Party Consignee option is a value-added service that allows the shipper to supply goods without commercial invoices being attached
+                     * @default false
+                     */
+                    third_party_consignee: boolean;
+                    /**
+                     * @description Indicates if the Dangerous goods are present in the shipment
+                     * @default false
+                     */
+                    dangerous_goods: boolean;
+                    /** @description Contact information for Dangerous goods */
+                    dangerous_goods_contact?: {
+                        /** @description Name of the contact */
+                        name?: string;
+                        /** @description Phone number of the contact */
+                        phone?: string;
+                    };
+                    /** @description The Windsor framework is a new regulation in the UK that simplifies customs procedures for goods moved from the UK mainland to Northern Ireland. */
+                    windsor_framework_details?: {
+                        /**
+                         * @description An indicator that will tell the carrier and HMRC the type of movement for the shipment.
+                         * @enum {string}
+                         */
+                        movement_indicator?: "c2c" | "b2c" | "c2b" | "b2b";
+                        /** @description An indicator that allows a shipper to declare the shipment as not-at-risk. */
+                        not_at_risk?: boolean;
+                    };
+                    /**
+                     * @description license_number - This field was part of a historical implementation for passing customs-related data. For new integrations, please use the corresponding parameters within the shipment.customs object.
+                     * @default null
+                     * @example 514785
+                     */
+                    license_number: string | null;
+                    /**
+                     * @description invoice_number - This field was part of a historical implementation for passing customs-related data. For new integrations, please use the corresponding parameters within the shipment.customs object.
+                     * @default null
+                     * @example IOC56888
+                     */
+                    invoice_number: string | null;
+                    /**
+                     * @description certificate_number - This field was part of a historical implementation for passing customs-related data. For new integrations, please use the corresponding parameters within the shipment.customs object.
+                     * @default null
+                     * @example 784515
+                     */
+                    certificate_number: string | null;
+                    /**
+                     * @description Indicates that the contents of the package are fragile and should be handled with care.
+                     * @default false
+                     */
+                    fragile: boolean;
+                    /**
+                     * @description Instructs the carrier to deliver the package only to the exact address provided.
+                     * @default false
+                     */
+                    "delivery-as-addressed": boolean;
+                    /**
+                     * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                     * @default false
+                     */
+                    "return-after-first-attempt": boolean;
+                    /**
+                     * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                     * @default null
+                     */
+                    regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
+                } & {
+                    [key: string]: unknown;
+                };
+                /**
+                 * @description The insurance provider to use for any insured packages in the shipment.
+                 *
+                 * @default none
+                 */
+                insurance_provider: "none" | "shipsurance" | "carrier" | "third_party";
+                /**
+                 * @description Arbitrary tags associated with this shipment.  Tags can be used to categorize shipments, and shipments can be queried by their tags.
+                 *
+                 * @default []
+                 */
+                readonly tags: {
+                    /**
+                     * Format: int32
+                     * @description An integer uniquely identifying a tag.
+                     * @example 8712
+                     */
+                    readonly tag_id?: number;
+                    /**
+                     * @description The tag name.
+                     * @example Fragile
+                     */
+                    name: string;
+                    /**
+                     * @description A hex-coded string identifying the color of the tag.
+                     * @example #FF0000
+                     */
+                    color?: string;
+                }[];
+                order_source_code?: "amazon_ca" | "amazon_us" | "brightpearl" | "channel_advisor" | "cratejoy" | "ebay" | "etsy" | "jane" | "groupon_goods" | "magento" | "paypal" | "seller_active" | "shopify" | "stitch_labs" | "squarespace" | "three_dcart" | "tophatter" | "walmart" | "woo_commerce" | "volusion";
+                /** @description The packages in the shipment.
+                 *
+                 *     > **Note:** Some carriers only allow one package per shipment.  If you attempt to create a multi-package shipment for a carrier that doesn't allow it, an error will be returned.
+                 *      */
+                packages: {
+                    /** @description A string that uniquely identifies this shipment package */
+                    readonly shipment_package_id?: string;
+                    /** @description A string that uniquely identifies this [package type](https://www.shipengine.com/docs/reference/list-carrier-packages/) */
+                    package_id?: string;
+                    /** @description The [package type](https://www.shipengine.com/docs/reference/list-carrier-packages/), such as `thick_envelope`, `small_flat_rate_box`, `large_package`, etc.  The code `package` indicates a custom or unknown package type.
+                     *      */
+                    package_code?: string;
+                    /** @description The name of the of the [package type](https://www.shipengine.com/docs/reference/list-carrier-packages/) */
+                    package_name?: string;
+                    /** @description The package weight */
+                    weight: {
+                        /** @description The weight, in the specified unit */
+                        value: number;
+                        unit: "pound" | "ounce" | "gram" | "kilogram";
+                    };
+                    /** @description The package dimensions */
+                    dimensions?: {
+                        /** @default inch */
+                        unit: "inch" | "centimeter";
+                        /**
+                         * @description The length of the package, in the specified unit
+                         * @default 0
+                         */
+                        length: number;
+                        /**
+                         * @description The width of the package, in the specified unit
+                         * @default 0
+                         */
+                        width: number;
+                        /**
+                         * @description The height of the package, in the specified unit
+                         * @default 0
+                         */
+                        height: number;
+                    };
+                    /**
+                     * @description The insured value of the package.  Requires the `insurance_provider` field of the shipment to be set.
+                     *
+                     * @default {
+                     *       "currency": "USD",
+                     *       "amount": 0
+                     *     }
+                     */
+                    insured_value: {
+                        currency: string;
+                        /** @description The monetary amount, in the specified currency. */
+                        amount: number;
+                    };
+                    label_messages?: {
+                        /**
+                         * @description The first line of the custom label message.  Some carriers may prefix this line with something like "REF", "Reference", "Trx Ref No.", etc.
+                         *
+                         * @default null
+                         */
+                        reference1: string | null;
+                        /**
+                         * @description The second line of the custom label message.  Some carriers may prefix this line with something like "INV", "Reference 2", "Trx Ref No.", etc.
+                         *
+                         * @default null
+                         */
+                        reference2: string | null;
+                        /**
+                         * @description The third line of the custom label message.  Some carriers may prefix this line with something like "PO", "Reference 3", etc.
+                         *
+                         * @default null
+                         */
+                        reference3: string | null;
+                    };
+                    /** @description An external package id. */
+                    external_package_id?: string;
+                    /** @description The tracking number for the package.  The format depends on the carrier.
+                     *      */
+                    readonly tracking_number?: string;
+                    /**
+                     * @description A short description of the package content. Required for shipments moving to, from, and through Mexico.
+                     *
+                     * @example Hand knitted wool socks
+                     */
+                    content_description?: string | null;
+                    /**
+                     * @description Details about products inside packages (Information provided would be used on custom documentation)
+                     * @default []
+                     */
+                    products: {
+                        /**
+                         * @description A description of the item
+                         * @default null
+                         */
+                        description: string | null;
+                        /**
+                         * Format: int32
+                         * @description The quantity of this item in the shipment.
+                         * @default 0
+                         */
+                        quantity: number;
+                        /** @description The declared value of each item */
+                        value?: {
+                            currency: string;
+                            /** @description The monetary amount, in the specified currency. */
+                            amount: number;
+                        };
+                        /** @description The item weight */
+                        weight?: {
+                            /** @description The weight, in the specified unit */
+                            value: number;
+                            unit: "pound" | "ounce" | "gram" | "kilogram";
+                        };
+                        /**
+                         * @description The [Harmonized Tariff Code](https://en.wikipedia.org/wiki/Harmonized_System) of this item.
+                         * @default null
+                         * @example 3926.1
+                         */
+                        harmonized_tariff_code: string | null;
+                        /**
+                         * @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1) where this item originated
+                         *
+                         * @default null
+                         */
+                        country_of_origin: string | null;
+                        unit_of_measure?: string | null;
+                        /** @description The SKU (Stock Keeping Unit) of the item */
+                        sku?: string | null;
+                        /** @description Description of the Custom Item's SKU */
+                        sku_description?: string | null;
+                        /** @description Manufacturers Identification code */
+                        mid_code?: string | null;
+                        /** @description link to the item on the seller website */
+                        product_url?: string | null;
+                        /**
+                         * @description VAT rate applicable to the item
+                         * @example 0.2
+                         */
+                        vat_rate?: number | null;
+                        /**
+                         * @description Details about dangerous goods inside products
+                         * @default []
+                         */
+                        dangerous_goods: {
+                            /**
+                             * @description UN number to identify the dangerous goods.
+                             * @default null
+                             */
+                            id_number: string | null;
+                            /**
+                             * @description Trade description of the dangerous goods.
+                             * @default null
+                             */
+                            shipping_name: string | null;
+                            /**
+                             * @description Recognized Technical or chemical name of dangerous goods.
+                             * @default null
+                             */
+                            technical_name: string | null;
+                            /**
+                             * @description Dangerous goods product class based on regulation.
+                             * @default null
+                             */
+                            product_class: string | null;
+                            /**
+                             * @description A secondary of product class for substances presenting more than one particular hazard
+                             * @default null
+                             */
+                            product_class_subsidiary: string | null;
+                            /**
+                             * packaging_group
+                             * @enum {string}
+                             */
+                            packaging_group?: "i" | "ii" | "iii";
+                            /** @description This model represents the amount of the dangerous goods. */
+                            dangerous_amount?: {
+                                /**
+                                 * @description The amount of dangerous goods.
+                                 * @default 0
+                                 */
+                                amount: number;
+                                /**
+                                 * @description The unit of dangerous goods.
+                                 * @default null
+                                 */
+                                unit: string | null;
+                            };
+                            /**
+                             * Format: int32
+                             * @description Quantity of dangerous goods.
+                             * @default 0
+                             */
+                            quantity: number;
+                            /**
+                             * @description The specific standardized packaging instructions from the relevant regulatory agency that have been applied to the parcel/container.
+                             * @default null
+                             */
+                            packaging_instruction: string | null;
+                            /**
+                             * packaging_instruction_section
+                             * @enum {string}
+                             */
+                            packaging_instruction_section?: "section_1" | "section_2" | "section_1a" | "section_1b";
+                            /**
+                             * @description The type of exterior packaging used to contain the dangerous good.
+                             * @default null
+                             */
+                            packaging_type: string | null;
+                            /**
+                             * transport_mean
+                             * @enum {string}
+                             */
+                            transport_mean?: "ground" | "water" | "cargo_aircraft_only" | "passenger_aircraft";
+                            /**
+                             * @description Transport category assign to dangerous goods for the transport purpose.
+                             * @default null
+                             */
+                            transport_category: string | null;
+                            /**
+                             * @description Name of the regulatory authority.
+                             * @default null
+                             */
+                            regulation_authority: string | null;
+                            /**
+                             * regulation_level
+                             * @enum {string}
+                             */
+                            regulation_level?: "lightly_regulated" | "fully_regulated" | "limited_quantities" | "excepted_quantity";
+                            /**
+                             * @description Indication if the substance is radioactive.
+                             * @example false
+                             */
+                            radioactive?: boolean | null;
+                            /**
+                             * @description Indication if the substance needs to be reported to regulatory authority based on the quantity.
+                             * @example false
+                             */
+                            reportable_quantity?: boolean | null;
+                            /**
+                             * @description Defines which types of tunnels the shipment is allowed to go through
+                             * @default null
+                             */
+                            tunnel_code: string | null;
+                            /**
+                             * @description Provider additonal description regarding the dangerous goods. This is used as a placed holder to provider additional context and varies by carrier
+                             * @default null
+                             */
+                            additional_description: string | null;
+                        }[];
+                        /** @description Additional details about products */
+                        extended_details?: {
+                            [key: string]: unknown;
+                        };
+                    }[];
+                }[];
+                /** @description The combined weight of all packages in the shipment */
+                readonly total_weight: {
+                    /** @description The weight, in the specified unit */
+                    value: number;
+                    unit: "pound" | "ounce" | "gram" | "kilogram";
+                };
+                /**
+                 * @description Calculate a rate for this shipment with the requested carrier using a ratecard that differs from the default.  Only supported for UPS and USPS.
+                 * @example retail
+                 */
+                comparison_rate_type?: string | null;
+                /**
+                 * Format: int32
+                 * @description Certain carriers base [their rates](https://blog.stamps.com/2017/09/08/usps-postal-zones/) off of
+                 *     custom zones that vary depending upon the ship_to and ship_from location
+                 *
+                 * @example 6
+                 */
+                readonly zone?: number | null;
+            };
+            /** @description The date that the package was (or will be) shipped.  ShipEngine will take the day of week into consideration. For example, if the carrier does not operate on Sundays, then a package that would have shipped on Sunday will ship on Monday instead.
+             *      */
+            readonly ship_date?: string;
+            /** @description The date and time that the label was created in ShipEngine. */
+            readonly created_at?: string;
+            /** @description The cost of shipping, delivery confirmation, and other carrier charges.  This amount **does not** include insurance costs.
+             *      */
+            readonly shipment_cost?: {
+                currency: string;
+                /** @description The monetary amount, in the specified currency. */
+                amount: number;
+            };
+            /** @description The insurance cost for this package.  Add this to the `shipment_cost` field to get the total cost.
+             *      */
+            readonly insurance_cost?: {
+                currency: string;
+                /** @description The monetary amount, in the specified currency. */
+                amount: number;
+            };
+            /** @description The total shipping cost for the specified comparison_rate_type.
+             *      */
+            readonly requested_comparison_amount?: {
+                currency: string;
+                /** @description The monetary amount, in the specified currency. */
+                amount: number;
+            };
+            /** @description A list of rate details that are associated with shipping cost. This is useful for
+             *     displaying a breakdown of the rate to the user.
+             *      */
+            readonly rate_details?: {
+                rate_detail_type?: "uncategorized" | "shipping" | "insurance" | "confirmation" | "discount" | "fuel_charge" | "additional_fees" | "tariff" | "tax" | "delivery" | "handling" | "special_goods" | "pickup" | "location_fee" | "oversize" | "returns" | "notifications" | "tip" | "duties_and_taxes" | "brokerage_fee" | "admin_fee" | "adjustment";
+                /** @description A rate detail description defined by a carrier */
+                carrier_description?: string;
+                /** @description A rate detail code defined by a carrier */
+                carrier_billing_code?: string;
+                /** @description Contains any additional information */
+                carrier_memo?: string;
+                amount?: {
+                    currency: string;
+                    /** @description The monetary amount, in the specified currency. */
+                    amount: number;
+                };
+                /** @description If applicable, contains additional data about a rate detail of a specific type, e.g. VAT */
+                rate_detail_attributes?: {
+                    tax_type?: "vat";
+                    /** @description Tax percentage, e.g. 20 for 20%, added to the shipping cost */
+                    tax_percentage?: number;
+                };
+                /** @description The source of the billing information. This is typically the carrier, but could be a third party, e.g insurance */
+                billing_source?: string;
+            }[];
+            /**
+             * @description The tracking number for the package. Tracking number formats vary across carriers.
+             * @example 782758401696
+             */
+            readonly tracking_number?: string;
+            /** @description Indicates whether this is a return label.  You may also want to set the `rma_number` so you know what is being returned.
+             *      */
+            is_return_label?: boolean;
+            /** @description An optional Return Merchandise Authorization number.  This field is useful for return labels.  You can set it to any string value.
+             *      */
+            rma_number?: string | null;
+            /** @description Indicates whether this is an international shipment.  That is, the originating country and destination country are different.
+             *      */
+            readonly is_international?: boolean;
+            /** @description If this label was created as part of a [batch](https://www.shipengine.com/docs/labels/bulk/), then this is the unique ID of that batch.
+             *      */
+            readonly batch_id?: string;
+            /** @description The unique ID of the [carrier account](https://www.shipengine.com/docs/carriers/setup/) that was used to create this label
+             *      */
+            readonly carrier_id?: string;
+            /** @description The label charge event.
+             *      */
+            charge_event?: "carrier_default" | "on_creation" | "on_carrier_acceptance";
+            /** @description The `label_id` of the original (outgoing) label that the return label is for. This associates the two labels together, which is
+             *     required by some carriers.
+             *      */
+            outbound_label_id?: string;
+            /** @description The [carrier service](https://www.shipengine.com/docs/shipping/use-a-carrier-service/) used to ship the package, such as `fedex_ground`, `usps_first_class_mail`, `flat_rate_envelope`, etc.
+             *      */
+            readonly service_code?: string;
+            /**
+             * @deprecated
+             * @description Indicate if this label is being used only for testing purposes. If true, then no charge will be added to your account.
+             * @default false
+             */
+            test_label: boolean;
+            /** @description The [package type](https://www.shipengine.com/docs/reference/list-carrier-packages/), such as `thick_envelope`, `small_flat_rate_box`, `large_package`, etc.  The code `package` indicates a custom or unknown package type.
+             *      */
+            readonly package_code?: string;
+            /** @default validate_and_clean */
+            validate_address: "no_validation" | "validate_only" | "validate_and_clean";
+            /** @description Indicates whether the label has been [voided](https://www.shipengine.com/docs/labels/voiding/)
+             *      */
+            readonly voided?: boolean;
+            /** @description The date and time that the label was [voided](https://www.shipengine.com/docs/labels/voiding/), or `null` if the label has not been voided
+             *      */
+            readonly voided_at?: string | null;
+            /** @default url */
+            label_download_type: "url" | "inline";
+            /**
+             * @description The file format that you want the label to be in.  We recommend `pdf` format because it is supported by all carriers, whereas some carriers do not support the `png` or `zpl` formats.
+             *
+             * @default pdf
+             */
+            label_format: "pdf" | "png" | "zpl";
+            /**
+             * @description The display format that the label should be shown in.
+             * @default label
+             */
+            display_scheme: "label" | "paperless" | "label_and_paperless";
+            /**
+             * @description The layout (size) that you want the label to be in.  The `label_format` determines which sizes are allowed.  `4x6` is supported for all label formats, whereas `letter` (8.5" x 11") is only supported for `pdf` format.
+             *
+             * @default 4x6
+             */
+            label_layout: "4x6" | "letter" | "A4" | "A6";
+            /** @description Indicates whether the shipment is trackable, in which case the `tracking_status` field will reflect the current status and each package will have a `tracking_number`.
+             *      */
+            readonly trackable?: boolean;
+            /** @description The label image resource that was used to create a custom label image. */
+            label_image_id?: string | null;
+            /** @description The [shipping carrier](https://www.shipengine.com/docs/carriers/setup/) who will ship the package, such as `fedex`, `dhl_express`, `stamps_com`, etc.
+             *      */
+            readonly carrier_code?: string;
+            /** @description The current status of the package, such as `in_transit` or `delivered` */
+            readonly tracking_status?: "unknown" | "in_transit" | "error" | "delivered";
+            /** @description The type of delivery confirmation that is required for this shipment. */
+            readonly confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
+            readonly label_download?: {
+                /** @description The URL of the linked resource, if any */
+                href?: string;
+                /** @description The URL for the pdf generated label */
+                pdf?: string;
+                /** @description The URL for the png generated label */
+                png?: string;
+                /** @description The URL for the zpl generated label */
+                zpl?: string;
+            };
+            /** @description The link to download the customs form (a.k.a. commercial invoice) for this shipment, if any.  Forms are in PDF format. This field is null if the shipment does not require a customs form, or if the carrier does not support it.
+             *      */
+            readonly form_download?: {
+                /** @description The URL of the linked resource, if any */
+                href: string;
+                /** @description The type of resource, or the type of relationship to the parent resource */
+                type?: string;
+            } | null;
+            /** @description The QR code download for the package */
+            readonly qr_code_download?: {
+                /** @description The URL of the linked resource, if any */
+                href?: string;
+                /** @description The type of resource, or the type of relationship to the parent resource */
+                type?: string;
+            } | null;
+            /** @description The paperless details which may contain elements like `href`, `instructions` and `handoff_code`.
+             *      */
+            readonly paperless_download?: {
+                /** @description The URL of the linked resource, if any */
+                href?: string;
+                /**
+                 * @description The instructions for the paperless download.
+                 *
+                 * @default null
+                 */
+                instructions: string | null;
+                /**
+                 * @description The handoff code for the paperless download.
+                 *
+                 * @default null
+                 */
+                handoff_code: string | null;
+            } | null;
+            /** @description The link to submit an insurance claim for the shipment.  This field is null if the shipment is not insured or if the insurance provider does not support online claim submission.
+             *      */
+            readonly insurance_claim?: {
+                /** @description The URL of the linked resource, if any */
+                href: string;
+                /** @description The type of resource, or the type of relationship to the parent resource */
+                type?: string;
+            } | null;
+            /** @description The label's package(s).
+             *
+             *     > **Note:** Some carriers only allow one package per label.  If you attempt to create a multi-package label for a carrier that doesn't allow it, an error will be returned.
+             *      */
+            readonly packages?: ({
+                /**
+                 * Format: int32
+                 * @description The shipment package id
+                 */
+                readonly package_id?: number;
+                /** @description The [package type](https://www.shipengine.com/docs/reference/list-carrier-packages/), such as `thick_envelope`, `small_flat_rate_box`, `large_package`, etc.  The code `package` indicates a custom or unknown package type.
+                 *      */
+                package_code?: string;
+                /** @description The package weight */
+                weight: {
+                    /** @description The weight, in the specified unit */
+                    value: number;
+                    unit: "pound" | "ounce" | "gram" | "kilogram";
+                };
+                /** @description The package dimensions */
+                dimensions?: {
+                    /** @default inch */
+                    unit: "inch" | "centimeter";
+                    /**
+                     * @description The length of the package, in the specified unit
+                     * @default 0
+                     */
+                    length: number;
+                    /**
+                     * @description The width of the package, in the specified unit
+                     * @default 0
+                     */
+                    width: number;
+                    /**
+                     * @description The height of the package, in the specified unit
+                     * @default 0
+                     */
+                    height: number;
+                };
+                /**
+                 * @description The insured value of the package.  Requires the `insurance_provider` field of the shipment to be set.
+                 *
+                 * @default {
+                 *       "currency": "USD",
+                 *       "amount": 0
+                 *     }
+                 */
+                insured_value: {
+                    currency: string;
+                    /** @description The monetary amount, in the specified currency. */
+                    amount: number;
+                };
+                /** @description The tracking number for the package.  The format depends on the carrier.
+                 *      */
+                readonly tracking_number?: string;
+                /** @description The label download for the package */
+                readonly label_download?: {
+                    /** @description The URL of the linked resource, if any */
+                    href?: string;
+                    /** @description The URL for the pdf generated label */
+                    pdf?: string;
+                    /** @description The URL for the png generated label */
+                    png?: string;
+                    /** @description The URL for the zpl generated label */
+                    zpl?: string;
+                };
+                /** @description The form download for any customs that are needed */
+                readonly form_download?: {
+                    /** @description The URL of the linked resource, if any */
+                    href?: string;
+                    /** @description The type of resource, or the type of relationship to the parent resource */
+                    type?: string;
+                };
+                /** @description The QR code download for the package */
+                readonly qr_code_download?: {
+                    /** @description The URL of the linked resource, if any */
+                    href?: string;
+                    /** @description The type of resource, or the type of relationship to the parent resource */
+                    type?: string;
+                };
+                /** @description The paperless details which may contain elements like `href`, `instructions` and `handoff_code`. */
+                readonly paperless_download?: {
+                    /** @description The URL of the linked resource, if any */
+                    href?: string;
+                    /**
+                     * @description The instructions for the paperless download.
+                     *
+                     * @default null
+                     */
+                    instructions: string | null;
+                    /**
+                     * @description The handoff code for the paperless download.
+                     *
+                     * @default null
+                     */
+                    handoff_code: string | null;
+                };
+                label_messages?: {
+                    /**
+                     * @description The first line of the custom label message.  Some carriers may prefix this line with something like "REF", "Reference", "Trx Ref No.", etc.
+                     *
+                     * @default null
+                     */
+                    reference1: string | null;
+                    /**
+                     * @description The second line of the custom label message.  Some carriers may prefix this line with something like "INV", "Reference 2", "Trx Ref No.", etc.
+                     *
+                     * @default null
+                     */
+                    reference2: string | null;
+                    /**
+                     * @description The third line of the custom label message.  Some carriers may prefix this line with something like "PO", "Reference 3", etc.
+                     *
+                     * @default null
+                     */
+                    reference3: string | null;
+                };
+                /** @description An external package id. */
+                external_package_id?: string;
+                /**
+                 * @description A short description of the package content. Required for shipments moving to, from, and through Mexico.
+                 *
+                 * @example Hand knitted wool socks
+                 */
+                content_description?: string | null;
+                /**
+                 * Format: int32
+                 * @description Package sequence
+                 */
+                readonly sequence?: number;
+                /** @description Whether the package has label documents available for download */
+                has_label_documents?: boolean;
+                /** @description Whether the package has form documents available for download */
+                has_form_documents?: boolean;
+                /** @description Whether the package has QR code documents available for download */
+                has_qr_code_documents?: boolean;
+                /** @description Whether the package has paperless documents available for download */
+                has_paperless_label_documents?: boolean;
+            } & {
+                /** @description Alternative identifiers associated with this package.
+                 *      */
+                readonly alternative_identifiers?: {
+                    /**
+                     * @description The type of alternative_identifier that corresponds to the value.
+                     *
+                     * @example last_mile_tracking_number
+                     */
+                    type?: string;
+                    /**
+                     * @description The value of the alternative_identifier.
+                     *
+                     * @example 12345678912345678912
+                     */
+                    value?: string;
+                }[] | null;
+            })[];
+            /** @description Additional information some carriers may provide by which to identify a given label in their system.
+             *      */
+            readonly alternative_identifiers?: {
+                /**
+                 * @description The type of alternative_identifier that corresponds to the value.
+                 *
+                 * @example last_mile_tracking_number
+                 */
+                type?: string;
+                /**
+                 * @description The value of the alternative_identifier.
+                 *
+                 * @example 12345678912345678912
+                 */
+                value?: string;
+            }[] | null;
+            /**
+             * @description The URL to track the package. This URL is provided by the carrier and is unique to the tracking number.
+             *
+             * @example https://www.fedex.com/fedextrack/?action=track&trackingnumber=1234
+             */
+            readonly tracking_url?: string | null;
+            /** @description The recipient's mailing address */
+            readonly ship_to?: {
+                /**
+                 * @description The name of a contact person at this address.  This field may be set instead of - or in addition to - the `company_name` field.
+                 *
+                 * @example John Doe
+                 */
+                name: string;
+                /**
+                 * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                 *
+                 * @example +1 204-253-9411 ext. 123
+                 */
+                phone?: string;
+                /**
+                 * @description Email for the address owner.
+                 *
+                 * @example example@example.com
+                 */
+                email?: string | null;
+                /**
+                 * @description If this is a business address, then the company name should be specified here.
+                 *
+                 * @example The Home Depot
+                 */
+                company_name?: string | null;
+                /**
+                 * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                 *
+                 * @example 1999 Bishop Grandin Blvd.
+                 */
+                address_line1: string;
+                /**
+                 * @description The second line of the street address.  For some addresses, this line may not be needed.
+                 *
+                 * @example Unit 408
+                 */
+                address_line2?: string | null;
+                /**
+                 * @description The third line of the street address.  For some addresses, this line may not be needed.
+                 *
+                 * @example Building #7
+                 */
+                address_line3?: string | null;
+                /**
+                 * @description The name of the city or locality
+                 * @example Winnipeg
+                 */
+                city_locality: string;
+                /**
+                 * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                 *
+                 * @example Manitoba
+                 */
+                state_province: string;
+                postal_code: string;
+                /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                 *      */
+                country_code?: string;
+                /**
+                 * @description Indicates whether this is a residential address.
+                 * @default unknown
+                 * @example no
+                 */
+                address_residential_indicator: "unknown" | "yes" | "no";
+            } & {
+                /** @description Additional text about how to handle the shipment at this address.
+                 *      */
+                instructions?: string | null;
+                geolocation?: {
+                    /**
+                     * @description Enum of available type of geolocation items:
+                     *       - 'what3words' functionality allows to specify a location by providing 3 words that have been assign to the specific location see [link](https://what3words.com/business) for more details.
+                     *
+                     * @example what3words
+                     * @enum {string}
+                     */
+                    type?: "what3words";
+                    /**
+                     * @description value of the geolocation item
+                     * @example cats.with.thumbs
+                     */
+                    value?: string;
+                }[];
+            };
+            /**
+             * @description Indicates how the label was voided. This field is `null` if the label has not been voided.
+             *
+             * @example manual
+             */
+            readonly void_type?: ("refund_assist" | "manual") | null;
+            /** @description Information about the Refund Assist request for this label. This field is `null` if the label is not eligible for Refund Assist.
+             *      */
+            readonly refund_details?: {
+                /** @description The current status of the refund request */
+                readonly refund_status?: "request_scheduled" | "pending" | "approved" | "rejected" | "excluded";
+                /** @description The date and time when the refund request was submitted */
+                readonly request_date?: string;
+                /** @description The amount that was originally paid for the label */
+                readonly amount_paid?: {
+                    currency: string;
+                    /** @description The monetary amount, in the specified currency. */
+                    amount: number;
+                } | null;
+                /** @description The amount requested to be refunded */
+                readonly amount_requested?: {
+                    currency: string;
+                    /** @description The monetary amount, in the specified currency. */
+                    amount: number;
+                } | null;
+                /** @description The amount approved for refund by the carrier */
+                readonly amount_approved?: {
+                    currency: string;
+                    /** @description The monetary amount, in the specified currency. */
+                    amount: number;
+                } | null;
+                /** @description The amount that has been credited back to the account */
+                readonly amount_credited?: {
+                    currency: string;
+                    /** @description The monetary amount, in the specified currency. */
+                    amount: number;
+                } | null;
+            } | null;
+        };
         /**
          * list_manifests_response_body
          * @description A list manifests response body
@@ -26282,7 +32877,18 @@ export interface components {
          * calculate_rates_request_body
          * @description A rate shipment request body
          */
-        calculate_rates_request_body: {
+        calculate_rates_request_body: ({
+            /**
+             * @description A unique identifier for a carrier service point where the shipment will be delivered by the carrier. This will take precedence over a shipment's ship to address.
+             * @example 614940
+             */
+            ship_to_service_point_id?: string | null;
+            /**
+             * @description A unique identifier for a carrier drop off point where a merchant plans to deliver packages. This will take precedence over a shipment's ship from address.
+             * @example 614940
+             */
+            ship_from_service_point_id?: string | null;
+        } & {
             /** @description The rate options */
             rate_options?: {
                 /** @description Array of carrier ids to get rates for */
@@ -26300,7 +32906,7 @@ export interface components {
                  */
                 rate_type?: "check" | "shipment" | "quick";
             };
-        } & ({
+        }) & ({
             /** @description A string that uniquely identifies the shipment */
             shipment_id?: string;
         } | {
@@ -26627,7 +33233,7 @@ export interface components {
                  * @description The type of delivery confirmation that is required for this shipment.
                  * @default none
                  */
-                confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                 /**
                  * @description Customs information.  This is usually only needed for international shipments.
                  *
@@ -26969,6 +33575,26 @@ export interface components {
                      * @example 784515
                      */
                     certificate_number: string | null;
+                    /**
+                     * @description Indicates that the contents of the package are fragile and should be handled with care.
+                     * @default false
+                     */
+                    fragile: boolean;
+                    /**
+                     * @description Instructs the carrier to deliver the package only to the exact address provided.
+                     * @default false
+                     */
+                    "delivery-as-addressed": boolean;
+                    /**
+                     * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                     * @default false
+                     */
+                    "return-after-first-attempt": boolean;
+                    /**
+                     * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                     * @default null
+                     */
+                    regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
                 } & {
                     [key: string]: unknown;
                 };
@@ -27607,7 +34233,7 @@ export interface components {
                  * @description The type of delivery confirmation that is required for this shipment.
                  * @default none
                  */
-                confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                 /**
                  * @description Customs information.  This is usually only needed for international shipments.
                  *
@@ -27949,6 +34575,26 @@ export interface components {
                      * @example 784515
                      */
                     certificate_number: string | null;
+                    /**
+                     * @description Indicates that the contents of the package are fragile and should be handled with care.
+                     * @default false
+                     */
+                    fragile: boolean;
+                    /**
+                     * @description Instructs the carrier to deliver the package only to the exact address provided.
+                     * @default false
+                     */
+                    "delivery-as-addressed": boolean;
+                    /**
+                     * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                     * @default false
+                     */
+                    "return-after-first-attempt": boolean;
+                    /**
+                     * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                     * @default null
+                     */
+                    regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
                 } & {
                     [key: string]: unknown;
                 };
@@ -28583,7 +35229,7 @@ export interface components {
              * @description The type of delivery confirmation that is required for this shipment.
              * @default none
              */
-            confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+            confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
             /**
              * @description Customs information.  This is usually only needed for international shipments.
              *
@@ -28925,6 +35571,26 @@ export interface components {
                  * @example 784515
                  */
                 certificate_number: string | null;
+                /**
+                 * @description Indicates that the contents of the package are fragile and should be handled with care.
+                 * @default false
+                 */
+                fragile: boolean;
+                /**
+                 * @description Instructs the carrier to deliver the package only to the exact address provided.
+                 * @default false
+                 */
+                "delivery-as-addressed": boolean;
+                /**
+                 * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                 * @default false
+                 */
+                "return-after-first-attempt": boolean;
+                /**
+                 * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                 * @default null
+                 */
+                regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
             } & {
                 [key: string]: unknown;
             };
@@ -29600,7 +36266,7 @@ export interface components {
              * @description The type of delivery confirmation that is required for this shipment.
              * @default none
              */
-            confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+            confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
             /**
              * @description Customs information.  This is usually only needed for international shipments.
              *
@@ -29942,6 +36608,26 @@ export interface components {
                  * @example 784515
                  */
                 certificate_number: string | null;
+                /**
+                 * @description Indicates that the contents of the package are fragile and should be handled with care.
+                 * @default false
+                 */
+                fragile: boolean;
+                /**
+                 * @description Instructs the carrier to deliver the package only to the exact address provided.
+                 * @default false
+                 */
+                "delivery-as-addressed": boolean;
+                /**
+                 * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                 * @default false
+                 */
+                "return-after-first-attempt": boolean;
+                /**
+                 * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                 * @default null
+                 */
+                regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
             } & {
                 [key: string]: unknown;
             };
@@ -30252,7 +36938,7 @@ export interface components {
             /** @description The rates response */
             rate_response: {
                 /** @description An array of shipment rates */
-                readonly rates?: {
+                readonly rates?: ({
                     /** @description A string that uniquely identifies the rate */
                     readonly rate_id: string;
                     readonly rate_type: "check" | "shipment";
@@ -30313,8 +36999,6 @@ export interface components {
                         /** @description If applicable, contains additional data about a rate detail of a specific type, e.g. VAT */
                         rate_detail_attributes?: {
                             tax_type?: "vat";
-                            /** @description Code for a specific tax type */
-                            tax_code?: string;
                             /** @description Tax percentage, e.g. 20 for 20%, added to the shipping cost */
                             tax_percentage?: number;
                         };
@@ -30371,7 +37055,10 @@ export interface components {
                     readonly warning_messages: string[];
                     /** @description The error messages */
                     readonly error_messages: string[];
-                }[];
+                } & {
+                    /** @description Optional attributes that indicate the most profitable rates */
+                    rate_attributes?: ("best_value" | "cheapest" | "fastest")[];
+                })[];
                 /**
                  * @description An array of invalid shipment rates
                  * @default []
@@ -30437,8 +37124,6 @@ export interface components {
                         /** @description If applicable, contains additional data about a rate detail of a specific type, e.g. VAT */
                         rate_detail_attributes?: {
                             tax_type?: "vat";
-                            /** @description Code for a specific tax type */
-                            tax_code?: string;
                             /** @description Tax percentage, e.g. 20 for 20%, added to the shipping cost */
                             tax_percentage?: number;
                         };
@@ -30533,7 +37218,7 @@ export interface components {
             /** @description The rates response */
             rate_response?: {
                 /** @description An array of shipment rates */
-                readonly rates?: {
+                readonly rates?: ({
                     /** @description A string that uniquely identifies the rate */
                     readonly rate_id: string;
                     readonly rate_type: "check" | "shipment";
@@ -30594,8 +37279,6 @@ export interface components {
                         /** @description If applicable, contains additional data about a rate detail of a specific type, e.g. VAT */
                         rate_detail_attributes?: {
                             tax_type?: "vat";
-                            /** @description Code for a specific tax type */
-                            tax_code?: string;
                             /** @description Tax percentage, e.g. 20 for 20%, added to the shipping cost */
                             tax_percentage?: number;
                         };
@@ -30652,7 +37335,10 @@ export interface components {
                     readonly warning_messages: string[];
                     /** @description The error messages */
                     readonly error_messages: string[];
-                }[];
+                } & {
+                    /** @description Optional attributes that indicate the most profitable rates */
+                    rate_attributes?: ("best_value" | "cheapest" | "fastest")[];
+                })[];
                 /**
                  * @description An array of invalid shipment rates
                  * @default []
@@ -30718,8 +37404,6 @@ export interface components {
                         /** @description If applicable, contains additional data about a rate detail of a specific type, e.g. VAT */
                         rate_detail_attributes?: {
                             tax_type?: "vat";
-                            /** @description Code for a specific tax type */
-                            tax_code?: string;
                             /** @description Tax percentage, e.g. 20 for 20%, added to the shipping cost */
                             tax_percentage?: number;
                         };
@@ -30815,7 +37499,7 @@ export interface components {
          */
         rates_information: {
             /** @description An array of shipment rates */
-            readonly rates?: {
+            readonly rates?: ({
                 /** @description A string that uniquely identifies the rate */
                 readonly rate_id: string;
                 readonly rate_type: "check" | "shipment";
@@ -30876,8 +37560,6 @@ export interface components {
                     /** @description If applicable, contains additional data about a rate detail of a specific type, e.g. VAT */
                     rate_detail_attributes?: {
                         tax_type?: "vat";
-                        /** @description Code for a specific tax type */
-                        tax_code?: string;
                         /** @description Tax percentage, e.g. 20 for 20%, added to the shipping cost */
                         tax_percentage?: number;
                     };
@@ -30934,7 +37616,10 @@ export interface components {
                 readonly warning_messages: string[];
                 /** @description The error messages */
                 readonly error_messages: string[];
-            }[];
+            } & {
+                /** @description Optional attributes that indicate the most profitable rates */
+                rate_attributes?: ("best_value" | "cheapest" | "fastest")[];
+            })[];
             /**
              * @description An array of invalid shipment rates
              * @default []
@@ -31000,8 +37685,6 @@ export interface components {
                     /** @description If applicable, contains additional data about a rate detail of a specific type, e.g. VAT */
                     rate_detail_attributes?: {
                         tax_type?: "vat";
-                        /** @description Code for a specific tax type */
-                        tax_code?: string;
                         /** @description Tax percentage, e.g. 20 for 20%, added to the shipping cost */
                         tax_percentage?: number;
                     };
@@ -31155,8 +37838,6 @@ export interface components {
                 /** @description If applicable, contains additional data about a rate detail of a specific type, e.g. VAT */
                 rate_detail_attributes?: {
                     tax_type?: "vat";
-                    /** @description Code for a specific tax type */
-                    tax_code?: string;
                     /** @description Tax percentage, e.g. 20 for 20%, added to the shipping cost */
                     tax_percentage?: number;
                 };
@@ -31236,7 +37917,18 @@ export interface components {
          * compare_bulk_rates_request_body
          * @description A rate shipments request body
          */
-        compare_bulk_rates_request_body: {
+        compare_bulk_rates_request_body: ({
+            /**
+             * @description A unique identifier for a carrier service point where the shipment will be delivered by the carrier. This will take precedence over a shipment's ship to address.
+             * @example 614940
+             */
+            ship_to_service_point_id?: string | null;
+            /**
+             * @description A unique identifier for a carrier drop off point where a merchant plans to deliver packages. This will take precedence over a shipment's ship from address.
+             * @example 614940
+             */
+            ship_from_service_point_id?: string | null;
+        } & {
             /** @description The rate options */
             rate_options: {
                 /** @description Array of carrier ids to get rates for */
@@ -31254,7 +37946,7 @@ export interface components {
                  */
                 rate_type?: "check" | "shipment" | "quick";
             };
-        } & ({
+        }) & ({
             /** @description The array of shipment IDs */
             shipment_ids: string[];
         } | {
@@ -31581,7 +38273,7 @@ export interface components {
                  * @description The type of delivery confirmation that is required for this shipment.
                  * @default none
                  */
-                confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                 /**
                  * @description Customs information.  This is usually only needed for international shipments.
                  *
@@ -31923,6 +38615,26 @@ export interface components {
                      * @example 784515
                      */
                     certificate_number: string | null;
+                    /**
+                     * @description Indicates that the contents of the package are fragile and should be handled with care.
+                     * @default false
+                     */
+                    fragile: boolean;
+                    /**
+                     * @description Instructs the carrier to deliver the package only to the exact address provided.
+                     * @default false
+                     */
+                    "delivery-as-addressed": boolean;
+                    /**
+                     * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                     * @default false
+                     */
+                    "return-after-first-attempt": boolean;
+                    /**
+                     * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                     * @default null
+                     */
+                    regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
                 } & {
                     [key: string]: unknown;
                 };
@@ -32581,7 +39293,7 @@ export interface components {
                  * @description The type of delivery confirmation that is required for this shipment.
                  * @default none
                  */
-                confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                 /**
                  * @description Customs information.  This is usually only needed for international shipments.
                  *
@@ -32923,6 +39635,26 @@ export interface components {
                      * @example 784515
                      */
                     certificate_number: string | null;
+                    /**
+                     * @description Indicates that the contents of the package are fragile and should be handled with care.
+                     * @default false
+                     */
+                    fragile: boolean;
+                    /**
+                     * @description Instructs the carrier to deliver the package only to the exact address provided.
+                     * @default false
+                     */
+                    "delivery-as-addressed": boolean;
+                    /**
+                     * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                     * @default false
+                     */
+                    "return-after-first-attempt": boolean;
+                    /**
+                     * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                     * @default null
+                     */
+                    regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
                 } & {
                     [key: string]: unknown;
                 };
@@ -33354,7 +40086,7 @@ export interface components {
                  */
                 height: number;
             };
-            confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+            confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
             address_residential_indicator?: "unknown" | "yes" | "no";
             /** @description ship date */
             ship_date: string;
@@ -33433,7 +40165,7 @@ export interface components {
                  */
                 height: number;
             };
-            confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+            confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
             address_residential_indicator?: "unknown" | "yes" | "no";
             /** @description ship date */
             ship_date?: string;
@@ -33526,6 +40258,8 @@ export interface components {
             readonly warning_messages: string[];
             /** @description The error messages */
             readonly error_messages: string[];
+            /** @description Optional attributes that indicate the most profitable rates */
+            rate_attributes?: ("best_value" | "cheapest" | "fastest")[];
         }[];
         /**
          * rate_estimate
@@ -33615,6 +40349,8 @@ export interface components {
             readonly warning_messages: string[];
             /** @description The error messages */
             readonly error_messages: string[];
+            /** @description Optional attributes that indicate the most profitable rates */
+            rate_attributes?: ("best_value" | "cheapest" | "fastest")[];
         };
         /**
          * get_rate_by_id_response_body
@@ -33681,8 +40417,6 @@ export interface components {
                 /** @description If applicable, contains additional data about a rate detail of a specific type, e.g. VAT */
                 rate_detail_attributes?: {
                     tax_type?: "vat";
-                    /** @description Code for a specific tax type */
-                    tax_code?: string;
                     /** @description Tax percentage, e.g. 20 for 20%, added to the shipping cost */
                     tax_percentage?: number;
                 };
@@ -34589,7 +41323,7 @@ export interface components {
                  * @description The type of delivery confirmation that is required for this shipment.
                  * @default none
                  */
-                confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                 /**
                  * @description Customs information.  This is usually only needed for international shipments.
                  *
@@ -34931,6 +41665,26 @@ export interface components {
                      * @example 784515
                      */
                     certificate_number: string | null;
+                    /**
+                     * @description Indicates that the contents of the package are fragile and should be handled with care.
+                     * @default false
+                     */
+                    fragile: boolean;
+                    /**
+                     * @description Instructs the carrier to deliver the package only to the exact address provided.
+                     * @default false
+                     */
+                    "delivery-as-addressed": boolean;
+                    /**
+                     * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                     * @default false
+                     */
+                    "return-after-first-attempt": boolean;
+                    /**
+                     * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                     * @default null
+                     */
+                    regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
                 } & {
                     [key: string]: unknown;
                 };
@@ -35614,7 +42368,7 @@ export interface components {
                  * @description The type of delivery confirmation that is required for this shipment.
                  * @default none
                  */
-                confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                 /**
                  * @description Customs information.  This is usually only needed for international shipments.
                  *
@@ -35956,6 +42710,26 @@ export interface components {
                      * @example 784515
                      */
                     certificate_number: string | null;
+                    /**
+                     * @description Indicates that the contents of the package are fragile and should be handled with care.
+                     * @default false
+                     */
+                    fragile: boolean;
+                    /**
+                     * @description Instructs the carrier to deliver the package only to the exact address provided.
+                     * @default false
+                     */
+                    "delivery-as-addressed": boolean;
+                    /**
+                     * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                     * @default false
+                     */
+                    "return-after-first-attempt": boolean;
+                    /**
+                     * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                     * @default null
+                     */
+                    regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
                 } & {
                     [key: string]: unknown;
                 };
@@ -36594,7 +43368,7 @@ export interface components {
                  * @description The type of delivery confirmation that is required for this shipment.
                  * @default none
                  */
-                confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                 /**
                  * @description Customs information.  This is usually only needed for international shipments.
                  *
@@ -36936,6 +43710,26 @@ export interface components {
                      * @example 784515
                      */
                     certificate_number: string | null;
+                    /**
+                     * @description Indicates that the contents of the package are fragile and should be handled with care.
+                     * @default false
+                     */
+                    fragile: boolean;
+                    /**
+                     * @description Instructs the carrier to deliver the package only to the exact address provided.
+                     * @default false
+                     */
+                    "delivery-as-addressed": boolean;
+                    /**
+                     * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                     * @default false
+                     */
+                    "return-after-first-attempt": boolean;
+                    /**
+                     * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                     * @default null
+                     */
+                    regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
                 } & {
                     [key: string]: unknown;
                 };
@@ -37723,7 +44517,7 @@ export interface components {
              * @description The type of delivery confirmation that is required for this shipment.
              * @default none
              */
-            confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+            confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
             /**
              * @description Customs information.  This is usually only needed for international shipments.
              *
@@ -38065,6 +44859,26 @@ export interface components {
                  * @example 784515
                  */
                 certificate_number: string | null;
+                /**
+                 * @description Indicates that the contents of the package are fragile and should be handled with care.
+                 * @default false
+                 */
+                fragile: boolean;
+                /**
+                 * @description Instructs the carrier to deliver the package only to the exact address provided.
+                 * @default false
+                 */
+                "delivery-as-addressed": boolean;
+                /**
+                 * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                 * @default false
+                 */
+                "return-after-first-attempt": boolean;
+                /**
+                 * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                 * @default null
+                 */
+                regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
             } & {
                 [key: string]: unknown;
             };
@@ -39009,7 +45823,7 @@ export interface components {
              * @description The type of delivery confirmation that is required for this shipment.
              * @default none
              */
-            confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+            confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
             /**
              * @description Customs information.  This is usually only needed for international shipments.
              *
@@ -39351,6 +46165,26 @@ export interface components {
                  * @example 784515
                  */
                 certificate_number: string | null;
+                /**
+                 * @description Indicates that the contents of the package are fragile and should be handled with care.
+                 * @default false
+                 */
+                fragile: boolean;
+                /**
+                 * @description Instructs the carrier to deliver the package only to the exact address provided.
+                 * @default false
+                 */
+                "delivery-as-addressed": boolean;
+                /**
+                 * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                 * @default false
+                 */
+                "return-after-first-attempt": boolean;
+                /**
+                 * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                 * @default null
+                 */
+                regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
             } & {
                 [key: string]: unknown;
             };
@@ -39991,7 +46825,7 @@ export interface components {
                  * @description The type of delivery confirmation that is required for this shipment.
                  * @default none
                  */
-                confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                 /**
                  * @description Customs information.  This is usually only needed for international shipments.
                  *
@@ -40333,6 +47167,26 @@ export interface components {
                      * @example 784515
                      */
                     certificate_number: string | null;
+                    /**
+                     * @description Indicates that the contents of the package are fragile and should be handled with care.
+                     * @default false
+                     */
+                    fragile: boolean;
+                    /**
+                     * @description Instructs the carrier to deliver the package only to the exact address provided.
+                     * @default false
+                     */
+                    "delivery-as-addressed": boolean;
+                    /**
+                     * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                     * @default false
+                     */
+                    "return-after-first-attempt": boolean;
+                    /**
+                     * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                     * @default null
+                     */
+                    regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
                 } & {
                     [key: string]: unknown;
                 };
@@ -40976,7 +47830,7 @@ export interface components {
                  * @description The type of delivery confirmation that is required for this shipment.
                  * @default none
                  */
-                confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                 /**
                  * @description Customs information.  This is usually only needed for international shipments.
                  *
@@ -41318,6 +48172,26 @@ export interface components {
                      * @example 784515
                      */
                     certificate_number: string | null;
+                    /**
+                     * @description Indicates that the contents of the package are fragile and should be handled with care.
+                     * @default false
+                     */
+                    fragile: boolean;
+                    /**
+                     * @description Instructs the carrier to deliver the package only to the exact address provided.
+                     * @default false
+                     */
+                    "delivery-as-addressed": boolean;
+                    /**
+                     * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                     * @default false
+                     */
+                    "return-after-first-attempt": boolean;
+                    /**
+                     * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                     * @default null
+                     */
+                    regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
                 } & {
                     [key: string]: unknown;
                 };
@@ -41979,7 +48853,7 @@ export interface components {
              * @description The type of delivery confirmation that is required for this shipment.
              * @default none
              */
-            confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+            confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
             /**
              * @description Customs information.  This is usually only needed for international shipments.
              *
@@ -42321,6 +49195,26 @@ export interface components {
                  * @example 784515
                  */
                 certificate_number: string | null;
+                /**
+                 * @description Indicates that the contents of the package are fragile and should be handled with care.
+                 * @default false
+                 */
+                fragile: boolean;
+                /**
+                 * @description Instructs the carrier to deliver the package only to the exact address provided.
+                 * @default false
+                 */
+                "delivery-as-addressed": boolean;
+                /**
+                 * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                 * @default false
+                 */
+                "return-after-first-attempt": boolean;
+                /**
+                 * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                 * @default null
+                 */
+                regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
             } & {
                 [key: string]: unknown;
             };
@@ -42951,7 +49845,7 @@ export interface components {
              * @description The type of delivery confirmation that is required for this shipment.
              * @default none
              */
-            confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+            confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
             /**
              * @description Customs information.  This is usually only needed for international shipments.
              *
@@ -43293,6 +50187,26 @@ export interface components {
                  * @example 784515
                  */
                 certificate_number: string | null;
+                /**
+                 * @description Indicates that the contents of the package are fragile and should be handled with care.
+                 * @default false
+                 */
+                fragile: boolean;
+                /**
+                 * @description Instructs the carrier to deliver the package only to the exact address provided.
+                 * @default false
+                 */
+                "delivery-as-addressed": boolean;
+                /**
+                 * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                 * @default false
+                 */
+                "return-after-first-attempt": boolean;
+                /**
+                 * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                 * @default null
+                 */
+                regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
             } & {
                 [key: string]: unknown;
             };
@@ -43931,7 +50845,7 @@ export interface components {
              * @description The type of delivery confirmation that is required for this shipment.
              * @default none
              */
-            confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+            confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
             /**
              * @description Customs information.  This is usually only needed for international shipments.
              *
@@ -44273,6 +51187,26 @@ export interface components {
                  * @example 784515
                  */
                 certificate_number: string | null;
+                /**
+                 * @description Indicates that the contents of the package are fragile and should be handled with care.
+                 * @default false
+                 */
+                fragile: boolean;
+                /**
+                 * @description Instructs the carrier to deliver the package only to the exact address provided.
+                 * @default false
+                 */
+                "delivery-as-addressed": boolean;
+                /**
+                 * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                 * @default false
+                 */
+                "return-after-first-attempt": boolean;
+                /**
+                 * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                 * @default null
+                 */
+                regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
             } & {
                 [key: string]: unknown;
             };
@@ -44742,7 +51676,7 @@ export interface components {
          */
         list_shipment_rates_response_body: {
             /** @description An array of shipment rates */
-            readonly rates: {
+            readonly rates: ({
                 /** @description A string that uniquely identifies the rate */
                 readonly rate_id: string;
                 readonly rate_type: "check" | "shipment";
@@ -44803,8 +51737,6 @@ export interface components {
                     /** @description If applicable, contains additional data about a rate detail of a specific type, e.g. VAT */
                     rate_detail_attributes?: {
                         tax_type?: "vat";
-                        /** @description Code for a specific tax type */
-                        tax_code?: string;
                         /** @description Tax percentage, e.g. 20 for 20%, added to the shipping cost */
                         tax_percentage?: number;
                     };
@@ -44861,7 +51793,10 @@ export interface components {
                 readonly warning_messages: string[];
                 /** @description The error messages */
                 readonly error_messages: string[];
-            }[];
+            } & {
+                /** @description Optional attributes that indicate the most profitable rates */
+                rate_attributes?: ("best_value" | "cheapest" | "fastest")[];
+            })[];
             /**
              * @description An array of invalid shipment rates
              * @default []
@@ -44927,8 +51862,6 @@ export interface components {
                     /** @description If applicable, contains additional data about a rate detail of a specific type, e.g. VAT */
                     rate_detail_attributes?: {
                         tax_type?: "vat";
-                        /** @description Code for a specific tax type */
-                        tax_code?: string;
                         /** @description Tax percentage, e.g. 20 for 20%, added to the shipping cost */
                         tax_percentage?: number;
                     };
@@ -48323,7 +55256,7 @@ export interface operations {
                          * @description The display format that the label should be shown in.
                          * @default label
                          */
-                        display_scheme?: "label" | "qr_code" | "label_and_qr_code" | "paperless" | "label_and_paperless";
+                        display_scheme?: "label" | "paperless" | "label_and_paperless";
                     };
                 };
             };
@@ -49829,7 +56762,7 @@ export interface operations {
                      * @description The display format that the label should be shown in.
                      * @default label
                      */
-                    display_scheme?: "label" | "qr_code" | "label_and_qr_code" | "paperless" | "label_and_paperless";
+                    display_scheme?: "label" | "paperless" | "label_and_paperless";
                 };
             };
         };
@@ -50146,6 +57079,8 @@ export interface operations {
                             readonly primary?: boolean;
                             /** @description Carrier supports multiple packages per shipment */
                             readonly has_multi_package_supporting_services?: boolean;
+                            /** @description The carrier has services that support return shipments. */
+                            readonly allows_returns?: boolean;
                             /** @description The carrier supports adding custom label messages to an order. */
                             readonly supports_label_messages?: boolean;
                             /** @description The carrier is disabled by the current ShipEngine account's billing plan. */
@@ -50171,6 +57106,8 @@ export interface operations {
                                 readonly international?: boolean;
                                 /** @description Carrier supports multiple packages per shipment */
                                 readonly is_multi_package_supported?: boolean;
+                                /** @description This service supports return shipments. */
+                                readonly is_return_supported?: boolean;
                             }[];
                             /** @description A list of package types that are supported by the carrier */
                             readonly packages?: {
@@ -50220,6 +57157,15 @@ export interface operations {
                                 /** @description Description of option */
                                 readonly description?: string;
                             }[];
+                            /** @description The carrier provides rates for the shipment. */
+                            readonly send_rates?: boolean;
+                            /** @description The carrier supports user-managed rates for shipments. */
+                            readonly supports_user_managed_rates?: boolean;
+                            /**
+                             * @description The current connection status of the carrier. Indicates whether the carrier connection is pending approval or has been approved for use.
+                             * @enum {string}
+                             */
+                            readonly connection_status?: "pending_approval" | "approved";
                         }[];
                     } & {
                         /** @description A UUID that uniquely identifies the request id.
@@ -50292,6 +57238,8 @@ export interface operations {
                             readonly primary?: boolean;
                             /** @description Carrier supports multiple packages per shipment */
                             readonly has_multi_package_supporting_services?: boolean;
+                            /** @description The carrier has services that support return shipments. */
+                            readonly allows_returns?: boolean;
                             /** @description The carrier supports adding custom label messages to an order. */
                             readonly supports_label_messages?: boolean;
                             /** @description The carrier is disabled by the current ShipEngine account's billing plan. */
@@ -50317,6 +57265,8 @@ export interface operations {
                                 readonly international?: boolean;
                                 /** @description Carrier supports multiple packages per shipment */
                                 readonly is_multi_package_supported?: boolean;
+                                /** @description This service supports return shipments. */
+                                readonly is_return_supported?: boolean;
                             }[];
                             /** @description A list of package types that are supported by the carrier */
                             readonly packages?: {
@@ -50366,6 +57316,15 @@ export interface operations {
                                 /** @description Description of option */
                                 readonly description?: string;
                             }[];
+                            /** @description The carrier provides rates for the shipment. */
+                            readonly send_rates?: boolean;
+                            /** @description The carrier supports user-managed rates for shipments. */
+                            readonly supports_user_managed_rates?: boolean;
+                            /**
+                             * @description The current connection status of the carrier. Indicates whether the carrier connection is pending approval or has been approved for use.
+                             * @enum {string}
+                             */
+                            readonly connection_status?: "pending_approval" | "approved";
                         }[];
                     } & {
                         /** @description A UUID that uniquely identifies the request id.
@@ -50561,6 +57520,8 @@ export interface operations {
                         readonly primary?: boolean;
                         /** @description Carrier supports multiple packages per shipment */
                         readonly has_multi_package_supporting_services?: boolean;
+                        /** @description The carrier has services that support return shipments. */
+                        readonly allows_returns?: boolean;
                         /** @description The carrier supports adding custom label messages to an order. */
                         readonly supports_label_messages?: boolean;
                         /** @description The carrier is disabled by the current ShipEngine account's billing plan. */
@@ -50586,6 +57547,8 @@ export interface operations {
                             readonly international?: boolean;
                             /** @description Carrier supports multiple packages per shipment */
                             readonly is_multi_package_supported?: boolean;
+                            /** @description This service supports return shipments. */
+                            readonly is_return_supported?: boolean;
                         }[];
                         /** @description A list of package types that are supported by the carrier */
                         readonly packages?: {
@@ -50635,6 +57598,15 @@ export interface operations {
                             /** @description Description of option */
                             readonly description?: string;
                         }[];
+                        /** @description The carrier provides rates for the shipment. */
+                        readonly send_rates?: boolean;
+                        /** @description The carrier supports user-managed rates for shipments. */
+                        readonly supports_user_managed_rates?: boolean;
+                        /**
+                         * @description The current connection status of the carrier. Indicates whether the carrier connection is pending approval or has been approved for use.
+                         * @enum {string}
+                         */
+                        readonly connection_status?: "pending_approval" | "approved";
                     };
                 };
             };
@@ -51393,6 +58365,8 @@ export interface operations {
                             readonly international?: boolean;
                             /** @description Carrier supports multiple packages per shipment */
                             readonly is_multi_package_supported?: boolean;
+                            /** @description This service supports return shipments. */
+                            readonly is_return_supported?: boolean;
                         }[];
                     };
                 };
@@ -52985,6 +59959,17 @@ export interface operations {
                              */
                             value: string;
                         }[];
+                        /**
+                         * @description The name of the webhook
+                         * @example My Webhook
+                         */
+                        name?: string;
+                        /**
+                         * Format: int32
+                         * @description Store ID
+                         * @example 123456
+                         */
+                        store_id?: number;
                     }[];
                 };
             };
@@ -53094,6 +60079,17 @@ export interface operations {
                          */
                         value: string;
                     }[];
+                    /**
+                     * @description The name of the webhook
+                     * @example My New Webhook
+                     */
+                    name?: string;
+                    /**
+                     * Format: int32
+                     * @description Store ID
+                     * @example 123456
+                     */
+                    store_id?: number;
                 };
             };
         };
@@ -53128,6 +60124,17 @@ export interface operations {
                              */
                             value: string;
                         }[];
+                        /**
+                         * @description The name of the webhook
+                         * @example My Webhook
+                         */
+                        name?: string;
+                        /**
+                         * Format: int32
+                         * @description Store ID
+                         * @example 123456
+                         */
+                        store_id?: number;
                     };
                 };
             };
@@ -53283,6 +60290,17 @@ export interface operations {
                              */
                             value: string;
                         }[];
+                        /**
+                         * @description The name of the webhook
+                         * @example My Webhook
+                         */
+                        name?: string;
+                        /**
+                         * Format: int32
+                         * @description Store ID
+                         * @example 123456
+                         */
+                        store_id?: number;
                     };
                 };
             };
@@ -53429,6 +60447,17 @@ export interface operations {
                          */
                         value: string;
                     }[];
+                    /**
+                     * @description The name of the webhook
+                     * @example My Updated Webhook
+                     */
+                    name?: string;
+                    /**
+                     * Format: int32
+                     * @description Store ID
+                     * @example 123456
+                     */
+                    store_id?: number;
                 };
             };
         };
@@ -53923,6 +60952,11 @@ export interface operations {
                  */
                 created_at_end?: string;
                 /**
+                 * @description Only return labels with specific refund status/es.
+                 * @example pending,approved
+                 */
+                refund_status?: ("request_scheduled" | "pending" | "approved" | "rejected" | "excluded")[];
+                /**
                  * @description Return a specific page of results. Defaults to the first page. If set to a number that's greater than the number of pages of results, an empty page is returned.
                  *
                  * @example 2
@@ -53936,7 +60970,7 @@ export interface operations {
                 /** @description Controls the sort order of the query. */
                 sort_dir?: "asc" | "desc";
                 /** @description Controls which field the query is sorted by. */
-                sort_by?: "modified_at" | "created_at";
+                sort_by?: "modified_at" | "created_at" | "voided_at";
             };
             header?: never;
             path?: never;
@@ -53962,6 +60996,11 @@ export interface operations {
                             /** @description The shipment that this label is for.  ShipEngine can create a shipment for you automatically when you [create a label](https://www.shipengine.com/docs/labels/create-a-label/), or you can [create your own shipment](https://www.shipengine.com/docs/shipping/create-a-shipment/) and then [use it to print a label](https://www.shipengine.com/docs/labels/create-from-shipment/)
                              *      */
                             readonly shipment_id?: string;
+                            /** @description A unique user-defined key to identify a shipment.  This can be used to retrieve the shipment.
+                             *      */
+                            readonly external_shipment_id?: string | null;
+                            /** @description ID that the Order Source assigned */
+                            readonly external_order_id?: string | null;
                             /** @description The shipment information used to generate the label */
                             shipment?: {
                                 /** @description A string that uniquely identifies the shipment */
@@ -54282,7 +61321,7 @@ export interface operations {
                                  * @description The type of delivery confirmation that is required for this shipment.
                                  * @default none
                                  */
-                                confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                                confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                                 /**
                                  * @description Customs information.  This is usually only needed for international shipments.
                                  *
@@ -54624,6 +61663,26 @@ export interface operations {
                                      * @example 784515
                                      */
                                     certificate_number: string | null;
+                                    /**
+                                     * @description Indicates that the contents of the package are fragile and should be handled with care.
+                                     * @default false
+                                     */
+                                    fragile: boolean;
+                                    /**
+                                     * @description Instructs the carrier to deliver the package only to the exact address provided.
+                                     * @default false
+                                     */
+                                    "delivery-as-addressed": boolean;
+                                    /**
+                                     * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                                     * @default false
+                                     */
+                                    "return-after-first-attempt": boolean;
+                                    /**
+                                     * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                                     * @default null
+                                     */
+                                    regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
                                 } & {
                                     [key: string]: unknown;
                                 };
@@ -54976,8 +62035,6 @@ export interface operations {
                                 /** @description If applicable, contains additional data about a rate detail of a specific type, e.g. VAT */
                                 rate_detail_attributes?: {
                                     tax_type?: "vat";
-                                    /** @description Code for a specific tax type */
-                                    tax_code?: string;
                                     /** @description Tax percentage, e.g. 20 for 20%, added to the shipping cost */
                                     tax_percentage?: number;
                                 };
@@ -55043,7 +62100,7 @@ export interface operations {
                              * @description The display format that the label should be shown in.
                              * @default label
                              */
-                            display_scheme: "label" | "qr_code" | "label_and_qr_code" | "paperless" | "label_and_paperless";
+                            display_scheme: "label" | "paperless" | "label_and_paperless";
                             /**
                              * @description The layout (size) that you want the label to be in.  The `label_format` determines which sizes are allowed.  `4x6` is supported for all label formats, whereas `letter` (8.5" x 11") is only supported for `pdf` format.
                              *
@@ -55061,7 +62118,7 @@ export interface operations {
                             /** @description The current status of the package, such as `in_transit` or `delivered` */
                             readonly tracking_status?: "unknown" | "in_transit" | "error" | "delivered";
                             /** @description The type of delivery confirmation that is required for this shipment. */
-                            readonly confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                            readonly confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                             readonly label_download?: {
                                 /** @description The URL of the linked resource, if any */
                                 href?: string;
@@ -55077,6 +62134,13 @@ export interface operations {
                             readonly form_download?: {
                                 /** @description The URL of the linked resource, if any */
                                 href: string;
+                                /** @description The type of resource, or the type of relationship to the parent resource */
+                                type?: string;
+                            } | null;
+                            /** @description The QR code download for the package */
+                            readonly qr_code_download?: {
+                                /** @description The URL of the linked resource, if any */
+                                href?: string;
                                 /** @description The type of resource, or the type of relationship to the parent resource */
                                 type?: string;
                             } | null;
@@ -55284,6 +62348,129 @@ export interface operations {
                              * @example https://www.fedex.com/fedextrack/?action=track&trackingnumber=1234
                              */
                             readonly tracking_url?: string | null;
+                            /** @description The recipient's mailing address */
+                            readonly ship_to?: {
+                                /**
+                                 * @description The name of a contact person at this address.  This field may be set instead of - or in addition to - the `company_name` field.
+                                 *
+                                 * @example John Doe
+                                 */
+                                name: string;
+                                /**
+                                 * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                                 *
+                                 * @example +1 204-253-9411 ext. 123
+                                 */
+                                phone?: string;
+                                /**
+                                 * @description Email for the address owner.
+                                 *
+                                 * @example example@example.com
+                                 */
+                                email?: string | null;
+                                /**
+                                 * @description If this is a business address, then the company name should be specified here.
+                                 *
+                                 * @example The Home Depot
+                                 */
+                                company_name?: string | null;
+                                /**
+                                 * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                                 *
+                                 * @example 1999 Bishop Grandin Blvd.
+                                 */
+                                address_line1: string;
+                                /**
+                                 * @description The second line of the street address.  For some addresses, this line may not be needed.
+                                 *
+                                 * @example Unit 408
+                                 */
+                                address_line2?: string | null;
+                                /**
+                                 * @description The third line of the street address.  For some addresses, this line may not be needed.
+                                 *
+                                 * @example Building #7
+                                 */
+                                address_line3?: string | null;
+                                /**
+                                 * @description The name of the city or locality
+                                 * @example Winnipeg
+                                 */
+                                city_locality: string;
+                                /**
+                                 * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                                 *
+                                 * @example Manitoba
+                                 */
+                                state_province: string;
+                                postal_code: string;
+                                /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                                 *      */
+                                country_code?: string;
+                                /**
+                                 * @description Indicates whether this is a residential address.
+                                 * @default unknown
+                                 * @example no
+                                 */
+                                address_residential_indicator: "unknown" | "yes" | "no";
+                            } & {
+                                /** @description Additional text about how to handle the shipment at this address.
+                                 *      */
+                                instructions?: string | null;
+                                geolocation?: {
+                                    /**
+                                     * @description Enum of available type of geolocation items:
+                                     *       - 'what3words' functionality allows to specify a location by providing 3 words that have been assign to the specific location see [link](https://what3words.com/business) for more details.
+                                     *
+                                     * @example what3words
+                                     * @enum {string}
+                                     */
+                                    type?: "what3words";
+                                    /**
+                                     * @description value of the geolocation item
+                                     * @example cats.with.thumbs
+                                     */
+                                    value?: string;
+                                }[];
+                            };
+                            /**
+                             * @description Indicates how the label was voided. This field is `null` if the label has not been voided.
+                             *
+                             * @example manual
+                             */
+                            readonly void_type?: ("refund_assist" | "manual") | null;
+                            /** @description Information about the Refund Assist request for this label. This field is `null` if the label is not eligible for Refund Assist.
+                             *      */
+                            readonly refund_details?: {
+                                /** @description The current status of the refund request */
+                                readonly refund_status?: "request_scheduled" | "pending" | "approved" | "rejected" | "excluded";
+                                /** @description The date and time when the refund request was submitted */
+                                readonly request_date?: string;
+                                /** @description The amount that was originally paid for the label */
+                                readonly amount_paid?: {
+                                    currency: string;
+                                    /** @description The monetary amount, in the specified currency. */
+                                    amount: number;
+                                } | null;
+                                /** @description The amount requested to be refunded */
+                                readonly amount_requested?: {
+                                    currency: string;
+                                    /** @description The monetary amount, in the specified currency. */
+                                    amount: number;
+                                } | null;
+                                /** @description The amount approved for refund by the carrier */
+                                readonly amount_approved?: {
+                                    currency: string;
+                                    /** @description The monetary amount, in the specified currency. */
+                                    amount: number;
+                                } | null;
+                                /** @description The amount that has been credited back to the account */
+                                readonly amount_credited?: {
+                                    currency: string;
+                                    /** @description The monetary amount, in the specified currency. */
+                                    amount: number;
+                                } | null;
+                            } | null;
                         }[];
                     } & ({
                         /**
@@ -55745,7 +62932,7 @@ export interface operations {
                          * @description The type of delivery confirmation that is required for this shipment.
                          * @default none
                          */
-                        confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                        confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                         /**
                          * @description Customs information.  This is usually only needed for international shipments.
                          *
@@ -56087,6 +63274,26 @@ export interface operations {
                              * @example 784515
                              */
                             certificate_number?: string | null;
+                            /**
+                             * @description Indicates that the contents of the package are fragile and should be handled with care.
+                             * @default false
+                             */
+                            fragile?: boolean;
+                            /**
+                             * @description Instructs the carrier to deliver the package only to the exact address provided.
+                             * @default false
+                             */
+                            "delivery-as-addressed"?: boolean;
+                            /**
+                             * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                             * @default false
+                             */
+                            "return-after-first-attempt"?: boolean;
+                            /**
+                             * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                             * @default null
+                             */
+                            regulated_content_type?: ("day_old_poultry" | "other_live_animal") | null;
                         } & {
                             [key: string]: unknown;
                         };
@@ -56390,7 +63597,7 @@ export interface operations {
                      * @description The display format that the label should be shown in.
                      * @default label
                      */
-                    display_scheme?: "label" | "qr_code" | "label_and_qr_code" | "paperless" | "label_and_paperless";
+                    display_scheme?: "label" | "paperless" | "label_and_paperless";
                     /**
                      * @description The layout (size) that you want the label to be in.  The `label_format` determines which sizes are allowed.  `4x6` is supported for all label formats, whereas `letter` (8.5" x 11") is only supported for `pdf` format.
                      *
@@ -56417,6 +63624,11 @@ export interface operations {
                         /** @description The shipment that this label is for.  ShipEngine can create a shipment for you automatically when you [create a label](https://www.shipengine.com/docs/labels/create-a-label/), or you can [create your own shipment](https://www.shipengine.com/docs/shipping/create-a-shipment/) and then [use it to print a label](https://www.shipengine.com/docs/labels/create-from-shipment/)
                          *      */
                         readonly shipment_id: string;
+                        /** @description A unique user-defined key to identify a shipment.  This can be used to retrieve the shipment.
+                         *      */
+                        readonly external_shipment_id: string | null;
+                        /** @description ID that the Order Source assigned */
+                        readonly external_order_id: string | null;
                         /** @description The shipment information used to generate the label */
                         shipment?: {
                             /** @description A string that uniquely identifies the shipment */
@@ -56737,7 +63949,7 @@ export interface operations {
                              * @description The type of delivery confirmation that is required for this shipment.
                              * @default none
                              */
-                            confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                            confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                             /**
                              * @description Customs information.  This is usually only needed for international shipments.
                              *
@@ -57079,6 +64291,26 @@ export interface operations {
                                  * @example 784515
                                  */
                                 certificate_number: string | null;
+                                /**
+                                 * @description Indicates that the contents of the package are fragile and should be handled with care.
+                                 * @default false
+                                 */
+                                fragile: boolean;
+                                /**
+                                 * @description Instructs the carrier to deliver the package only to the exact address provided.
+                                 * @default false
+                                 */
+                                "delivery-as-addressed": boolean;
+                                /**
+                                 * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                                 * @default false
+                                 */
+                                "return-after-first-attempt": boolean;
+                                /**
+                                 * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                                 * @default null
+                                 */
+                                regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
                             } & {
                                 [key: string]: unknown;
                             };
@@ -57431,8 +64663,6 @@ export interface operations {
                             /** @description If applicable, contains additional data about a rate detail of a specific type, e.g. VAT */
                             rate_detail_attributes?: {
                                 tax_type?: "vat";
-                                /** @description Code for a specific tax type */
-                                tax_code?: string;
                                 /** @description Tax percentage, e.g. 20 for 20%, added to the shipping cost */
                                 tax_percentage?: number;
                             };
@@ -57498,7 +64728,7 @@ export interface operations {
                          * @description The display format that the label should be shown in.
                          * @default label
                          */
-                        display_scheme: "label" | "qr_code" | "label_and_qr_code" | "paperless" | "label_and_paperless";
+                        display_scheme: "label" | "paperless" | "label_and_paperless";
                         /**
                          * @description The layout (size) that you want the label to be in.  The `label_format` determines which sizes are allowed.  `4x6` is supported for all label formats, whereas `letter` (8.5" x 11") is only supported for `pdf` format.
                          *
@@ -57516,7 +64746,7 @@ export interface operations {
                         /** @description The current status of the package, such as `in_transit` or `delivered` */
                         readonly tracking_status: "unknown" | "in_transit" | "error" | "delivered";
                         /** @description The type of delivery confirmation that is required for this shipment. */
-                        readonly confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                        readonly confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                         readonly label_download: {
                             /** @description The URL of the linked resource, if any */
                             href?: string;
@@ -57532,6 +64762,13 @@ export interface operations {
                         readonly form_download: {
                             /** @description The URL of the linked resource, if any */
                             href: string;
+                            /** @description The type of resource, or the type of relationship to the parent resource */
+                            type?: string;
+                        } | null;
+                        /** @description The QR code download for the package */
+                        readonly qr_code_download: {
+                            /** @description The URL of the linked resource, if any */
+                            href?: string;
                             /** @description The type of resource, or the type of relationship to the parent resource */
                             type?: string;
                         } | null;
@@ -57739,6 +64976,129 @@ export interface operations {
                          * @example https://www.fedex.com/fedextrack/?action=track&trackingnumber=1234
                          */
                         readonly tracking_url?: string | null;
+                        /** @description The recipient's mailing address */
+                        readonly ship_to: {
+                            /**
+                             * @description The name of a contact person at this address.  This field may be set instead of - or in addition to - the `company_name` field.
+                             *
+                             * @example John Doe
+                             */
+                            name: string;
+                            /**
+                             * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                             *
+                             * @example +1 204-253-9411 ext. 123
+                             */
+                            phone?: string;
+                            /**
+                             * @description Email for the address owner.
+                             *
+                             * @example example@example.com
+                             */
+                            email?: string | null;
+                            /**
+                             * @description If this is a business address, then the company name should be specified here.
+                             *
+                             * @example The Home Depot
+                             */
+                            company_name?: string | null;
+                            /**
+                             * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                             *
+                             * @example 1999 Bishop Grandin Blvd.
+                             */
+                            address_line1: string;
+                            /**
+                             * @description The second line of the street address.  For some addresses, this line may not be needed.
+                             *
+                             * @example Unit 408
+                             */
+                            address_line2?: string | null;
+                            /**
+                             * @description The third line of the street address.  For some addresses, this line may not be needed.
+                             *
+                             * @example Building #7
+                             */
+                            address_line3?: string | null;
+                            /**
+                             * @description The name of the city or locality
+                             * @example Winnipeg
+                             */
+                            city_locality: string;
+                            /**
+                             * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                             *
+                             * @example Manitoba
+                             */
+                            state_province: string;
+                            postal_code: string;
+                            /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                             *      */
+                            country_code?: string;
+                            /**
+                             * @description Indicates whether this is a residential address.
+                             * @default unknown
+                             * @example no
+                             */
+                            address_residential_indicator: "unknown" | "yes" | "no";
+                        } & {
+                            /** @description Additional text about how to handle the shipment at this address.
+                             *      */
+                            instructions?: string | null;
+                            geolocation?: {
+                                /**
+                                 * @description Enum of available type of geolocation items:
+                                 *       - 'what3words' functionality allows to specify a location by providing 3 words that have been assign to the specific location see [link](https://what3words.com/business) for more details.
+                                 *
+                                 * @example what3words
+                                 * @enum {string}
+                                 */
+                                type?: "what3words";
+                                /**
+                                 * @description value of the geolocation item
+                                 * @example cats.with.thumbs
+                                 */
+                                value?: string;
+                            }[];
+                        };
+                        /**
+                         * @description Indicates how the label was voided. This field is `null` if the label has not been voided.
+                         *
+                         * @example manual
+                         */
+                        readonly void_type?: ("refund_assist" | "manual") | null;
+                        /** @description Information about the Refund Assist request for this label. This field is `null` if the label is not eligible for Refund Assist.
+                         *      */
+                        readonly refund_details?: {
+                            /** @description The current status of the refund request */
+                            readonly refund_status?: "request_scheduled" | "pending" | "approved" | "rejected" | "excluded";
+                            /** @description The date and time when the refund request was submitted */
+                            readonly request_date?: string;
+                            /** @description The amount that was originally paid for the label */
+                            readonly amount_paid?: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            } | null;
+                            /** @description The amount requested to be refunded */
+                            readonly amount_requested?: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            } | null;
+                            /** @description The amount approved for refund by the carrier */
+                            readonly amount_approved?: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            } | null;
+                            /** @description The amount that has been credited back to the account */
+                            readonly amount_credited?: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            } | null;
+                        } | null;
                     };
                 };
             };
@@ -57881,6 +65241,11 @@ export interface operations {
                         /** @description The shipment that this label is for.  ShipEngine can create a shipment for you automatically when you [create a label](https://www.shipengine.com/docs/labels/create-a-label/), or you can [create your own shipment](https://www.shipengine.com/docs/shipping/create-a-shipment/) and then [use it to print a label](https://www.shipengine.com/docs/labels/create-from-shipment/)
                          *      */
                         readonly shipment_id?: string;
+                        /** @description A unique user-defined key to identify a shipment.  This can be used to retrieve the shipment.
+                         *      */
+                        readonly external_shipment_id?: string | null;
+                        /** @description ID that the Order Source assigned */
+                        readonly external_order_id?: string | null;
                         /** @description The shipment information used to generate the label */
                         shipment?: {
                             /** @description A string that uniquely identifies the shipment */
@@ -58201,7 +65566,7 @@ export interface operations {
                              * @description The type of delivery confirmation that is required for this shipment.
                              * @default none
                              */
-                            confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                            confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                             /**
                              * @description Customs information.  This is usually only needed for international shipments.
                              *
@@ -58543,6 +65908,26 @@ export interface operations {
                                  * @example 784515
                                  */
                                 certificate_number: string | null;
+                                /**
+                                 * @description Indicates that the contents of the package are fragile and should be handled with care.
+                                 * @default false
+                                 */
+                                fragile: boolean;
+                                /**
+                                 * @description Instructs the carrier to deliver the package only to the exact address provided.
+                                 * @default false
+                                 */
+                                "delivery-as-addressed": boolean;
+                                /**
+                                 * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                                 * @default false
+                                 */
+                                "return-after-first-attempt": boolean;
+                                /**
+                                 * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                                 * @default null
+                                 */
+                                regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
                             } & {
                                 [key: string]: unknown;
                             };
@@ -58895,8 +66280,6 @@ export interface operations {
                             /** @description If applicable, contains additional data about a rate detail of a specific type, e.g. VAT */
                             rate_detail_attributes?: {
                                 tax_type?: "vat";
-                                /** @description Code for a specific tax type */
-                                tax_code?: string;
                                 /** @description Tax percentage, e.g. 20 for 20%, added to the shipping cost */
                                 tax_percentage?: number;
                             };
@@ -58962,7 +66345,7 @@ export interface operations {
                          * @description The display format that the label should be shown in.
                          * @default label
                          */
-                        display_scheme: "label" | "qr_code" | "label_and_qr_code" | "paperless" | "label_and_paperless";
+                        display_scheme: "label" | "paperless" | "label_and_paperless";
                         /**
                          * @description The layout (size) that you want the label to be in.  The `label_format` determines which sizes are allowed.  `4x6` is supported for all label formats, whereas `letter` (8.5" x 11") is only supported for `pdf` format.
                          *
@@ -58980,7 +66363,7 @@ export interface operations {
                         /** @description The current status of the package, such as `in_transit` or `delivered` */
                         readonly tracking_status?: "unknown" | "in_transit" | "error" | "delivered";
                         /** @description The type of delivery confirmation that is required for this shipment. */
-                        readonly confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                        readonly confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                         readonly label_download?: {
                             /** @description The URL of the linked resource, if any */
                             href?: string;
@@ -58996,6 +66379,13 @@ export interface operations {
                         readonly form_download?: {
                             /** @description The URL of the linked resource, if any */
                             href: string;
+                            /** @description The type of resource, or the type of relationship to the parent resource */
+                            type?: string;
+                        } | null;
+                        /** @description The QR code download for the package */
+                        readonly qr_code_download?: {
+                            /** @description The URL of the linked resource, if any */
+                            href?: string;
                             /** @description The type of resource, or the type of relationship to the parent resource */
                             type?: string;
                         } | null;
@@ -59203,6 +66593,129 @@ export interface operations {
                          * @example https://www.fedex.com/fedextrack/?action=track&trackingnumber=1234
                          */
                         readonly tracking_url?: string | null;
+                        /** @description The recipient's mailing address */
+                        readonly ship_to?: {
+                            /**
+                             * @description The name of a contact person at this address.  This field may be set instead of - or in addition to - the `company_name` field.
+                             *
+                             * @example John Doe
+                             */
+                            name: string;
+                            /**
+                             * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                             *
+                             * @example +1 204-253-9411 ext. 123
+                             */
+                            phone?: string;
+                            /**
+                             * @description Email for the address owner.
+                             *
+                             * @example example@example.com
+                             */
+                            email?: string | null;
+                            /**
+                             * @description If this is a business address, then the company name should be specified here.
+                             *
+                             * @example The Home Depot
+                             */
+                            company_name?: string | null;
+                            /**
+                             * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                             *
+                             * @example 1999 Bishop Grandin Blvd.
+                             */
+                            address_line1: string;
+                            /**
+                             * @description The second line of the street address.  For some addresses, this line may not be needed.
+                             *
+                             * @example Unit 408
+                             */
+                            address_line2?: string | null;
+                            /**
+                             * @description The third line of the street address.  For some addresses, this line may not be needed.
+                             *
+                             * @example Building #7
+                             */
+                            address_line3?: string | null;
+                            /**
+                             * @description The name of the city or locality
+                             * @example Winnipeg
+                             */
+                            city_locality: string;
+                            /**
+                             * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                             *
+                             * @example Manitoba
+                             */
+                            state_province: string;
+                            postal_code: string;
+                            /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                             *      */
+                            country_code?: string;
+                            /**
+                             * @description Indicates whether this is a residential address.
+                             * @default unknown
+                             * @example no
+                             */
+                            address_residential_indicator: "unknown" | "yes" | "no";
+                        } & {
+                            /** @description Additional text about how to handle the shipment at this address.
+                             *      */
+                            instructions?: string | null;
+                            geolocation?: {
+                                /**
+                                 * @description Enum of available type of geolocation items:
+                                 *       - 'what3words' functionality allows to specify a location by providing 3 words that have been assign to the specific location see [link](https://what3words.com/business) for more details.
+                                 *
+                                 * @example what3words
+                                 * @enum {string}
+                                 */
+                                type?: "what3words";
+                                /**
+                                 * @description value of the geolocation item
+                                 * @example cats.with.thumbs
+                                 */
+                                value?: string;
+                            }[];
+                        };
+                        /**
+                         * @description Indicates how the label was voided. This field is `null` if the label has not been voided.
+                         *
+                         * @example manual
+                         */
+                        readonly void_type?: ("refund_assist" | "manual") | null;
+                        /** @description Information about the Refund Assist request for this label. This field is `null` if the label is not eligible for Refund Assist.
+                         *      */
+                        readonly refund_details?: {
+                            /** @description The current status of the refund request */
+                            readonly refund_status?: "request_scheduled" | "pending" | "approved" | "rejected" | "excluded";
+                            /** @description The date and time when the refund request was submitted */
+                            readonly request_date?: string;
+                            /** @description The amount that was originally paid for the label */
+                            readonly amount_paid?: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            } | null;
+                            /** @description The amount requested to be refunded */
+                            readonly amount_requested?: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            } | null;
+                            /** @description The amount approved for refund by the carrier */
+                            readonly amount_approved?: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            } | null;
+                            /** @description The amount that has been credited back to the account */
+                            readonly amount_credited?: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            } | null;
+                        } | null;
                     };
                 };
             };
@@ -59347,7 +66860,7 @@ export interface operations {
                      * @description The display format that the label should be shown in.
                      * @default label
                      */
-                    display_scheme?: "label" | "qr_code" | "label_and_qr_code" | "paperless" | "label_and_paperless";
+                    display_scheme?: "label" | "paperless" | "label_and_paperless";
                 };
             };
         };
@@ -59366,6 +66879,11 @@ export interface operations {
                         /** @description The shipment that this label is for.  ShipEngine can create a shipment for you automatically when you [create a label](https://www.shipengine.com/docs/labels/create-a-label/), or you can [create your own shipment](https://www.shipengine.com/docs/shipping/create-a-shipment/) and then [use it to print a label](https://www.shipengine.com/docs/labels/create-from-shipment/)
                          *      */
                         readonly shipment_id?: string;
+                        /** @description A unique user-defined key to identify a shipment.  This can be used to retrieve the shipment.
+                         *      */
+                        readonly external_shipment_id?: string | null;
+                        /** @description ID that the Order Source assigned */
+                        readonly external_order_id?: string | null;
                         /** @description The shipment information used to generate the label */
                         shipment?: {
                             /** @description A string that uniquely identifies the shipment */
@@ -59686,7 +67204,7 @@ export interface operations {
                              * @description The type of delivery confirmation that is required for this shipment.
                              * @default none
                              */
-                            confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                            confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                             /**
                              * @description Customs information.  This is usually only needed for international shipments.
                              *
@@ -60028,6 +67546,26 @@ export interface operations {
                                  * @example 784515
                                  */
                                 certificate_number: string | null;
+                                /**
+                                 * @description Indicates that the contents of the package are fragile and should be handled with care.
+                                 * @default false
+                                 */
+                                fragile: boolean;
+                                /**
+                                 * @description Instructs the carrier to deliver the package only to the exact address provided.
+                                 * @default false
+                                 */
+                                "delivery-as-addressed": boolean;
+                                /**
+                                 * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                                 * @default false
+                                 */
+                                "return-after-first-attempt": boolean;
+                                /**
+                                 * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                                 * @default null
+                                 */
+                                regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
                             } & {
                                 [key: string]: unknown;
                             };
@@ -60380,8 +67918,6 @@ export interface operations {
                             /** @description If applicable, contains additional data about a rate detail of a specific type, e.g. VAT */
                             rate_detail_attributes?: {
                                 tax_type?: "vat";
-                                /** @description Code for a specific tax type */
-                                tax_code?: string;
                                 /** @description Tax percentage, e.g. 20 for 20%, added to the shipping cost */
                                 tax_percentage?: number;
                             };
@@ -60447,7 +67983,7 @@ export interface operations {
                          * @description The display format that the label should be shown in.
                          * @default label
                          */
-                        display_scheme: "label" | "qr_code" | "label_and_qr_code" | "paperless" | "label_and_paperless";
+                        display_scheme: "label" | "paperless" | "label_and_paperless";
                         /**
                          * @description The layout (size) that you want the label to be in.  The `label_format` determines which sizes are allowed.  `4x6` is supported for all label formats, whereas `letter` (8.5" x 11") is only supported for `pdf` format.
                          *
@@ -60465,7 +68001,7 @@ export interface operations {
                         /** @description The current status of the package, such as `in_transit` or `delivered` */
                         readonly tracking_status?: "unknown" | "in_transit" | "error" | "delivered";
                         /** @description The type of delivery confirmation that is required for this shipment. */
-                        readonly confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                        readonly confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                         readonly label_download?: {
                             /** @description The URL of the linked resource, if any */
                             href?: string;
@@ -60481,6 +68017,13 @@ export interface operations {
                         readonly form_download?: {
                             /** @description The URL of the linked resource, if any */
                             href: string;
+                            /** @description The type of resource, or the type of relationship to the parent resource */
+                            type?: string;
+                        } | null;
+                        /** @description The QR code download for the package */
+                        readonly qr_code_download?: {
+                            /** @description The URL of the linked resource, if any */
+                            href?: string;
                             /** @description The type of resource, or the type of relationship to the parent resource */
                             type?: string;
                         } | null;
@@ -60688,6 +68231,2785 @@ export interface operations {
                          * @example https://www.fedex.com/fedextrack/?action=track&trackingnumber=1234
                          */
                         readonly tracking_url?: string | null;
+                        /** @description The recipient's mailing address */
+                        readonly ship_to?: {
+                            /**
+                             * @description The name of a contact person at this address.  This field may be set instead of - or in addition to - the `company_name` field.
+                             *
+                             * @example John Doe
+                             */
+                            name: string;
+                            /**
+                             * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                             *
+                             * @example +1 204-253-9411 ext. 123
+                             */
+                            phone?: string;
+                            /**
+                             * @description Email for the address owner.
+                             *
+                             * @example example@example.com
+                             */
+                            email?: string | null;
+                            /**
+                             * @description If this is a business address, then the company name should be specified here.
+                             *
+                             * @example The Home Depot
+                             */
+                            company_name?: string | null;
+                            /**
+                             * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                             *
+                             * @example 1999 Bishop Grandin Blvd.
+                             */
+                            address_line1: string;
+                            /**
+                             * @description The second line of the street address.  For some addresses, this line may not be needed.
+                             *
+                             * @example Unit 408
+                             */
+                            address_line2?: string | null;
+                            /**
+                             * @description The third line of the street address.  For some addresses, this line may not be needed.
+                             *
+                             * @example Building #7
+                             */
+                            address_line3?: string | null;
+                            /**
+                             * @description The name of the city or locality
+                             * @example Winnipeg
+                             */
+                            city_locality: string;
+                            /**
+                             * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                             *
+                             * @example Manitoba
+                             */
+                            state_province: string;
+                            postal_code: string;
+                            /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                             *      */
+                            country_code?: string;
+                            /**
+                             * @description Indicates whether this is a residential address.
+                             * @default unknown
+                             * @example no
+                             */
+                            address_residential_indicator: "unknown" | "yes" | "no";
+                        } & {
+                            /** @description Additional text about how to handle the shipment at this address.
+                             *      */
+                            instructions?: string | null;
+                            geolocation?: {
+                                /**
+                                 * @description Enum of available type of geolocation items:
+                                 *       - 'what3words' functionality allows to specify a location by providing 3 words that have been assign to the specific location see [link](https://what3words.com/business) for more details.
+                                 *
+                                 * @example what3words
+                                 * @enum {string}
+                                 */
+                                type?: "what3words";
+                                /**
+                                 * @description value of the geolocation item
+                                 * @example cats.with.thumbs
+                                 */
+                                value?: string;
+                            }[];
+                        };
+                        /**
+                         * @description Indicates how the label was voided. This field is `null` if the label has not been voided.
+                         *
+                         * @example manual
+                         */
+                        readonly void_type?: ("refund_assist" | "manual") | null;
+                        /** @description Information about the Refund Assist request for this label. This field is `null` if the label is not eligible for Refund Assist.
+                         *      */
+                        readonly refund_details?: {
+                            /** @description The current status of the refund request */
+                            readonly refund_status?: "request_scheduled" | "pending" | "approved" | "rejected" | "excluded";
+                            /** @description The date and time when the refund request was submitted */
+                            readonly request_date?: string;
+                            /** @description The amount that was originally paid for the label */
+                            readonly amount_paid?: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            } | null;
+                            /** @description The amount requested to be refunded */
+                            readonly amount_requested?: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            } | null;
+                            /** @description The amount approved for refund by the carrier */
+                            readonly amount_approved?: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            } | null;
+                            /** @description The amount that has been credited back to the account */
+                            readonly amount_credited?: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            } | null;
+                        } | null;
+                    };
+                };
+            };
+            /** @description The request contained errors. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description A UUID that uniquely identifies the request id.
+                         *     This can be given to the support team to help debug non-trivial issues that may occur
+                         *      */
+                        request_id: string;
+                        /** @description The errors associated with the failed API call */
+                        readonly errors: {
+                            error_source: "carrier" | "order_source" | "shipengine";
+                            error_type: "account_status" | "business_rules" | "validation" | "security" | "system" | "integrations";
+                            error_code: "auto_fund_not_supported" | "batch_cannot_be_modified" | "carrier_conflict" | "carrier_disconnected" | "carrier_not_connected" | "carrier_not_supported" | "confirmation_not_supported" | "default_warehouse_cannot_be_deleted" | "field_conflict" | "field_value_required" | "forbidden" | "identifier_conflict" | "identifiers_must_match" | "insufficient_funds" | "invalid_address" | "invalid_billing_plan" | "invalid_field_value" | "invalid_identifier" | "invalid_status" | "invalid_string_length" | "label_images_not_supported" | "meter_failure" | "order_source_not_active" | "rate_limit_exceeded" | "refresh_not_supported" | "request_body_required" | "return_label_not_supported" | "settings_not_supported" | "subscription_inactive" | "terms_not_accepted" | "tracking_not_supported" | "trial_expired" | "unauthorized" | "unknown" | "unspecified" | "verification_failure" | "warehouse_conflict" | "webhook_event_type_conflict" | "customs_items_required" | "incompatible_paired_labels" | "invalid_charge_event" | "invalid_object" | "no_rates_returned" | "file_not_found" | "shipping_rule_not_found" | "service_not_determined" | "no_rates_returned" | "funding_source_registration_in_progress" | "insurance_failure" | "funding_source_missing_configuration" | "funding_source_error";
+                            /**
+                             * @description An error message associated with the failed API call
+                             * @example Body of request cannot be null.
+                             */
+                            readonly message: string;
+                            /** @description A string that uniquely identifies the carrier that generated the error. */
+                            readonly carrier_id?: string;
+                            /** @description The name of the [shipping carrier](https://www.shipengine.com/docs/carriers/setup/) that generated the error, such as `fedex`, `dhl_express`, `stamps_com`, etc.
+                             *      */
+                            readonly carrier_code?: string;
+                            /**
+                             * @description The name of the field that caused the error
+                             * @example shipment.ship_to.phone_number
+                             */
+                            readonly field_name?: string;
+                        }[];
+                    };
+                };
+            };
+            /** @description The specified resource does not exist. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description A UUID that uniquely identifies the request id.
+                         *     This can be given to the support team to help debug non-trivial issues that may occur
+                         *      */
+                        request_id: string;
+                        /** @description The errors associated with the failed API call */
+                        readonly errors: {
+                            error_source: "carrier" | "order_source" | "shipengine";
+                            error_type: "account_status" | "business_rules" | "validation" | "security" | "system" | "integrations";
+                            error_code: "auto_fund_not_supported" | "batch_cannot_be_modified" | "carrier_conflict" | "carrier_disconnected" | "carrier_not_connected" | "carrier_not_supported" | "confirmation_not_supported" | "default_warehouse_cannot_be_deleted" | "field_conflict" | "field_value_required" | "forbidden" | "identifier_conflict" | "identifiers_must_match" | "insufficient_funds" | "invalid_address" | "invalid_billing_plan" | "invalid_field_value" | "invalid_identifier" | "invalid_status" | "invalid_string_length" | "label_images_not_supported" | "meter_failure" | "order_source_not_active" | "rate_limit_exceeded" | "refresh_not_supported" | "request_body_required" | "return_label_not_supported" | "settings_not_supported" | "subscription_inactive" | "terms_not_accepted" | "tracking_not_supported" | "trial_expired" | "unauthorized" | "unknown" | "unspecified" | "verification_failure" | "warehouse_conflict" | "webhook_event_type_conflict" | "customs_items_required" | "incompatible_paired_labels" | "invalid_charge_event" | "invalid_object" | "no_rates_returned" | "file_not_found" | "shipping_rule_not_found" | "service_not_determined" | "no_rates_returned" | "funding_source_registration_in_progress" | "insurance_failure" | "funding_source_missing_configuration" | "funding_source_error";
+                            /**
+                             * @description An error message associated with the failed API call
+                             * @example Body of request cannot be null.
+                             */
+                            readonly message: string;
+                            /** @description A string that uniquely identifies the carrier that generated the error. */
+                            readonly carrier_id?: string;
+                            /** @description The name of the [shipping carrier](https://www.shipengine.com/docs/carriers/setup/) that generated the error, such as `fedex`, `dhl_express`, `stamps_com`, etc.
+                             *      */
+                            readonly carrier_code?: string;
+                            /**
+                             * @description The name of the field that caused the error
+                             * @example shipment.ship_to.phone_number
+                             */
+                            readonly field_name?: string;
+                        }[];
+                    };
+                };
+            };
+            /** @description An error occurred on ShipEngine's side.
+             *
+             *     > This error will automatically be reported to our engineers.
+             *      */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description A UUID that uniquely identifies the request id.
+                         *     This can be given to the support team to help debug non-trivial issues that may occur
+                         *      */
+                        request_id: string;
+                        /** @description The errors associated with the failed API call */
+                        readonly errors: {
+                            error_source: "carrier" | "order_source" | "shipengine";
+                            error_type: "account_status" | "business_rules" | "validation" | "security" | "system" | "integrations";
+                            error_code: "auto_fund_not_supported" | "batch_cannot_be_modified" | "carrier_conflict" | "carrier_disconnected" | "carrier_not_connected" | "carrier_not_supported" | "confirmation_not_supported" | "default_warehouse_cannot_be_deleted" | "field_conflict" | "field_value_required" | "forbidden" | "identifier_conflict" | "identifiers_must_match" | "insufficient_funds" | "invalid_address" | "invalid_billing_plan" | "invalid_field_value" | "invalid_identifier" | "invalid_status" | "invalid_string_length" | "label_images_not_supported" | "meter_failure" | "order_source_not_active" | "rate_limit_exceeded" | "refresh_not_supported" | "request_body_required" | "return_label_not_supported" | "settings_not_supported" | "subscription_inactive" | "terms_not_accepted" | "tracking_not_supported" | "trial_expired" | "unauthorized" | "unknown" | "unspecified" | "verification_failure" | "warehouse_conflict" | "webhook_event_type_conflict" | "customs_items_required" | "incompatible_paired_labels" | "invalid_charge_event" | "invalid_object" | "no_rates_returned" | "file_not_found" | "shipping_rule_not_found" | "service_not_determined" | "no_rates_returned" | "funding_source_registration_in_progress" | "insurance_failure" | "funding_source_missing_configuration" | "funding_source_error";
+                            /**
+                             * @description An error message associated with the failed API call
+                             * @example Body of request cannot be null.
+                             */
+                            readonly message: string;
+                            /** @description A string that uniquely identifies the carrier that generated the error. */
+                            readonly carrier_id?: string;
+                            /** @description The name of the [shipping carrier](https://www.shipengine.com/docs/carriers/setup/) that generated the error, such as `fedex`, `dhl_express`, `stamps_com`, etc.
+                             *      */
+                            readonly carrier_code?: string;
+                            /**
+                             * @description The name of the field that caused the error
+                             * @example shipment.ship_to.phone_number
+                             */
+                            readonly field_name?: string;
+                        }[];
+                    };
+                };
+            };
+        };
+    };
+    create_label_from_rate_shopper: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The rate selection strategy for the Rate Shopper. This determines which carrier
+                 *     and service will be automatically selected from your wallet carriers based on
+                 *     the rates returned for the shipment.
+                 *      */
+                rate_shopper_id: "best_value" | "cheapest" | "fastest";
+            };
+            cookie?: never;
+        };
+        /** @description Label creation details with inline shipment */
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description The shipment details for which to create a label. Must be provided inline.
+                     *     The carrier_id, service_code, and shipping_rule_id are not included as these
+                     *     will be automatically determined by the Rate Shopper based on your strategy.
+                     *      */
+                    shipment: {
+                        /** @description A string that uniquely identifies the shipment */
+                        readonly shipment_id?: string;
+                        /** @description ID that the Order Source assigned */
+                        external_order_id?: string | null;
+                        /**
+                         * @description Describe the packages included in this shipment as related to potential metadata that was imported from
+                         *     external order sources
+                         *
+                         * @default []
+                         */
+                        items?: {
+                            /** @description item name */
+                            name?: string;
+                            /** @description sales order id */
+                            sales_order_id?: string | null;
+                            /** @description sales order item id */
+                            sales_order_item_id?: string | null;
+                            /**
+                             * Format: int32
+                             * @description The quantity of this item included in the shipment
+                             */
+                            quantity?: number;
+                            /** @description Item Stock Keeping Unit */
+                            sku?: string | null;
+                            /** @description Item Stock Keeping Unit of the product bundle */
+                            readonly bundle_sku?: string | null;
+                            /** @description external order id */
+                            external_order_id?: string | null;
+                            /** @description external order item id */
+                            external_order_item_id?: string | null;
+                            /**
+                             * @description Amazon Standard Identification Number
+                             * @example B00005N5PF
+                             */
+                            asin?: string | null;
+                            order_source_code?: "amazon_ca" | "amazon_us" | "brightpearl" | "channel_advisor" | "cratejoy" | "ebay" | "etsy" | "jane" | "groupon_goods" | "magento" | "paypal" | "seller_active" | "shopify" | "stitch_labs" | "squarespace" | "three_dcart" | "tophatter" | "walmart" | "woo_commerce" | "volusion";
+                        }[];
+                        tax_identifiers?: {
+                            taxable_entity_type: "shipper" | "recipient" | "ior";
+                            identifier_type: "vat" | "eori" | "ssn" | "ein" | "tin" | "ioss" | "pan" | "voec" | "pccc" | "oss" | "passport" | "abn" | "ukims";
+                            /** @description The authority that issued this tax. This must be a valid 2 character ISO 3166 Alpha 2 country code. */
+                            issuing_authority: string;
+                            /** @description The value of the identifier */
+                            value: string;
+                        }[] | null;
+                        /** @description A unique user-defined key to identify a shipment.  This can be used to retrieve the shipment.
+                         *
+                         *     > **Warning:** The `external_shipment_id` is limited to 50 characters. Any additional characters will be truncated.
+                         *      */
+                        external_shipment_id?: string | null;
+                        /** @description A non-unique user-defined number used to identify a shipment.  If undefined, this will match the external_shipment_id of the shipment.
+                         *
+                         *     > **Warning:** The `shipment_number` is limited to 50 characters. Any additional characters will be truncated.
+                         *      */
+                        shipment_number?: string | null;
+                        /** @description The date that the shipment was (or will be) shipped.  ShipEngine will take the day of week into consideration. For example, if the carrier does not operate on Sundays, then a package that would have shipped on Sunday will ship on Monday instead.
+                         *      */
+                        ship_date?: string;
+                        /** @description The date and time that the shipment was created in ShipEngine. */
+                        readonly created_at?: string;
+                        /** @description The date and time that the shipment was created or last modified. */
+                        readonly modified_at?: string;
+                        /**
+                         * @description The current status of the shipment
+                         * @default pending
+                         */
+                        readonly shipment_status?: "pending" | "processing" | "label_purchased" | "cancelled";
+                        /** @description The recipient's mailing address */
+                        ship_to?: {
+                            /**
+                             * @description The name of a contact person at this address.  This field may be set instead of - or in addition to - the `company_name` field.
+                             *
+                             * @example John Doe
+                             */
+                            name: string;
+                            /**
+                             * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                             *
+                             * @example +1 204-253-9411 ext. 123
+                             */
+                            phone?: string;
+                            /**
+                             * @description Email for the address owner.
+                             *
+                             * @example example@example.com
+                             */
+                            email?: string | null;
+                            /**
+                             * @description If this is a business address, then the company name should be specified here.
+                             *
+                             * @example The Home Depot
+                             */
+                            company_name?: string | null;
+                            /**
+                             * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                             *
+                             * @example 1999 Bishop Grandin Blvd.
+                             */
+                            address_line1: string;
+                            /**
+                             * @description The second line of the street address.  For some addresses, this line may not be needed.
+                             *
+                             * @example Unit 408
+                             */
+                            address_line2?: string | null;
+                            /**
+                             * @description The third line of the street address.  For some addresses, this line may not be needed.
+                             *
+                             * @example Building #7
+                             */
+                            address_line3?: string | null;
+                            /**
+                             * @description The name of the city or locality
+                             * @example Winnipeg
+                             */
+                            city_locality: string;
+                            /**
+                             * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                             *
+                             * @example Manitoba
+                             */
+                            state_province: string;
+                            postal_code: string;
+                            /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                             *      */
+                            country_code?: string;
+                            /**
+                             * @description Indicates whether this is a residential address.
+                             * @default unknown
+                             * @example no
+                             */
+                            address_residential_indicator?: "unknown" | "yes" | "no";
+                        } & {
+                            /** @description Additional text about how to handle the shipment at this address.
+                             *      */
+                            instructions?: string | null;
+                            geolocation?: {
+                                /**
+                                 * @description Enum of available type of geolocation items:
+                                 *       - 'what3words' functionality allows to specify a location by providing 3 words that have been assign to the specific location see [link](https://what3words.com/business) for more details.
+                                 *
+                                 * @example what3words
+                                 * @enum {string}
+                                 */
+                                type?: "what3words";
+                                /**
+                                 * @description value of the geolocation item
+                                 * @example cats.with.thumbs
+                                 */
+                                value?: string;
+                            }[];
+                        };
+                        /** @description The shipment's origin address. If you frequently ship from the same location, consider [creating a warehouse](https://www.shipengine.com/docs/reference/create-warehouse/).  Then you can simply specify the `warehouse_id` rather than the complete address each time.
+                         *      */
+                        ship_from?: {
+                            /**
+                             * @description The name of a contact person at this address.  This field may be set instead of - or in addition to - the `company_name` field.
+                             *
+                             * @example John Doe
+                             */
+                            name: string;
+                            /**
+                             * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                             *
+                             * @example +1 204-253-9411 ext. 123
+                             */
+                            phone?: string;
+                            /**
+                             * @description Email for the address owner.
+                             *
+                             * @example example@example.com
+                             */
+                            email?: string | null;
+                            /**
+                             * @description If this is a business address, then the company name should be specified here.
+                             *
+                             * @example The Home Depot
+                             */
+                            company_name?: string | null;
+                            /**
+                             * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                             *
+                             * @example 1999 Bishop Grandin Blvd.
+                             */
+                            address_line1: string;
+                            /**
+                             * @description The second line of the street address.  For some addresses, this line may not be needed.
+                             *
+                             * @example Unit 408
+                             */
+                            address_line2?: string | null;
+                            /**
+                             * @description The third line of the street address.  For some addresses, this line may not be needed.
+                             *
+                             * @example Building #7
+                             */
+                            address_line3?: string | null;
+                            /**
+                             * @description The name of the city or locality
+                             * @example Winnipeg
+                             */
+                            city_locality: string;
+                            /**
+                             * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                             *
+                             * @example Manitoba
+                             */
+                            state_province: string;
+                            postal_code: string;
+                            /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                             *      */
+                            country_code?: string;
+                            /**
+                             * @description Indicates whether this is a residential address.
+                             * @default unknown
+                             * @example no
+                             */
+                            address_residential_indicator?: "unknown" | "yes" | "no";
+                        } & {
+                            /** @description Additional text about how to handle the shipment at this address.
+                             *      */
+                            instructions?: string | null;
+                        };
+                        /**
+                         * @description The [warehouse](https://www.shipengine.com/docs/shipping/ship-from-a-warehouse/) that the shipment is being shipped from.  Either `warehouse_id` or `ship_from` must be specified.
+                         *
+                         * @default null
+                         */
+                        warehouse_id?: string | null;
+                        /** @description The return address for this shipment.  Defaults to the `ship_from` address.
+                         *      */
+                        return_to?: {
+                            /**
+                             * @description The name of a contact person at this address.  This field may be set instead of - or in addition to - the `company_name` field.
+                             *
+                             * @example John Doe
+                             */
+                            name: string;
+                            /**
+                             * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                             *
+                             * @example +1 204-253-9411 ext. 123
+                             */
+                            phone?: string;
+                            /**
+                             * @description Email for the address owner.
+                             *
+                             * @example example@example.com
+                             */
+                            email?: string | null;
+                            /**
+                             * @description If this is a business address, then the company name should be specified here.
+                             *
+                             * @example The Home Depot
+                             */
+                            company_name?: string | null;
+                            /**
+                             * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                             *
+                             * @example 1999 Bishop Grandin Blvd.
+                             */
+                            address_line1: string;
+                            /**
+                             * @description The second line of the street address.  For some addresses, this line may not be needed.
+                             *
+                             * @example Unit 408
+                             */
+                            address_line2?: string | null;
+                            /**
+                             * @description The third line of the street address.  For some addresses, this line may not be needed.
+                             *
+                             * @example Building #7
+                             */
+                            address_line3?: string | null;
+                            /**
+                             * @description The name of the city or locality
+                             * @example Winnipeg
+                             */
+                            city_locality: string;
+                            /**
+                             * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                             *
+                             * @example Manitoba
+                             */
+                            state_province: string;
+                            postal_code: string;
+                            /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                             *      */
+                            country_code?: string;
+                            /**
+                             * @description Indicates whether this is a residential address.
+                             * @default unknown
+                             * @example no
+                             */
+                            address_residential_indicator?: "unknown" | "yes" | "no";
+                        } & {
+                            /** @description Additional text about how to handle the shipment at this address.
+                             *      */
+                            instructions?: string | null;
+                        };
+                        /**
+                         * @description An optional indicator if the shipment is intended to be a return. Defaults to false if not provided.
+                         *
+                         * @default false
+                         */
+                        is_return?: boolean | null;
+                        /**
+                         * @description The type of delivery confirmation that is required for this shipment.
+                         * @default none
+                         */
+                        confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
+                        /**
+                         * @description Customs information.  This is usually only needed for international shipments.
+                         *
+                         * @default null
+                         */
+                        customs?: {
+                            /**
+                             * @description The type of contents in this shipment.  This may impact import duties or customs treatment.
+                             * @default merchandise
+                             */
+                            contents: "merchandise" | "documents" | "gift" | "returned_goods" | "sample" | "other";
+                            /** @description Explanation for contents (required if the `contents` is provided as `other`) */
+                            contents_explanation?: string;
+                            /**
+                             * @description Indicates what to do if a package is unable to be delivered.
+                             * @default return_to_sender
+                             */
+                            non_delivery: "return_to_sender" | "treat_as_abandoned";
+                            /** @description Specifies the supported terms of trade code (incoterms) */
+                            terms_of_trade_code?: string & ("exw" | "fca" | "cpt" | "cip" | "dpu" | "dap" | "ddp" | "fas" | "fob" | "cfr" | "cif" | "ddu" | "daf" | "deq" | "des");
+                            /** @description Declaration statement to be placed on the commercial invoice */
+                            declaration?: string;
+                            invoice_additional_details?: {
+                                /** @description Freight Charge for shipment. */
+                                freight_charge?: {
+                                    currency: string;
+                                    /** @description The monetary amount, in the specified currency. */
+                                    amount: number;
+                                };
+                                /** @description Insurance Charge for shipment. */
+                                insurance_charge?: {
+                                    currency: string;
+                                    /** @description The monetary amount, in the specified currency. */
+                                    amount: number;
+                                };
+                                /** @description Discount for shipment. */
+                                discount?: {
+                                    currency: string;
+                                    /** @description The monetary amount, in the specified currency. */
+                                    amount: number;
+                                };
+                                /** @description Estimated import charges for commercial invoices for international shipments. */
+                                estimated_import_charges?: {
+                                    /** @description Estimated import taxes. */
+                                    taxes?: {
+                                        currency: string;
+                                        /** @description The monetary amount, in the specified currency. */
+                                        amount: number;
+                                    };
+                                    /** @description Estimated import duties. */
+                                    duties?: {
+                                        currency: string;
+                                        /** @description The monetary amount, in the specified currency. */
+                                        amount: number;
+                                    };
+                                };
+                                /** @description Other charge for shipment. */
+                                other_charge?: {
+                                    currency: string;
+                                    /** @description The monetary amount, in the specified currency. */
+                                    amount: number;
+                                };
+                                /** @description Description for the other charge (if provided). */
+                                other_charge_description?: string;
+                                /** @description The invoice number to be used in the customs. */
+                                invoice_number?: string;
+                            };
+                            importer_of_record?: {
+                                /**
+                                 * @description The name of a contact person at this address. Either `name` or the `company_name` field should always be set.
+                                 *
+                                 * @example John Doe
+                                 */
+                                name: string;
+                                /**
+                                 * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                                 *
+                                 * @example +1 204-253-9411 ext. 123
+                                 */
+                                phone?: string;
+                                /**
+                                 * @description Email for the address owner.
+                                 *
+                                 * @example example@example.com
+                                 */
+                                email?: string | null;
+                                /**
+                                 * @description If this is a business address, then the company name should be specified here. Either `name` or the `company_name` field should always be set.
+                                 *
+                                 * @example The Home Depot
+                                 */
+                                company_name?: string | null;
+                                /**
+                                 * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                                 *
+                                 * @example 1999 Bishop Grandin Blvd.
+                                 */
+                                address_line1: string;
+                                /**
+                                 * @description The second line of the street address.  For some addresses, this line may not be needed.
+                                 *
+                                 * @example Unit 408
+                                 */
+                                address_line2?: string | null;
+                                /**
+                                 * @description The third line of the street address.  For some addresses, this line may not be needed.
+                                 *
+                                 * @example Building #7
+                                 */
+                                address_line3?: string | null;
+                                /**
+                                 * @description The name of the city or locality
+                                 * @example Winnipeg
+                                 */
+                                city_locality: string;
+                                /**
+                                 * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                                 *
+                                 * @example Manitoba
+                                 */
+                                state_province?: string;
+                                postal_code: string;
+                                /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                                 *      */
+                                country_code: string;
+                            };
+                            /** @description The license number to be used in the customs. */
+                            license_number?: string;
+                            /** @description The certificate number to be used in the customs. */
+                            certificate_number?: string;
+                            /**
+                             * @deprecated
+                             * @description Customs declarations for each item in the shipment. (Please provide this information under `products` inside `packages`)
+                             * @default []
+                             */
+                            customs_items?: {
+                                /** @description A string that uniquely identifies the customs item */
+                                readonly customs_item_id: string;
+                                /**
+                                 * @description A description of the item
+                                 * @default null
+                                 */
+                                description?: string | null;
+                                /**
+                                 * Format: int32
+                                 * @description The quantity of this item in the shipment.
+                                 * @default 0
+                                 */
+                                quantity?: number;
+                                /** @description The monetary amount, in the specified currency. */
+                                value?: number;
+                                /** @description The currencies that are supported by ShipEngine are the ones that specified by ISO 4217: https://www.iso.org/iso-4217-currency-codes.html
+                                 *      */
+                                value_currency?: string;
+                                /** @description The item weight */
+                                weight?: {
+                                    /** @description The weight, in the specified unit */
+                                    value: number;
+                                    unit: "pound" | "ounce" | "gram" | "kilogram";
+                                };
+                                /**
+                                 * @description The [Harmonized Tariff Code](https://en.wikipedia.org/wiki/Harmonized_System) of this item.
+                                 * @default null
+                                 * @example 3926.1
+                                 */
+                                harmonized_tariff_code?: string | null;
+                                /**
+                                 * @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1) where this item originated
+                                 *
+                                 * @default null
+                                 */
+                                country_of_origin?: string | null;
+                                unit_of_measure?: string | null;
+                                /** @description The SKU (Stock Keeping Unit) of the customs item */
+                                sku?: string | null;
+                                /** @description Description of the Custom Item's SKU */
+                                sku_description?: string | null;
+                            }[];
+                        } | null;
+                        /** @description Advanced shipment options.  These are entirely optional. */
+                        advanced_options?: {
+                            /**
+                             * @description This field is used to [bill shipping costs to a third party](https://www.shipengine.com/docs/shipping/bill-to-third-party/).  This field must be used in conjunction with the `bill_to_country_code`, `bill_to_party`, and `bill_to_postal_code` fields.
+                             *
+                             * @default null
+                             */
+                            bill_to_account?: string | null;
+                            /**
+                             * @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1) of the third-party that is responsible for shipping costs.
+                             *
+                             * @default null
+                             */
+                            bill_to_country_code?: string | null;
+                            /**
+                             * @description Indicates whether to bill shipping costs to the recipient or to a third-party.  When billing to a third-party, the `bill_to_account`, `bill_to_country_code`, and `bill_to_postal_code` fields must also be set.
+                             *
+                             * @default null
+                             */
+                            bill_to_party?: ("recipient" | "third_party") | null;
+                            /**
+                             * @description The postal code of the third-party that is responsible for shipping costs.
+                             *
+                             * @default null
+                             */
+                            bill_to_postal_code?: string | null;
+                            /**
+                             * @description Indicates that the shipment contains alcohol.
+                             * @default false
+                             */
+                            contains_alcohol?: boolean;
+                            /**
+                             * @description Indicates that the shipper is paying the international delivery duties for this shipment.  This option is supported by UPS, FedEx, and DHL Express.
+                             *
+                             * @default false
+                             */
+                            delivered_duty_paid?: boolean;
+                            /**
+                             * @description Indicates if the shipment contain dry ice
+                             * @default false
+                             */
+                            dry_ice?: boolean;
+                            /** @description The weight of the dry ice in the shipment */
+                            dry_ice_weight?: {
+                                /** @description The weight, in the specified unit */
+                                value: number;
+                                unit: "pound" | "ounce" | "gram" | "kilogram";
+                            } | null;
+                            /**
+                             * @description Indicates that the package cannot be processed automatically because it is too large or irregularly shaped. This is primarily for USPS shipments.  See [Section 1.2 of the USPS parcel standards](https://pe.usps.com/text/dmm300/101.htm#ep1047495) for details.
+                             *
+                             * @default false
+                             */
+                            non_machinable?: boolean;
+                            /**
+                             * @description Enables Saturday delivery, if supported by the carrier.
+                             * @default false
+                             */
+                            saturday_delivery?: boolean;
+                            /** @description Provide details for the Fedex freight service */
+                            fedex_freight?: {
+                                shipper_load_and_count?: string;
+                                booking_confirmation?: string;
+                            };
+                            /**
+                             * @description Whether to use [UPS Ground Freight pricing](https://www.shipengine.com/docs/shipping/ups-ground-freight/).  If enabled, then a `freight_class` must also be specified.
+                             *
+                             * @default null
+                             */
+                            use_ups_ground_freight_pricing?: boolean | null;
+                            /**
+                             * @description The National Motor Freight Traffic Association [freight class](http://www.nmfta.org/pages/nmfc?AspxAutoDetectCookieSupport=1), such as "77.5", "110", or "250".
+                             *
+                             * @default null
+                             * @example 77.5
+                             */
+                            freight_class?: string | null;
+                            /**
+                             * @description An arbitrary field that can be used to store information about the shipment.
+                             *
+                             * @default null
+                             */
+                            custom_field1?: string | null;
+                            /**
+                             * @description An arbitrary field that can be used to store information about the shipment.
+                             *
+                             * @default null
+                             */
+                            custom_field2?: string | null;
+                            /**
+                             * @description An arbitrary field that can be used to store information about the shipment.
+                             *
+                             * @default null
+                             */
+                            custom_field3?: string | null;
+                            /** @default null */
+                            origin_type?: ("pickup" | "drop_off") | null;
+                            /**
+                             * @description Indicate to the carrier that this shipment requires additional handling.
+                             *
+                             * @default null
+                             */
+                            additional_handling?: boolean | null;
+                            /** @default null */
+                            shipper_release?: boolean | null;
+                            /**
+                             * collect_on_delivery
+                             * @description Defer payment until package is delivered, instead of when it is ordered.
+                             */
+                            collect_on_delivery?: {
+                                payment_type?: "any" | "cash" | "cash_equivalent" | "none";
+                                /** payment_amount */
+                                payment_amount?: {
+                                    currency?: string;
+                                    amount?: number;
+                                };
+                            };
+                            /**
+                             * @description Third Party Consignee option is a value-added service that allows the shipper to supply goods without commercial invoices being attached
+                             * @default false
+                             */
+                            third_party_consignee?: boolean;
+                            /**
+                             * @description Indicates if the Dangerous goods are present in the shipment
+                             * @default false
+                             */
+                            dangerous_goods?: boolean;
+                            /** @description Contact information for Dangerous goods */
+                            dangerous_goods_contact?: {
+                                /** @description Name of the contact */
+                                name?: string;
+                                /** @description Phone number of the contact */
+                                phone?: string;
+                            };
+                            /** @description The Windsor framework is a new regulation in the UK that simplifies customs procedures for goods moved from the UK mainland to Northern Ireland. */
+                            windsor_framework_details?: {
+                                /**
+                                 * @description An indicator that will tell the carrier and HMRC the type of movement for the shipment.
+                                 * @enum {string}
+                                 */
+                                movement_indicator?: "c2c" | "b2c" | "c2b" | "b2b";
+                                /** @description An indicator that allows a shipper to declare the shipment as not-at-risk. */
+                                not_at_risk?: boolean;
+                            };
+                            /**
+                             * @description license_number - This field was part of a historical implementation for passing customs-related data. For new integrations, please use the corresponding parameters within the shipment.customs object.
+                             * @default null
+                             * @example 514785
+                             */
+                            license_number?: string | null;
+                            /**
+                             * @description invoice_number - This field was part of a historical implementation for passing customs-related data. For new integrations, please use the corresponding parameters within the shipment.customs object.
+                             * @default null
+                             * @example IOC56888
+                             */
+                            invoice_number?: string | null;
+                            /**
+                             * @description certificate_number - This field was part of a historical implementation for passing customs-related data. For new integrations, please use the corresponding parameters within the shipment.customs object.
+                             * @default null
+                             * @example 784515
+                             */
+                            certificate_number?: string | null;
+                            /**
+                             * @description Indicates that the contents of the package are fragile and should be handled with care.
+                             * @default false
+                             */
+                            fragile?: boolean;
+                            /**
+                             * @description Instructs the carrier to deliver the package only to the exact address provided.
+                             * @default false
+                             */
+                            "delivery-as-addressed"?: boolean;
+                            /**
+                             * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                             * @default false
+                             */
+                            "return-after-first-attempt"?: boolean;
+                            /**
+                             * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                             * @default null
+                             */
+                            regulated_content_type?: ("day_old_poultry" | "other_live_animal") | null;
+                        } & {
+                            [key: string]: unknown;
+                        };
+                        /**
+                         * @description The insurance provider to use for any insured packages in the shipment.
+                         *
+                         * @default none
+                         */
+                        insurance_provider?: "none" | "shipsurance" | "carrier" | "third_party";
+                        /**
+                         * @description Arbitrary tags associated with this shipment.  Tags can be used to categorize shipments, and shipments can be queried by their tags.
+                         *
+                         * @default []
+                         */
+                        readonly tags?: {
+                            /**
+                             * Format: int32
+                             * @description An integer uniquely identifying a tag.
+                             * @example 8712
+                             */
+                            readonly tag_id?: number;
+                            /**
+                             * @description The tag name.
+                             * @example Fragile
+                             */
+                            name: string;
+                            /**
+                             * @description A hex-coded string identifying the color of the tag.
+                             * @example #FF0000
+                             */
+                            color?: string;
+                        }[];
+                        order_source_code?: "amazon_ca" | "amazon_us" | "brightpearl" | "channel_advisor" | "cratejoy" | "ebay" | "etsy" | "jane" | "groupon_goods" | "magento" | "paypal" | "seller_active" | "shopify" | "stitch_labs" | "squarespace" | "three_dcart" | "tophatter" | "walmart" | "woo_commerce" | "volusion";
+                        /** @description The packages in the shipment.
+                         *
+                         *     > **Note:** Some carriers only allow one package per shipment.  If you attempt to create a multi-package shipment for a carrier that doesn't allow it, an error will be returned.
+                         *      */
+                        packages?: {
+                            /** @description A string that uniquely identifies this shipment package */
+                            readonly shipment_package_id?: string;
+                            /** @description A string that uniquely identifies this [package type](https://www.shipengine.com/docs/reference/list-carrier-packages/) */
+                            package_id?: string;
+                            /** @description The [package type](https://www.shipengine.com/docs/reference/list-carrier-packages/), such as `thick_envelope`, `small_flat_rate_box`, `large_package`, etc.  The code `package` indicates a custom or unknown package type.
+                             *      */
+                            package_code?: string;
+                            /** @description The name of the of the [package type](https://www.shipengine.com/docs/reference/list-carrier-packages/) */
+                            package_name?: string;
+                            /** @description The package weight */
+                            weight: {
+                                /** @description The weight, in the specified unit */
+                                value: number;
+                                unit: "pound" | "ounce" | "gram" | "kilogram";
+                            };
+                            /** @description The package dimensions */
+                            dimensions?: {
+                                /** @default inch */
+                                unit: "inch" | "centimeter";
+                                /**
+                                 * @description The length of the package, in the specified unit
+                                 * @default 0
+                                 */
+                                length: number;
+                                /**
+                                 * @description The width of the package, in the specified unit
+                                 * @default 0
+                                 */
+                                width: number;
+                                /**
+                                 * @description The height of the package, in the specified unit
+                                 * @default 0
+                                 */
+                                height: number;
+                            };
+                            /**
+                             * @description The insured value of the package.  Requires the `insurance_provider` field of the shipment to be set.
+                             *
+                             * @default {
+                             *       "currency": "USD",
+                             *       "amount": 0
+                             *     }
+                             */
+                            insured_value?: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            };
+                            label_messages?: {
+                                /**
+                                 * @description The first line of the custom label message.  Some carriers may prefix this line with something like "REF", "Reference", "Trx Ref No.", etc.
+                                 *
+                                 * @default null
+                                 */
+                                reference1: string | null;
+                                /**
+                                 * @description The second line of the custom label message.  Some carriers may prefix this line with something like "INV", "Reference 2", "Trx Ref No.", etc.
+                                 *
+                                 * @default null
+                                 */
+                                reference2: string | null;
+                                /**
+                                 * @description The third line of the custom label message.  Some carriers may prefix this line with something like "PO", "Reference 3", etc.
+                                 *
+                                 * @default null
+                                 */
+                                reference3: string | null;
+                            };
+                            /** @description An external package id. */
+                            external_package_id?: string;
+                            /** @description The tracking number for the package.  The format depends on the carrier.
+                             *      */
+                            readonly tracking_number?: string;
+                            /**
+                             * @description A short description of the package content. Required for shipments moving to, from, and through Mexico.
+                             *
+                             * @example Hand knitted wool socks
+                             */
+                            content_description?: string | null;
+                            /**
+                             * @description Details about products inside packages (Information provided would be used on custom documentation)
+                             * @default []
+                             */
+                            products?: {
+                                /**
+                                 * @description A description of the item
+                                 * @default null
+                                 */
+                                description?: string | null;
+                                /**
+                                 * Format: int32
+                                 * @description The quantity of this item in the shipment.
+                                 * @default 0
+                                 */
+                                quantity?: number;
+                                /** @description The declared value of each item */
+                                value?: {
+                                    currency: string;
+                                    /** @description The monetary amount, in the specified currency. */
+                                    amount: number;
+                                };
+                                /** @description The item weight */
+                                weight?: {
+                                    /** @description The weight, in the specified unit */
+                                    value: number;
+                                    unit: "pound" | "ounce" | "gram" | "kilogram";
+                                };
+                                /**
+                                 * @description The [Harmonized Tariff Code](https://en.wikipedia.org/wiki/Harmonized_System) of this item.
+                                 * @default null
+                                 * @example 3926.1
+                                 */
+                                harmonized_tariff_code?: string | null;
+                                /**
+                                 * @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1) where this item originated
+                                 *
+                                 * @default null
+                                 */
+                                country_of_origin?: string | null;
+                                unit_of_measure?: string | null;
+                                /** @description The SKU (Stock Keeping Unit) of the item */
+                                sku?: string | null;
+                                /** @description Description of the Custom Item's SKU */
+                                sku_description?: string | null;
+                                /** @description Manufacturers Identification code */
+                                mid_code?: string | null;
+                                /** @description link to the item on the seller website */
+                                product_url?: string | null;
+                                /**
+                                 * @description VAT rate applicable to the item
+                                 * @example 0.2
+                                 */
+                                vat_rate?: number | null;
+                                /**
+                                 * @description Details about dangerous goods inside products
+                                 * @default []
+                                 */
+                                dangerous_goods?: {
+                                    /**
+                                     * @description UN number to identify the dangerous goods.
+                                     * @default null
+                                     */
+                                    id_number?: string | null;
+                                    /**
+                                     * @description Trade description of the dangerous goods.
+                                     * @default null
+                                     */
+                                    shipping_name?: string | null;
+                                    /**
+                                     * @description Recognized Technical or chemical name of dangerous goods.
+                                     * @default null
+                                     */
+                                    technical_name?: string | null;
+                                    /**
+                                     * @description Dangerous goods product class based on regulation.
+                                     * @default null
+                                     */
+                                    product_class?: string | null;
+                                    /**
+                                     * @description A secondary of product class for substances presenting more than one particular hazard
+                                     * @default null
+                                     */
+                                    product_class_subsidiary?: string | null;
+                                    /**
+                                     * packaging_group
+                                     * @enum {string}
+                                     */
+                                    packaging_group?: "i" | "ii" | "iii";
+                                    /** @description This model represents the amount of the dangerous goods. */
+                                    dangerous_amount?: {
+                                        /**
+                                         * @description The amount of dangerous goods.
+                                         * @default 0
+                                         */
+                                        amount?: number;
+                                        /**
+                                         * @description The unit of dangerous goods.
+                                         * @default null
+                                         */
+                                        unit?: string | null;
+                                    };
+                                    /**
+                                     * Format: int32
+                                     * @description Quantity of dangerous goods.
+                                     * @default 0
+                                     */
+                                    quantity?: number;
+                                    /**
+                                     * @description The specific standardized packaging instructions from the relevant regulatory agency that have been applied to the parcel/container.
+                                     * @default null
+                                     */
+                                    packaging_instruction?: string | null;
+                                    /**
+                                     * packaging_instruction_section
+                                     * @enum {string}
+                                     */
+                                    packaging_instruction_section?: "section_1" | "section_2" | "section_1a" | "section_1b";
+                                    /**
+                                     * @description The type of exterior packaging used to contain the dangerous good.
+                                     * @default null
+                                     */
+                                    packaging_type?: string | null;
+                                    /**
+                                     * transport_mean
+                                     * @enum {string}
+                                     */
+                                    transport_mean?: "ground" | "water" | "cargo_aircraft_only" | "passenger_aircraft";
+                                    /**
+                                     * @description Transport category assign to dangerous goods for the transport purpose.
+                                     * @default null
+                                     */
+                                    transport_category?: string | null;
+                                    /**
+                                     * @description Name of the regulatory authority.
+                                     * @default null
+                                     */
+                                    regulation_authority?: string | null;
+                                    /**
+                                     * regulation_level
+                                     * @enum {string}
+                                     */
+                                    regulation_level?: "lightly_regulated" | "fully_regulated" | "limited_quantities" | "excepted_quantity";
+                                    /**
+                                     * @description Indication if the substance is radioactive.
+                                     * @example false
+                                     */
+                                    radioactive?: boolean | null;
+                                    /**
+                                     * @description Indication if the substance needs to be reported to regulatory authority based on the quantity.
+                                     * @example false
+                                     */
+                                    reportable_quantity?: boolean | null;
+                                    /**
+                                     * @description Defines which types of tunnels the shipment is allowed to go through
+                                     * @default null
+                                     */
+                                    tunnel_code?: string | null;
+                                    /**
+                                     * @description Provider additonal description regarding the dangerous goods. This is used as a placed holder to provider additional context and varies by carrier
+                                     * @default null
+                                     */
+                                    additional_description?: string | null;
+                                }[];
+                                /** @description Additional details about products */
+                                extended_details?: {
+                                    [key: string]: unknown;
+                                };
+                            }[];
+                        }[];
+                        /** @description The combined weight of all packages in the shipment */
+                        readonly total_weight?: {
+                            /** @description The weight, in the specified unit */
+                            value: number;
+                            unit: "pound" | "ounce" | "gram" | "kilogram";
+                        };
+                        /**
+                         * @description Calculate a rate for this shipment with the requested carrier using a ratecard that differs from the default.  Only supported for UPS and USPS.
+                         * @example retail
+                         */
+                        comparison_rate_type?: string | null;
+                        /**
+                         * Format: int32
+                         * @description Certain carriers base [their rates](https://blog.stamps.com/2017/09/08/usps-postal-zones/) off of
+                         *     custom zones that vary depending upon the ship_to and ship_from location
+                         *
+                         * @example 6
+                         */
+                        readonly zone?: number | null;
+                    };
+                    /** @description Indicates whether this is a return label.  You may also want to set the `rma_number` so you know what is being returned.
+                     *      */
+                    is_return_label?: boolean;
+                    /** @description An optional Return Merchandise Authorization number.  This field is useful for return labels.  You can set it to any string value.
+                     *      */
+                    rma_number?: string | null;
+                    /** @description The label charge event.
+                     *      */
+                    charge_event?: "carrier_default" | "on_creation" | "on_carrier_acceptance";
+                    /** @description The `label_id` of the original (outgoing) label that the return label is for. This associates the two labels together, which is
+                     *     required by some carriers.
+                     *      */
+                    outbound_label_id?: string;
+                    /**
+                     * @deprecated
+                     * @description Indicate if this label is being used only for testing purposes. If true, then no charge will be added to your account.
+                     * @default false
+                     */
+                    test_label?: boolean;
+                    /** @default no_validation */
+                    validate_address?: "no_validation" | "validate_only" | "validate_and_clean";
+                    /** @default url */
+                    label_download_type?: "url" | "inline";
+                    /**
+                     * @description The file format that you want the label to be in.  We recommend `pdf` format because it is supported by all carriers, whereas some carriers do not support the `png` or `zpl` formats.
+                     *
+                     * @default pdf
+                     */
+                    label_format?: "pdf" | "png" | "zpl";
+                    /**
+                     * @description The display format that the label should be shown in.
+                     * @default label
+                     */
+                    display_scheme?: "label" | "paperless" | "label_and_paperless";
+                    /**
+                     * @description The layout (size) that you want the label to be in.  The `label_format` determines which sizes are allowed.  `4x6` is supported for all label formats, whereas `letter` (8.5" x 11") is only supported for `pdf` format.
+                     *
+                     * @default 4x6
+                     */
+                    label_layout?: "4x6" | "letter" | "A4" | "A6";
+                    /** @description The label image resource that was used to create a custom label image. */
+                    label_image_id?: string | null;
+                };
+            };
+        };
+        responses: {
+            /** @description Label created successfully using Rate Shopper. The response includes the
+             *     selected carrier_id, service_code, and rate_shopper_id that was used.
+             *      */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rate selection strategy that was used to create this label. This will
+                         *     match the rate_shopper_id provided in the request path.
+                         *      */
+                        readonly rate_shopper_id?: "best_value" | "cheapest" | "fastest";
+                    } & {
+                        /** @description A string that uniquely identifies the label. This ID is generated by ShipEngine when the label is created.
+                         *      */
+                        readonly label_id?: string;
+                        readonly status?: "processing" | "completed" | "error" | "voided";
+                        /** @description The shipment that this label is for.  ShipEngine can create a shipment for you automatically when you [create a label](https://www.shipengine.com/docs/labels/create-a-label/), or you can [create your own shipment](https://www.shipengine.com/docs/shipping/create-a-shipment/) and then [use it to print a label](https://www.shipengine.com/docs/labels/create-from-shipment/)
+                         *      */
+                        readonly shipment_id?: string;
+                        /** @description A unique user-defined key to identify a shipment.  This can be used to retrieve the shipment.
+                         *      */
+                        readonly external_shipment_id?: string | null;
+                        /** @description ID that the Order Source assigned */
+                        readonly external_order_id?: string | null;
+                        /** @description The shipment information used to generate the label */
+                        shipment?: {
+                            /** @description A string that uniquely identifies the shipment */
+                            readonly shipment_id: string;
+                            /** @description The carrier account that is billed for the shipping charges */
+                            carrier_id: string;
+                            /** @description The [carrier service](https://www.shipengine.com/docs/shipping/use-a-carrier-service/) used to ship the package, such as `fedex_ground`, `usps_first_class_mail`, `flat_rate_envelope`, etc.
+                             *      */
+                            service_code: string;
+                            /** @description ID of the shipping rule, which you want to use to automate carrier/carrier service selection for the shipment
+                             *      */
+                            shipping_rule_id?: string;
+                            /** @description ID that the Order Source assigned */
+                            external_order_id?: string | null;
+                            /**
+                             * @description Describe the packages included in this shipment as related to potential metadata that was imported from
+                             *     external order sources
+                             *
+                             * @default []
+                             */
+                            items: {
+                                /** @description item name */
+                                name?: string;
+                                /** @description sales order id */
+                                sales_order_id?: string | null;
+                                /** @description sales order item id */
+                                sales_order_item_id?: string | null;
+                                /**
+                                 * Format: int32
+                                 * @description The quantity of this item included in the shipment
+                                 */
+                                quantity?: number;
+                                /** @description Item Stock Keeping Unit */
+                                sku?: string | null;
+                                /** @description Item Stock Keeping Unit of the product bundle */
+                                readonly bundle_sku?: string | null;
+                                /** @description external order id */
+                                external_order_id?: string | null;
+                                /** @description external order item id */
+                                external_order_item_id?: string | null;
+                                /**
+                                 * @description Amazon Standard Identification Number
+                                 * @example B00005N5PF
+                                 */
+                                asin?: string | null;
+                                order_source_code?: "amazon_ca" | "amazon_us" | "brightpearl" | "channel_advisor" | "cratejoy" | "ebay" | "etsy" | "jane" | "groupon_goods" | "magento" | "paypal" | "seller_active" | "shopify" | "stitch_labs" | "squarespace" | "three_dcart" | "tophatter" | "walmart" | "woo_commerce" | "volusion";
+                            }[];
+                            tax_identifiers?: {
+                                taxable_entity_type: "shipper" | "recipient" | "ior";
+                                identifier_type: "vat" | "eori" | "ssn" | "ein" | "tin" | "ioss" | "pan" | "voec" | "pccc" | "oss" | "passport" | "abn" | "ukims";
+                                /** @description The authority that issued this tax. This must be a valid 2 character ISO 3166 Alpha 2 country code. */
+                                issuing_authority: string;
+                                /** @description The value of the identifier */
+                                value: string;
+                            }[] | null;
+                            /** @description A unique user-defined key to identify a shipment.  This can be used to retrieve the shipment.
+                             *
+                             *     > **Warning:** The `external_shipment_id` is limited to 50 characters. Any additional characters will be truncated.
+                             *      */
+                            external_shipment_id?: string | null;
+                            /** @description A non-unique user-defined number used to identify a shipment.  If undefined, this will match the external_shipment_id of the shipment.
+                             *
+                             *     > **Warning:** The `shipment_number` is limited to 50 characters. Any additional characters will be truncated.
+                             *      */
+                            shipment_number?: string | null;
+                            /** @description The date that the shipment was (or will be) shipped.  ShipEngine will take the day of week into consideration. For example, if the carrier does not operate on Sundays, then a package that would have shipped on Sunday will ship on Monday instead.
+                             *      */
+                            ship_date: string;
+                            /** @description The date and time that the shipment was created in ShipEngine. */
+                            readonly created_at: string;
+                            /** @description The date and time that the shipment was created or last modified. */
+                            readonly modified_at: string;
+                            /**
+                             * @description The current status of the shipment
+                             * @default pending
+                             */
+                            readonly shipment_status: "pending" | "processing" | "label_purchased" | "cancelled";
+                            /** @description The recipient's mailing address */
+                            ship_to: {
+                                /**
+                                 * @description The name of a contact person at this address.  This field may be set instead of - or in addition to - the `company_name` field.
+                                 *
+                                 * @example John Doe
+                                 */
+                                name: string;
+                                /**
+                                 * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                                 *
+                                 * @example +1 204-253-9411 ext. 123
+                                 */
+                                phone?: string;
+                                /**
+                                 * @description Email for the address owner.
+                                 *
+                                 * @example example@example.com
+                                 */
+                                email?: string | null;
+                                /**
+                                 * @description If this is a business address, then the company name should be specified here.
+                                 *
+                                 * @example The Home Depot
+                                 */
+                                company_name?: string | null;
+                                /**
+                                 * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                                 *
+                                 * @example 1999 Bishop Grandin Blvd.
+                                 */
+                                address_line1: string;
+                                /**
+                                 * @description The second line of the street address.  For some addresses, this line may not be needed.
+                                 *
+                                 * @example Unit 408
+                                 */
+                                address_line2?: string | null;
+                                /**
+                                 * @description The third line of the street address.  For some addresses, this line may not be needed.
+                                 *
+                                 * @example Building #7
+                                 */
+                                address_line3?: string | null;
+                                /**
+                                 * @description The name of the city or locality
+                                 * @example Winnipeg
+                                 */
+                                city_locality: string;
+                                /**
+                                 * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                                 *
+                                 * @example Manitoba
+                                 */
+                                state_province: string;
+                                postal_code: string;
+                                /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                                 *      */
+                                country_code?: string;
+                                /**
+                                 * @description Indicates whether this is a residential address.
+                                 * @default unknown
+                                 * @example no
+                                 */
+                                address_residential_indicator: "unknown" | "yes" | "no";
+                            } & {
+                                /** @description Additional text about how to handle the shipment at this address.
+                                 *      */
+                                instructions?: string | null;
+                                geolocation?: {
+                                    /**
+                                     * @description Enum of available type of geolocation items:
+                                     *       - 'what3words' functionality allows to specify a location by providing 3 words that have been assign to the specific location see [link](https://what3words.com/business) for more details.
+                                     *
+                                     * @example what3words
+                                     * @enum {string}
+                                     */
+                                    type?: "what3words";
+                                    /**
+                                     * @description value of the geolocation item
+                                     * @example cats.with.thumbs
+                                     */
+                                    value?: string;
+                                }[];
+                            };
+                            /** @description The shipment's origin address. If you frequently ship from the same location, consider [creating a warehouse](https://www.shipengine.com/docs/reference/create-warehouse/).  Then you can simply specify the `warehouse_id` rather than the complete address each time.
+                             *      */
+                            ship_from: {
+                                /**
+                                 * @description The name of a contact person at this address.  This field may be set instead of - or in addition to - the `company_name` field.
+                                 *
+                                 * @example John Doe
+                                 */
+                                name: string;
+                                /**
+                                 * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                                 *
+                                 * @example +1 204-253-9411 ext. 123
+                                 */
+                                phone?: string;
+                                /**
+                                 * @description Email for the address owner.
+                                 *
+                                 * @example example@example.com
+                                 */
+                                email?: string | null;
+                                /**
+                                 * @description If this is a business address, then the company name should be specified here.
+                                 *
+                                 * @example The Home Depot
+                                 */
+                                company_name?: string | null;
+                                /**
+                                 * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                                 *
+                                 * @example 1999 Bishop Grandin Blvd.
+                                 */
+                                address_line1: string;
+                                /**
+                                 * @description The second line of the street address.  For some addresses, this line may not be needed.
+                                 *
+                                 * @example Unit 408
+                                 */
+                                address_line2?: string | null;
+                                /**
+                                 * @description The third line of the street address.  For some addresses, this line may not be needed.
+                                 *
+                                 * @example Building #7
+                                 */
+                                address_line3?: string | null;
+                                /**
+                                 * @description The name of the city or locality
+                                 * @example Winnipeg
+                                 */
+                                city_locality: string;
+                                /**
+                                 * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                                 *
+                                 * @example Manitoba
+                                 */
+                                state_province: string;
+                                postal_code: string;
+                                /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                                 *      */
+                                country_code?: string;
+                                /**
+                                 * @description Indicates whether this is a residential address.
+                                 * @default unknown
+                                 * @example no
+                                 */
+                                address_residential_indicator: "unknown" | "yes" | "no";
+                            } & {
+                                /** @description Additional text about how to handle the shipment at this address.
+                                 *      */
+                                instructions?: string | null;
+                            };
+                            /**
+                             * @description The [warehouse](https://www.shipengine.com/docs/shipping/ship-from-a-warehouse/) that the shipment is being shipped from.  Either `warehouse_id` or `ship_from` must be specified.
+                             *
+                             * @default null
+                             */
+                            warehouse_id: string | null;
+                            /** @description The return address for this shipment.  Defaults to the `ship_from` address.
+                             *      */
+                            return_to: {
+                                /**
+                                 * @description The name of a contact person at this address.  This field may be set instead of - or in addition to - the `company_name` field.
+                                 *
+                                 * @example John Doe
+                                 */
+                                name: string;
+                                /**
+                                 * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                                 *
+                                 * @example +1 204-253-9411 ext. 123
+                                 */
+                                phone?: string;
+                                /**
+                                 * @description Email for the address owner.
+                                 *
+                                 * @example example@example.com
+                                 */
+                                email?: string | null;
+                                /**
+                                 * @description If this is a business address, then the company name should be specified here.
+                                 *
+                                 * @example The Home Depot
+                                 */
+                                company_name?: string | null;
+                                /**
+                                 * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                                 *
+                                 * @example 1999 Bishop Grandin Blvd.
+                                 */
+                                address_line1: string;
+                                /**
+                                 * @description The second line of the street address.  For some addresses, this line may not be needed.
+                                 *
+                                 * @example Unit 408
+                                 */
+                                address_line2?: string | null;
+                                /**
+                                 * @description The third line of the street address.  For some addresses, this line may not be needed.
+                                 *
+                                 * @example Building #7
+                                 */
+                                address_line3?: string | null;
+                                /**
+                                 * @description The name of the city or locality
+                                 * @example Winnipeg
+                                 */
+                                city_locality: string;
+                                /**
+                                 * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                                 *
+                                 * @example Manitoba
+                                 */
+                                state_province: string;
+                                postal_code: string;
+                                /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                                 *      */
+                                country_code?: string;
+                                /**
+                                 * @description Indicates whether this is a residential address.
+                                 * @default unknown
+                                 * @example no
+                                 */
+                                address_residential_indicator: "unknown" | "yes" | "no";
+                            } & {
+                                /** @description Additional text about how to handle the shipment at this address.
+                                 *      */
+                                instructions?: string | null;
+                            };
+                            /**
+                             * @description An optional indicator if the shipment is intended to be a return. Defaults to false if not provided.
+                             *
+                             * @default false
+                             */
+                            is_return: boolean | null;
+                            /**
+                             * @description The type of delivery confirmation that is required for this shipment.
+                             * @default none
+                             */
+                            confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
+                            /**
+                             * @description Customs information.  This is usually only needed for international shipments.
+                             *
+                             * @default null
+                             */
+                            customs: {
+                                /**
+                                 * @description The type of contents in this shipment.  This may impact import duties or customs treatment.
+                                 * @default merchandise
+                                 */
+                                contents: "merchandise" | "documents" | "gift" | "returned_goods" | "sample" | "other";
+                                /** @description Explanation for contents (required if the `contents` is provided as `other`) */
+                                contents_explanation?: string;
+                                /**
+                                 * @description Indicates what to do if a package is unable to be delivered.
+                                 * @default return_to_sender
+                                 */
+                                non_delivery: "return_to_sender" | "treat_as_abandoned";
+                                /** @description Specifies the supported terms of trade code (incoterms) */
+                                terms_of_trade_code?: string & ("exw" | "fca" | "cpt" | "cip" | "dpu" | "dap" | "ddp" | "fas" | "fob" | "cfr" | "cif" | "ddu" | "daf" | "deq" | "des");
+                                /** @description Declaration statement to be placed on the commercial invoice */
+                                declaration?: string;
+                                invoice_additional_details?: {
+                                    /** @description Freight Charge for shipment. */
+                                    freight_charge?: {
+                                        currency: string;
+                                        /** @description The monetary amount, in the specified currency. */
+                                        amount: number;
+                                    };
+                                    /** @description Insurance Charge for shipment. */
+                                    insurance_charge?: {
+                                        currency: string;
+                                        /** @description The monetary amount, in the specified currency. */
+                                        amount: number;
+                                    };
+                                    /** @description Discount for shipment. */
+                                    discount?: {
+                                        currency: string;
+                                        /** @description The monetary amount, in the specified currency. */
+                                        amount: number;
+                                    };
+                                    /** @description Estimated import charges for commercial invoices for international shipments. */
+                                    estimated_import_charges?: {
+                                        /** @description Estimated import taxes. */
+                                        taxes?: {
+                                            currency: string;
+                                            /** @description The monetary amount, in the specified currency. */
+                                            amount: number;
+                                        };
+                                        /** @description Estimated import duties. */
+                                        duties?: {
+                                            currency: string;
+                                            /** @description The monetary amount, in the specified currency. */
+                                            amount: number;
+                                        };
+                                    };
+                                    /** @description Other charge for shipment. */
+                                    other_charge?: {
+                                        currency: string;
+                                        /** @description The monetary amount, in the specified currency. */
+                                        amount: number;
+                                    };
+                                    /** @description Description for the other charge (if provided). */
+                                    other_charge_description?: string;
+                                    /** @description The invoice number to be used in the customs. */
+                                    invoice_number?: string;
+                                };
+                                importer_of_record?: {
+                                    /**
+                                     * @description The name of a contact person at this address. Either `name` or the `company_name` field should always be set.
+                                     *
+                                     * @example John Doe
+                                     */
+                                    name: string;
+                                    /**
+                                     * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                                     *
+                                     * @example +1 204-253-9411 ext. 123
+                                     */
+                                    phone?: string;
+                                    /**
+                                     * @description Email for the address owner.
+                                     *
+                                     * @example example@example.com
+                                     */
+                                    email?: string | null;
+                                    /**
+                                     * @description If this is a business address, then the company name should be specified here. Either `name` or the `company_name` field should always be set.
+                                     *
+                                     * @example The Home Depot
+                                     */
+                                    company_name?: string | null;
+                                    /**
+                                     * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                                     *
+                                     * @example 1999 Bishop Grandin Blvd.
+                                     */
+                                    address_line1: string;
+                                    /**
+                                     * @description The second line of the street address.  For some addresses, this line may not be needed.
+                                     *
+                                     * @example Unit 408
+                                     */
+                                    address_line2?: string | null;
+                                    /**
+                                     * @description The third line of the street address.  For some addresses, this line may not be needed.
+                                     *
+                                     * @example Building #7
+                                     */
+                                    address_line3?: string | null;
+                                    /**
+                                     * @description The name of the city or locality
+                                     * @example Winnipeg
+                                     */
+                                    city_locality: string;
+                                    /**
+                                     * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                                     *
+                                     * @example Manitoba
+                                     */
+                                    state_province?: string;
+                                    postal_code: string;
+                                    /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                                     *      */
+                                    country_code: string;
+                                };
+                                /** @description The license number to be used in the customs. */
+                                license_number?: string;
+                                /** @description The certificate number to be used in the customs. */
+                                certificate_number?: string;
+                                /**
+                                 * @deprecated
+                                 * @description Customs declarations for each item in the shipment. (Please provide this information under `products` inside `packages`)
+                                 * @default []
+                                 */
+                                customs_items: {
+                                    /** @description A string that uniquely identifies the customs item */
+                                    readonly customs_item_id: string;
+                                    /**
+                                     * @description A description of the item
+                                     * @default null
+                                     */
+                                    description: string | null;
+                                    /**
+                                     * Format: int32
+                                     * @description The quantity of this item in the shipment.
+                                     * @default 0
+                                     */
+                                    quantity: number;
+                                    /** @description The monetary amount, in the specified currency. */
+                                    value?: number;
+                                    /** @description The currencies that are supported by ShipEngine are the ones that specified by ISO 4217: https://www.iso.org/iso-4217-currency-codes.html
+                                     *      */
+                                    value_currency?: string;
+                                    /** @description The item weight */
+                                    weight?: {
+                                        /** @description The weight, in the specified unit */
+                                        value: number;
+                                        unit: "pound" | "ounce" | "gram" | "kilogram";
+                                    };
+                                    /**
+                                     * @description The [Harmonized Tariff Code](https://en.wikipedia.org/wiki/Harmonized_System) of this item.
+                                     * @default null
+                                     * @example 3926.1
+                                     */
+                                    harmonized_tariff_code: string | null;
+                                    /**
+                                     * @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1) where this item originated
+                                     *
+                                     * @default null
+                                     */
+                                    country_of_origin: string | null;
+                                    unit_of_measure?: string | null;
+                                    /** @description The SKU (Stock Keeping Unit) of the customs item */
+                                    sku?: string | null;
+                                    /** @description Description of the Custom Item's SKU */
+                                    sku_description?: string | null;
+                                }[];
+                            } | null;
+                            /** @description Advanced shipment options.  These are entirely optional. */
+                            advanced_options: {
+                                /**
+                                 * @description This field is used to [bill shipping costs to a third party](https://www.shipengine.com/docs/shipping/bill-to-third-party/).  This field must be used in conjunction with the `bill_to_country_code`, `bill_to_party`, and `bill_to_postal_code` fields.
+                                 *
+                                 * @default null
+                                 */
+                                bill_to_account: string | null;
+                                /**
+                                 * @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1) of the third-party that is responsible for shipping costs.
+                                 *
+                                 * @default null
+                                 */
+                                bill_to_country_code: string | null;
+                                /**
+                                 * @description Indicates whether to bill shipping costs to the recipient or to a third-party.  When billing to a third-party, the `bill_to_account`, `bill_to_country_code`, and `bill_to_postal_code` fields must also be set.
+                                 *
+                                 * @default null
+                                 */
+                                bill_to_party: ("recipient" | "third_party") | null;
+                                /**
+                                 * @description The postal code of the third-party that is responsible for shipping costs.
+                                 *
+                                 * @default null
+                                 */
+                                bill_to_postal_code: string | null;
+                                /**
+                                 * @description Indicates that the shipment contains alcohol.
+                                 * @default false
+                                 */
+                                contains_alcohol: boolean;
+                                /**
+                                 * @description Indicates that the shipper is paying the international delivery duties for this shipment.  This option is supported by UPS, FedEx, and DHL Express.
+                                 *
+                                 * @default false
+                                 */
+                                delivered_duty_paid: boolean;
+                                /**
+                                 * @description Indicates if the shipment contain dry ice
+                                 * @default false
+                                 */
+                                dry_ice: boolean;
+                                /** @description The weight of the dry ice in the shipment */
+                                dry_ice_weight?: {
+                                    /** @description The weight, in the specified unit */
+                                    value: number;
+                                    unit: "pound" | "ounce" | "gram" | "kilogram";
+                                } | null;
+                                /**
+                                 * @description Indicates that the package cannot be processed automatically because it is too large or irregularly shaped. This is primarily for USPS shipments.  See [Section 1.2 of the USPS parcel standards](https://pe.usps.com/text/dmm300/101.htm#ep1047495) for details.
+                                 *
+                                 * @default false
+                                 */
+                                non_machinable: boolean;
+                                /**
+                                 * @description Enables Saturday delivery, if supported by the carrier.
+                                 * @default false
+                                 */
+                                saturday_delivery: boolean;
+                                /** @description Provide details for the Fedex freight service */
+                                fedex_freight?: {
+                                    shipper_load_and_count?: string;
+                                    booking_confirmation?: string;
+                                };
+                                /**
+                                 * @description Whether to use [UPS Ground Freight pricing](https://www.shipengine.com/docs/shipping/ups-ground-freight/).  If enabled, then a `freight_class` must also be specified.
+                                 *
+                                 * @default null
+                                 */
+                                use_ups_ground_freight_pricing: boolean | null;
+                                /**
+                                 * @description The National Motor Freight Traffic Association [freight class](http://www.nmfta.org/pages/nmfc?AspxAutoDetectCookieSupport=1), such as "77.5", "110", or "250".
+                                 *
+                                 * @default null
+                                 * @example 77.5
+                                 */
+                                freight_class: string | null;
+                                /**
+                                 * @description An arbitrary field that can be used to store information about the shipment.
+                                 *
+                                 * @default null
+                                 */
+                                custom_field1: string | null;
+                                /**
+                                 * @description An arbitrary field that can be used to store information about the shipment.
+                                 *
+                                 * @default null
+                                 */
+                                custom_field2: string | null;
+                                /**
+                                 * @description An arbitrary field that can be used to store information about the shipment.
+                                 *
+                                 * @default null
+                                 */
+                                custom_field3: string | null;
+                                /** @default null */
+                                origin_type: ("pickup" | "drop_off") | null;
+                                /**
+                                 * @description Indicate to the carrier that this shipment requires additional handling.
+                                 *
+                                 * @default null
+                                 */
+                                additional_handling: boolean | null;
+                                /** @default null */
+                                shipper_release: boolean | null;
+                                /**
+                                 * collect_on_delivery
+                                 * @description Defer payment until package is delivered, instead of when it is ordered.
+                                 */
+                                collect_on_delivery?: {
+                                    payment_type?: "any" | "cash" | "cash_equivalent" | "none";
+                                    /** payment_amount */
+                                    payment_amount?: {
+                                        currency?: string;
+                                        amount?: number;
+                                    };
+                                };
+                                /**
+                                 * @description Third Party Consignee option is a value-added service that allows the shipper to supply goods without commercial invoices being attached
+                                 * @default false
+                                 */
+                                third_party_consignee: boolean;
+                                /**
+                                 * @description Indicates if the Dangerous goods are present in the shipment
+                                 * @default false
+                                 */
+                                dangerous_goods: boolean;
+                                /** @description Contact information for Dangerous goods */
+                                dangerous_goods_contact?: {
+                                    /** @description Name of the contact */
+                                    name?: string;
+                                    /** @description Phone number of the contact */
+                                    phone?: string;
+                                };
+                                /** @description The Windsor framework is a new regulation in the UK that simplifies customs procedures for goods moved from the UK mainland to Northern Ireland. */
+                                windsor_framework_details?: {
+                                    /**
+                                     * @description An indicator that will tell the carrier and HMRC the type of movement for the shipment.
+                                     * @enum {string}
+                                     */
+                                    movement_indicator?: "c2c" | "b2c" | "c2b" | "b2b";
+                                    /** @description An indicator that allows a shipper to declare the shipment as not-at-risk. */
+                                    not_at_risk?: boolean;
+                                };
+                                /**
+                                 * @description license_number - This field was part of a historical implementation for passing customs-related data. For new integrations, please use the corresponding parameters within the shipment.customs object.
+                                 * @default null
+                                 * @example 514785
+                                 */
+                                license_number: string | null;
+                                /**
+                                 * @description invoice_number - This field was part of a historical implementation for passing customs-related data. For new integrations, please use the corresponding parameters within the shipment.customs object.
+                                 * @default null
+                                 * @example IOC56888
+                                 */
+                                invoice_number: string | null;
+                                /**
+                                 * @description certificate_number - This field was part of a historical implementation for passing customs-related data. For new integrations, please use the corresponding parameters within the shipment.customs object.
+                                 * @default null
+                                 * @example 784515
+                                 */
+                                certificate_number: string | null;
+                                /**
+                                 * @description Indicates that the contents of the package are fragile and should be handled with care.
+                                 * @default false
+                                 */
+                                fragile: boolean;
+                                /**
+                                 * @description Instructs the carrier to deliver the package only to the exact address provided.
+                                 * @default false
+                                 */
+                                "delivery-as-addressed": boolean;
+                                /**
+                                 * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                                 * @default false
+                                 */
+                                "return-after-first-attempt": boolean;
+                                /**
+                                 * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                                 * @default null
+                                 */
+                                regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
+                            } & {
+                                [key: string]: unknown;
+                            };
+                            /**
+                             * @description The insurance provider to use for any insured packages in the shipment.
+                             *
+                             * @default none
+                             */
+                            insurance_provider: "none" | "shipsurance" | "carrier" | "third_party";
+                            /**
+                             * @description Arbitrary tags associated with this shipment.  Tags can be used to categorize shipments, and shipments can be queried by their tags.
+                             *
+                             * @default []
+                             */
+                            readonly tags: {
+                                /**
+                                 * Format: int32
+                                 * @description An integer uniquely identifying a tag.
+                                 * @example 8712
+                                 */
+                                readonly tag_id?: number;
+                                /**
+                                 * @description The tag name.
+                                 * @example Fragile
+                                 */
+                                name: string;
+                                /**
+                                 * @description A hex-coded string identifying the color of the tag.
+                                 * @example #FF0000
+                                 */
+                                color?: string;
+                            }[];
+                            order_source_code?: "amazon_ca" | "amazon_us" | "brightpearl" | "channel_advisor" | "cratejoy" | "ebay" | "etsy" | "jane" | "groupon_goods" | "magento" | "paypal" | "seller_active" | "shopify" | "stitch_labs" | "squarespace" | "three_dcart" | "tophatter" | "walmart" | "woo_commerce" | "volusion";
+                            /** @description The packages in the shipment.
+                             *
+                             *     > **Note:** Some carriers only allow one package per shipment.  If you attempt to create a multi-package shipment for a carrier that doesn't allow it, an error will be returned.
+                             *      */
+                            packages: {
+                                /** @description A string that uniquely identifies this shipment package */
+                                readonly shipment_package_id?: string;
+                                /** @description A string that uniquely identifies this [package type](https://www.shipengine.com/docs/reference/list-carrier-packages/) */
+                                package_id?: string;
+                                /** @description The [package type](https://www.shipengine.com/docs/reference/list-carrier-packages/), such as `thick_envelope`, `small_flat_rate_box`, `large_package`, etc.  The code `package` indicates a custom or unknown package type.
+                                 *      */
+                                package_code?: string;
+                                /** @description The name of the of the [package type](https://www.shipengine.com/docs/reference/list-carrier-packages/) */
+                                package_name?: string;
+                                /** @description The package weight */
+                                weight: {
+                                    /** @description The weight, in the specified unit */
+                                    value: number;
+                                    unit: "pound" | "ounce" | "gram" | "kilogram";
+                                };
+                                /** @description The package dimensions */
+                                dimensions?: {
+                                    /** @default inch */
+                                    unit: "inch" | "centimeter";
+                                    /**
+                                     * @description The length of the package, in the specified unit
+                                     * @default 0
+                                     */
+                                    length: number;
+                                    /**
+                                     * @description The width of the package, in the specified unit
+                                     * @default 0
+                                     */
+                                    width: number;
+                                    /**
+                                     * @description The height of the package, in the specified unit
+                                     * @default 0
+                                     */
+                                    height: number;
+                                };
+                                /**
+                                 * @description The insured value of the package.  Requires the `insurance_provider` field of the shipment to be set.
+                                 *
+                                 * @default {
+                                 *       "currency": "USD",
+                                 *       "amount": 0
+                                 *     }
+                                 */
+                                insured_value: {
+                                    currency: string;
+                                    /** @description The monetary amount, in the specified currency. */
+                                    amount: number;
+                                };
+                                label_messages?: {
+                                    /**
+                                     * @description The first line of the custom label message.  Some carriers may prefix this line with something like "REF", "Reference", "Trx Ref No.", etc.
+                                     *
+                                     * @default null
+                                     */
+                                    reference1: string | null;
+                                    /**
+                                     * @description The second line of the custom label message.  Some carriers may prefix this line with something like "INV", "Reference 2", "Trx Ref No.", etc.
+                                     *
+                                     * @default null
+                                     */
+                                    reference2: string | null;
+                                    /**
+                                     * @description The third line of the custom label message.  Some carriers may prefix this line with something like "PO", "Reference 3", etc.
+                                     *
+                                     * @default null
+                                     */
+                                    reference3: string | null;
+                                };
+                                /** @description An external package id. */
+                                external_package_id?: string;
+                                /** @description The tracking number for the package.  The format depends on the carrier.
+                                 *      */
+                                readonly tracking_number?: string;
+                                /**
+                                 * @description A short description of the package content. Required for shipments moving to, from, and through Mexico.
+                                 *
+                                 * @example Hand knitted wool socks
+                                 */
+                                content_description?: string | null;
+                                /**
+                                 * @description Details about products inside packages (Information provided would be used on custom documentation)
+                                 * @default []
+                                 */
+                                products: {
+                                    /**
+                                     * @description A description of the item
+                                     * @default null
+                                     */
+                                    description: string | null;
+                                    /**
+                                     * Format: int32
+                                     * @description The quantity of this item in the shipment.
+                                     * @default 0
+                                     */
+                                    quantity: number;
+                                    /** @description The declared value of each item */
+                                    value?: {
+                                        currency: string;
+                                        /** @description The monetary amount, in the specified currency. */
+                                        amount: number;
+                                    };
+                                    /** @description The item weight */
+                                    weight?: {
+                                        /** @description The weight, in the specified unit */
+                                        value: number;
+                                        unit: "pound" | "ounce" | "gram" | "kilogram";
+                                    };
+                                    /**
+                                     * @description The [Harmonized Tariff Code](https://en.wikipedia.org/wiki/Harmonized_System) of this item.
+                                     * @default null
+                                     * @example 3926.1
+                                     */
+                                    harmonized_tariff_code: string | null;
+                                    /**
+                                     * @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1) where this item originated
+                                     *
+                                     * @default null
+                                     */
+                                    country_of_origin: string | null;
+                                    unit_of_measure?: string | null;
+                                    /** @description The SKU (Stock Keeping Unit) of the item */
+                                    sku?: string | null;
+                                    /** @description Description of the Custom Item's SKU */
+                                    sku_description?: string | null;
+                                    /** @description Manufacturers Identification code */
+                                    mid_code?: string | null;
+                                    /** @description link to the item on the seller website */
+                                    product_url?: string | null;
+                                    /**
+                                     * @description VAT rate applicable to the item
+                                     * @example 0.2
+                                     */
+                                    vat_rate?: number | null;
+                                    /**
+                                     * @description Details about dangerous goods inside products
+                                     * @default []
+                                     */
+                                    dangerous_goods: {
+                                        /**
+                                         * @description UN number to identify the dangerous goods.
+                                         * @default null
+                                         */
+                                        id_number: string | null;
+                                        /**
+                                         * @description Trade description of the dangerous goods.
+                                         * @default null
+                                         */
+                                        shipping_name: string | null;
+                                        /**
+                                         * @description Recognized Technical or chemical name of dangerous goods.
+                                         * @default null
+                                         */
+                                        technical_name: string | null;
+                                        /**
+                                         * @description Dangerous goods product class based on regulation.
+                                         * @default null
+                                         */
+                                        product_class: string | null;
+                                        /**
+                                         * @description A secondary of product class for substances presenting more than one particular hazard
+                                         * @default null
+                                         */
+                                        product_class_subsidiary: string | null;
+                                        /**
+                                         * packaging_group
+                                         * @enum {string}
+                                         */
+                                        packaging_group?: "i" | "ii" | "iii";
+                                        /** @description This model represents the amount of the dangerous goods. */
+                                        dangerous_amount?: {
+                                            /**
+                                             * @description The amount of dangerous goods.
+                                             * @default 0
+                                             */
+                                            amount: number;
+                                            /**
+                                             * @description The unit of dangerous goods.
+                                             * @default null
+                                             */
+                                            unit: string | null;
+                                        };
+                                        /**
+                                         * Format: int32
+                                         * @description Quantity of dangerous goods.
+                                         * @default 0
+                                         */
+                                        quantity: number;
+                                        /**
+                                         * @description The specific standardized packaging instructions from the relevant regulatory agency that have been applied to the parcel/container.
+                                         * @default null
+                                         */
+                                        packaging_instruction: string | null;
+                                        /**
+                                         * packaging_instruction_section
+                                         * @enum {string}
+                                         */
+                                        packaging_instruction_section?: "section_1" | "section_2" | "section_1a" | "section_1b";
+                                        /**
+                                         * @description The type of exterior packaging used to contain the dangerous good.
+                                         * @default null
+                                         */
+                                        packaging_type: string | null;
+                                        /**
+                                         * transport_mean
+                                         * @enum {string}
+                                         */
+                                        transport_mean?: "ground" | "water" | "cargo_aircraft_only" | "passenger_aircraft";
+                                        /**
+                                         * @description Transport category assign to dangerous goods for the transport purpose.
+                                         * @default null
+                                         */
+                                        transport_category: string | null;
+                                        /**
+                                         * @description Name of the regulatory authority.
+                                         * @default null
+                                         */
+                                        regulation_authority: string | null;
+                                        /**
+                                         * regulation_level
+                                         * @enum {string}
+                                         */
+                                        regulation_level?: "lightly_regulated" | "fully_regulated" | "limited_quantities" | "excepted_quantity";
+                                        /**
+                                         * @description Indication if the substance is radioactive.
+                                         * @example false
+                                         */
+                                        radioactive?: boolean | null;
+                                        /**
+                                         * @description Indication if the substance needs to be reported to regulatory authority based on the quantity.
+                                         * @example false
+                                         */
+                                        reportable_quantity?: boolean | null;
+                                        /**
+                                         * @description Defines which types of tunnels the shipment is allowed to go through
+                                         * @default null
+                                         */
+                                        tunnel_code: string | null;
+                                        /**
+                                         * @description Provider additonal description regarding the dangerous goods. This is used as a placed holder to provider additional context and varies by carrier
+                                         * @default null
+                                         */
+                                        additional_description: string | null;
+                                    }[];
+                                    /** @description Additional details about products */
+                                    extended_details?: {
+                                        [key: string]: unknown;
+                                    };
+                                }[];
+                            }[];
+                            /** @description The combined weight of all packages in the shipment */
+                            readonly total_weight: {
+                                /** @description The weight, in the specified unit */
+                                value: number;
+                                unit: "pound" | "ounce" | "gram" | "kilogram";
+                            };
+                            /**
+                             * @description Calculate a rate for this shipment with the requested carrier using a ratecard that differs from the default.  Only supported for UPS and USPS.
+                             * @example retail
+                             */
+                            comparison_rate_type?: string | null;
+                            /**
+                             * Format: int32
+                             * @description Certain carriers base [their rates](https://blog.stamps.com/2017/09/08/usps-postal-zones/) off of
+                             *     custom zones that vary depending upon the ship_to and ship_from location
+                             *
+                             * @example 6
+                             */
+                            readonly zone?: number | null;
+                        };
+                        /** @description The date that the package was (or will be) shipped.  ShipEngine will take the day of week into consideration. For example, if the carrier does not operate on Sundays, then a package that would have shipped on Sunday will ship on Monday instead.
+                         *      */
+                        readonly ship_date?: string;
+                        /** @description The date and time that the label was created in ShipEngine. */
+                        readonly created_at?: string;
+                        /** @description The cost of shipping, delivery confirmation, and other carrier charges.  This amount **does not** include insurance costs.
+                         *      */
+                        readonly shipment_cost?: {
+                            currency: string;
+                            /** @description The monetary amount, in the specified currency. */
+                            amount: number;
+                        };
+                        /** @description The insurance cost for this package.  Add this to the `shipment_cost` field to get the total cost.
+                         *      */
+                        readonly insurance_cost?: {
+                            currency: string;
+                            /** @description The monetary amount, in the specified currency. */
+                            amount: number;
+                        };
+                        /** @description The total shipping cost for the specified comparison_rate_type.
+                         *      */
+                        readonly requested_comparison_amount?: {
+                            currency: string;
+                            /** @description The monetary amount, in the specified currency. */
+                            amount: number;
+                        };
+                        /** @description A list of rate details that are associated with shipping cost. This is useful for
+                         *     displaying a breakdown of the rate to the user.
+                         *      */
+                        readonly rate_details?: {
+                            rate_detail_type?: "uncategorized" | "shipping" | "insurance" | "confirmation" | "discount" | "fuel_charge" | "additional_fees" | "tariff" | "tax" | "delivery" | "handling" | "special_goods" | "pickup" | "location_fee" | "oversize" | "returns" | "notifications" | "tip" | "duties_and_taxes" | "brokerage_fee" | "admin_fee" | "adjustment";
+                            /** @description A rate detail description defined by a carrier */
+                            carrier_description?: string;
+                            /** @description A rate detail code defined by a carrier */
+                            carrier_billing_code?: string;
+                            /** @description Contains any additional information */
+                            carrier_memo?: string;
+                            amount?: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            };
+                            /** @description If applicable, contains additional data about a rate detail of a specific type, e.g. VAT */
+                            rate_detail_attributes?: {
+                                tax_type?: "vat";
+                                /** @description Tax percentage, e.g. 20 for 20%, added to the shipping cost */
+                                tax_percentage?: number;
+                            };
+                            /** @description The source of the billing information. This is typically the carrier, but could be a third party, e.g insurance */
+                            billing_source?: string;
+                        }[];
+                        /**
+                         * @description The tracking number for the package. Tracking number formats vary across carriers.
+                         * @example 782758401696
+                         */
+                        readonly tracking_number?: string;
+                        /** @description Indicates whether this is a return label.  You may also want to set the `rma_number` so you know what is being returned.
+                         *      */
+                        is_return_label?: boolean;
+                        /** @description An optional Return Merchandise Authorization number.  This field is useful for return labels.  You can set it to any string value.
+                         *      */
+                        rma_number?: string | null;
+                        /** @description Indicates whether this is an international shipment.  That is, the originating country and destination country are different.
+                         *      */
+                        readonly is_international?: boolean;
+                        /** @description If this label was created as part of a [batch](https://www.shipengine.com/docs/labels/bulk/), then this is the unique ID of that batch.
+                         *      */
+                        readonly batch_id?: string;
+                        /** @description The unique ID of the [carrier account](https://www.shipengine.com/docs/carriers/setup/) that was used to create this label
+                         *      */
+                        readonly carrier_id?: string;
+                        /** @description The label charge event.
+                         *      */
+                        charge_event?: "carrier_default" | "on_creation" | "on_carrier_acceptance";
+                        /** @description The `label_id` of the original (outgoing) label that the return label is for. This associates the two labels together, which is
+                         *     required by some carriers.
+                         *      */
+                        outbound_label_id?: string;
+                        /** @description The [carrier service](https://www.shipengine.com/docs/shipping/use-a-carrier-service/) used to ship the package, such as `fedex_ground`, `usps_first_class_mail`, `flat_rate_envelope`, etc.
+                         *      */
+                        readonly service_code?: string;
+                        /**
+                         * @deprecated
+                         * @description Indicate if this label is being used only for testing purposes. If true, then no charge will be added to your account.
+                         * @default false
+                         */
+                        test_label: boolean;
+                        /** @description The [package type](https://www.shipengine.com/docs/reference/list-carrier-packages/), such as `thick_envelope`, `small_flat_rate_box`, `large_package`, etc.  The code `package` indicates a custom or unknown package type.
+                         *      */
+                        readonly package_code?: string;
+                        /** @default validate_and_clean */
+                        validate_address: "no_validation" | "validate_only" | "validate_and_clean";
+                        /** @description Indicates whether the label has been [voided](https://www.shipengine.com/docs/labels/voiding/)
+                         *      */
+                        readonly voided?: boolean;
+                        /** @description The date and time that the label was [voided](https://www.shipengine.com/docs/labels/voiding/), or `null` if the label has not been voided
+                         *      */
+                        readonly voided_at?: string | null;
+                        /** @default url */
+                        label_download_type: "url" | "inline";
+                        /**
+                         * @description The file format that you want the label to be in.  We recommend `pdf` format because it is supported by all carriers, whereas some carriers do not support the `png` or `zpl` formats.
+                         *
+                         * @default pdf
+                         */
+                        label_format: "pdf" | "png" | "zpl";
+                        /**
+                         * @description The display format that the label should be shown in.
+                         * @default label
+                         */
+                        display_scheme: "label" | "paperless" | "label_and_paperless";
+                        /**
+                         * @description The layout (size) that you want the label to be in.  The `label_format` determines which sizes are allowed.  `4x6` is supported for all label formats, whereas `letter` (8.5" x 11") is only supported for `pdf` format.
+                         *
+                         * @default 4x6
+                         */
+                        label_layout: "4x6" | "letter" | "A4" | "A6";
+                        /** @description Indicates whether the shipment is trackable, in which case the `tracking_status` field will reflect the current status and each package will have a `tracking_number`.
+                         *      */
+                        readonly trackable?: boolean;
+                        /** @description The label image resource that was used to create a custom label image. */
+                        label_image_id?: string | null;
+                        /** @description The [shipping carrier](https://www.shipengine.com/docs/carriers/setup/) who will ship the package, such as `fedex`, `dhl_express`, `stamps_com`, etc.
+                         *      */
+                        readonly carrier_code?: string;
+                        /** @description The current status of the package, such as `in_transit` or `delivered` */
+                        readonly tracking_status?: "unknown" | "in_transit" | "error" | "delivered";
+                        /** @description The type of delivery confirmation that is required for this shipment. */
+                        readonly confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
+                        readonly label_download?: {
+                            /** @description The URL of the linked resource, if any */
+                            href?: string;
+                            /** @description The URL for the pdf generated label */
+                            pdf?: string;
+                            /** @description The URL for the png generated label */
+                            png?: string;
+                            /** @description The URL for the zpl generated label */
+                            zpl?: string;
+                        };
+                        /** @description The link to download the customs form (a.k.a. commercial invoice) for this shipment, if any.  Forms are in PDF format. This field is null if the shipment does not require a customs form, or if the carrier does not support it.
+                         *      */
+                        readonly form_download?: {
+                            /** @description The URL of the linked resource, if any */
+                            href: string;
+                            /** @description The type of resource, or the type of relationship to the parent resource */
+                            type?: string;
+                        } | null;
+                        /** @description The QR code download for the package */
+                        readonly qr_code_download?: {
+                            /** @description The URL of the linked resource, if any */
+                            href?: string;
+                            /** @description The type of resource, or the type of relationship to the parent resource */
+                            type?: string;
+                        } | null;
+                        /** @description The paperless details which may contain elements like `href`, `instructions` and `handoff_code`.
+                         *      */
+                        readonly paperless_download?: {
+                            /** @description The URL of the linked resource, if any */
+                            href?: string;
+                            /**
+                             * @description The instructions for the paperless download.
+                             *
+                             * @default null
+                             */
+                            instructions: string | null;
+                            /**
+                             * @description The handoff code for the paperless download.
+                             *
+                             * @default null
+                             */
+                            handoff_code: string | null;
+                        } | null;
+                        /** @description The link to submit an insurance claim for the shipment.  This field is null if the shipment is not insured or if the insurance provider does not support online claim submission.
+                         *      */
+                        readonly insurance_claim?: {
+                            /** @description The URL of the linked resource, if any */
+                            href: string;
+                            /** @description The type of resource, or the type of relationship to the parent resource */
+                            type?: string;
+                        } | null;
+                        /** @description The label's package(s).
+                         *
+                         *     > **Note:** Some carriers only allow one package per label.  If you attempt to create a multi-package label for a carrier that doesn't allow it, an error will be returned.
+                         *      */
+                        readonly packages?: ({
+                            /**
+                             * Format: int32
+                             * @description The shipment package id
+                             */
+                            readonly package_id?: number;
+                            /** @description The [package type](https://www.shipengine.com/docs/reference/list-carrier-packages/), such as `thick_envelope`, `small_flat_rate_box`, `large_package`, etc.  The code `package` indicates a custom or unknown package type.
+                             *      */
+                            package_code?: string;
+                            /** @description The package weight */
+                            weight: {
+                                /** @description The weight, in the specified unit */
+                                value: number;
+                                unit: "pound" | "ounce" | "gram" | "kilogram";
+                            };
+                            /** @description The package dimensions */
+                            dimensions?: {
+                                /** @default inch */
+                                unit: "inch" | "centimeter";
+                                /**
+                                 * @description The length of the package, in the specified unit
+                                 * @default 0
+                                 */
+                                length: number;
+                                /**
+                                 * @description The width of the package, in the specified unit
+                                 * @default 0
+                                 */
+                                width: number;
+                                /**
+                                 * @description The height of the package, in the specified unit
+                                 * @default 0
+                                 */
+                                height: number;
+                            };
+                            /**
+                             * @description The insured value of the package.  Requires the `insurance_provider` field of the shipment to be set.
+                             *
+                             * @default {
+                             *       "currency": "USD",
+                             *       "amount": 0
+                             *     }
+                             */
+                            insured_value: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            };
+                            /** @description The tracking number for the package.  The format depends on the carrier.
+                             *      */
+                            readonly tracking_number?: string;
+                            /** @description The label download for the package */
+                            readonly label_download?: {
+                                /** @description The URL of the linked resource, if any */
+                                href?: string;
+                                /** @description The URL for the pdf generated label */
+                                pdf?: string;
+                                /** @description The URL for the png generated label */
+                                png?: string;
+                                /** @description The URL for the zpl generated label */
+                                zpl?: string;
+                            };
+                            /** @description The form download for any customs that are needed */
+                            readonly form_download?: {
+                                /** @description The URL of the linked resource, if any */
+                                href?: string;
+                                /** @description The type of resource, or the type of relationship to the parent resource */
+                                type?: string;
+                            };
+                            /** @description The QR code download for the package */
+                            readonly qr_code_download?: {
+                                /** @description The URL of the linked resource, if any */
+                                href?: string;
+                                /** @description The type of resource, or the type of relationship to the parent resource */
+                                type?: string;
+                            };
+                            /** @description The paperless details which may contain elements like `href`, `instructions` and `handoff_code`. */
+                            readonly paperless_download?: {
+                                /** @description The URL of the linked resource, if any */
+                                href?: string;
+                                /**
+                                 * @description The instructions for the paperless download.
+                                 *
+                                 * @default null
+                                 */
+                                instructions: string | null;
+                                /**
+                                 * @description The handoff code for the paperless download.
+                                 *
+                                 * @default null
+                                 */
+                                handoff_code: string | null;
+                            };
+                            label_messages?: {
+                                /**
+                                 * @description The first line of the custom label message.  Some carriers may prefix this line with something like "REF", "Reference", "Trx Ref No.", etc.
+                                 *
+                                 * @default null
+                                 */
+                                reference1: string | null;
+                                /**
+                                 * @description The second line of the custom label message.  Some carriers may prefix this line with something like "INV", "Reference 2", "Trx Ref No.", etc.
+                                 *
+                                 * @default null
+                                 */
+                                reference2: string | null;
+                                /**
+                                 * @description The third line of the custom label message.  Some carriers may prefix this line with something like "PO", "Reference 3", etc.
+                                 *
+                                 * @default null
+                                 */
+                                reference3: string | null;
+                            };
+                            /** @description An external package id. */
+                            external_package_id?: string;
+                            /**
+                             * @description A short description of the package content. Required for shipments moving to, from, and through Mexico.
+                             *
+                             * @example Hand knitted wool socks
+                             */
+                            content_description?: string | null;
+                            /**
+                             * Format: int32
+                             * @description Package sequence
+                             */
+                            readonly sequence?: number;
+                            /** @description Whether the package has label documents available for download */
+                            has_label_documents?: boolean;
+                            /** @description Whether the package has form documents available for download */
+                            has_form_documents?: boolean;
+                            /** @description Whether the package has QR code documents available for download */
+                            has_qr_code_documents?: boolean;
+                            /** @description Whether the package has paperless documents available for download */
+                            has_paperless_label_documents?: boolean;
+                        } & {
+                            /** @description Alternative identifiers associated with this package.
+                             *      */
+                            readonly alternative_identifiers?: {
+                                /**
+                                 * @description The type of alternative_identifier that corresponds to the value.
+                                 *
+                                 * @example last_mile_tracking_number
+                                 */
+                                type?: string;
+                                /**
+                                 * @description The value of the alternative_identifier.
+                                 *
+                                 * @example 12345678912345678912
+                                 */
+                                value?: string;
+                            }[] | null;
+                        })[];
+                        /** @description Additional information some carriers may provide by which to identify a given label in their system.
+                         *      */
+                        readonly alternative_identifiers?: {
+                            /**
+                             * @description The type of alternative_identifier that corresponds to the value.
+                             *
+                             * @example last_mile_tracking_number
+                             */
+                            type?: string;
+                            /**
+                             * @description The value of the alternative_identifier.
+                             *
+                             * @example 12345678912345678912
+                             */
+                            value?: string;
+                        }[] | null;
+                        /**
+                         * @description The URL to track the package. This URL is provided by the carrier and is unique to the tracking number.
+                         *
+                         * @example https://www.fedex.com/fedextrack/?action=track&trackingnumber=1234
+                         */
+                        readonly tracking_url?: string | null;
+                        /** @description The recipient's mailing address */
+                        readonly ship_to?: {
+                            /**
+                             * @description The name of a contact person at this address.  This field may be set instead of - or in addition to - the `company_name` field.
+                             *
+                             * @example John Doe
+                             */
+                            name: string;
+                            /**
+                             * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                             *
+                             * @example +1 204-253-9411 ext. 123
+                             */
+                            phone?: string;
+                            /**
+                             * @description Email for the address owner.
+                             *
+                             * @example example@example.com
+                             */
+                            email?: string | null;
+                            /**
+                             * @description If this is a business address, then the company name should be specified here.
+                             *
+                             * @example The Home Depot
+                             */
+                            company_name?: string | null;
+                            /**
+                             * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                             *
+                             * @example 1999 Bishop Grandin Blvd.
+                             */
+                            address_line1: string;
+                            /**
+                             * @description The second line of the street address.  For some addresses, this line may not be needed.
+                             *
+                             * @example Unit 408
+                             */
+                            address_line2?: string | null;
+                            /**
+                             * @description The third line of the street address.  For some addresses, this line may not be needed.
+                             *
+                             * @example Building #7
+                             */
+                            address_line3?: string | null;
+                            /**
+                             * @description The name of the city or locality
+                             * @example Winnipeg
+                             */
+                            city_locality: string;
+                            /**
+                             * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                             *
+                             * @example Manitoba
+                             */
+                            state_province: string;
+                            postal_code: string;
+                            /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                             *      */
+                            country_code?: string;
+                            /**
+                             * @description Indicates whether this is a residential address.
+                             * @default unknown
+                             * @example no
+                             */
+                            address_residential_indicator: "unknown" | "yes" | "no";
+                        } & {
+                            /** @description Additional text about how to handle the shipment at this address.
+                             *      */
+                            instructions?: string | null;
+                            geolocation?: {
+                                /**
+                                 * @description Enum of available type of geolocation items:
+                                 *       - 'what3words' functionality allows to specify a location by providing 3 words that have been assign to the specific location see [link](https://what3words.com/business) for more details.
+                                 *
+                                 * @example what3words
+                                 * @enum {string}
+                                 */
+                                type?: "what3words";
+                                /**
+                                 * @description value of the geolocation item
+                                 * @example cats.with.thumbs
+                                 */
+                                value?: string;
+                            }[];
+                        };
+                        /**
+                         * @description Indicates how the label was voided. This field is `null` if the label has not been voided.
+                         *
+                         * @example manual
+                         */
+                        readonly void_type?: ("refund_assist" | "manual") | null;
+                        /** @description Information about the Refund Assist request for this label. This field is `null` if the label is not eligible for Refund Assist.
+                         *      */
+                        readonly refund_details?: {
+                            /** @description The current status of the refund request */
+                            readonly refund_status?: "request_scheduled" | "pending" | "approved" | "rejected" | "excluded";
+                            /** @description The date and time when the refund request was submitted */
+                            readonly request_date?: string;
+                            /** @description The amount that was originally paid for the label */
+                            readonly amount_paid?: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            } | null;
+                            /** @description The amount requested to be refunded */
+                            readonly amount_requested?: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            } | null;
+                            /** @description The amount approved for refund by the carrier */
+                            readonly amount_approved?: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            } | null;
+                            /** @description The amount that has been credited back to the account */
+                            readonly amount_credited?: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            } | null;
+                        } | null;
                     };
                 };
             };
@@ -60825,7 +71147,7 @@ export interface operations {
                      * @description The display format that the label should be shown in.
                      * @default label
                      */
-                    display_scheme?: "label" | "qr_code" | "label_and_qr_code" | "paperless" | "label_and_paperless";
+                    display_scheme?: "label" | "paperless" | "label_and_paperless";
                 };
             };
         };
@@ -60844,6 +71166,11 @@ export interface operations {
                         /** @description The shipment that this label is for.  ShipEngine can create a shipment for you automatically when you [create a label](https://www.shipengine.com/docs/labels/create-a-label/), or you can [create your own shipment](https://www.shipengine.com/docs/shipping/create-a-shipment/) and then [use it to print a label](https://www.shipengine.com/docs/labels/create-from-shipment/)
                          *      */
                         readonly shipment_id?: string;
+                        /** @description A unique user-defined key to identify a shipment.  This can be used to retrieve the shipment.
+                         *      */
+                        readonly external_shipment_id?: string | null;
+                        /** @description ID that the Order Source assigned */
+                        readonly external_order_id?: string | null;
                         /** @description The shipment information used to generate the label */
                         shipment?: {
                             /** @description A string that uniquely identifies the shipment */
@@ -61164,7 +71491,7 @@ export interface operations {
                              * @description The type of delivery confirmation that is required for this shipment.
                              * @default none
                              */
-                            confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                            confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                             /**
                              * @description Customs information.  This is usually only needed for international shipments.
                              *
@@ -61506,6 +71833,26 @@ export interface operations {
                                  * @example 784515
                                  */
                                 certificate_number: string | null;
+                                /**
+                                 * @description Indicates that the contents of the package are fragile and should be handled with care.
+                                 * @default false
+                                 */
+                                fragile: boolean;
+                                /**
+                                 * @description Instructs the carrier to deliver the package only to the exact address provided.
+                                 * @default false
+                                 */
+                                "delivery-as-addressed": boolean;
+                                /**
+                                 * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                                 * @default false
+                                 */
+                                "return-after-first-attempt": boolean;
+                                /**
+                                 * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                                 * @default null
+                                 */
+                                regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
                             } & {
                                 [key: string]: unknown;
                             };
@@ -61858,8 +72205,6 @@ export interface operations {
                             /** @description If applicable, contains additional data about a rate detail of a specific type, e.g. VAT */
                             rate_detail_attributes?: {
                                 tax_type?: "vat";
-                                /** @description Code for a specific tax type */
-                                tax_code?: string;
                                 /** @description Tax percentage, e.g. 20 for 20%, added to the shipping cost */
                                 tax_percentage?: number;
                             };
@@ -61925,7 +72270,7 @@ export interface operations {
                          * @description The display format that the label should be shown in.
                          * @default label
                          */
-                        display_scheme: "label" | "qr_code" | "label_and_qr_code" | "paperless" | "label_and_paperless";
+                        display_scheme: "label" | "paperless" | "label_and_paperless";
                         /**
                          * @description The layout (size) that you want the label to be in.  The `label_format` determines which sizes are allowed.  `4x6` is supported for all label formats, whereas `letter` (8.5" x 11") is only supported for `pdf` format.
                          *
@@ -61943,7 +72288,7 @@ export interface operations {
                         /** @description The current status of the package, such as `in_transit` or `delivered` */
                         readonly tracking_status?: "unknown" | "in_transit" | "error" | "delivered";
                         /** @description The type of delivery confirmation that is required for this shipment. */
-                        readonly confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                        readonly confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                         readonly label_download?: {
                             /** @description The URL of the linked resource, if any */
                             href?: string;
@@ -61959,6 +72304,13 @@ export interface operations {
                         readonly form_download?: {
                             /** @description The URL of the linked resource, if any */
                             href: string;
+                            /** @description The type of resource, or the type of relationship to the parent resource */
+                            type?: string;
+                        } | null;
+                        /** @description The QR code download for the package */
+                        readonly qr_code_download?: {
+                            /** @description The URL of the linked resource, if any */
+                            href?: string;
                             /** @description The type of resource, or the type of relationship to the parent resource */
                             type?: string;
                         } | null;
@@ -62166,6 +72518,129 @@ export interface operations {
                          * @example https://www.fedex.com/fedextrack/?action=track&trackingnumber=1234
                          */
                         readonly tracking_url?: string | null;
+                        /** @description The recipient's mailing address */
+                        readonly ship_to?: {
+                            /**
+                             * @description The name of a contact person at this address.  This field may be set instead of - or in addition to - the `company_name` field.
+                             *
+                             * @example John Doe
+                             */
+                            name: string;
+                            /**
+                             * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                             *
+                             * @example +1 204-253-9411 ext. 123
+                             */
+                            phone?: string;
+                            /**
+                             * @description Email for the address owner.
+                             *
+                             * @example example@example.com
+                             */
+                            email?: string | null;
+                            /**
+                             * @description If this is a business address, then the company name should be specified here.
+                             *
+                             * @example The Home Depot
+                             */
+                            company_name?: string | null;
+                            /**
+                             * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                             *
+                             * @example 1999 Bishop Grandin Blvd.
+                             */
+                            address_line1: string;
+                            /**
+                             * @description The second line of the street address.  For some addresses, this line may not be needed.
+                             *
+                             * @example Unit 408
+                             */
+                            address_line2?: string | null;
+                            /**
+                             * @description The third line of the street address.  For some addresses, this line may not be needed.
+                             *
+                             * @example Building #7
+                             */
+                            address_line3?: string | null;
+                            /**
+                             * @description The name of the city or locality
+                             * @example Winnipeg
+                             */
+                            city_locality: string;
+                            /**
+                             * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                             *
+                             * @example Manitoba
+                             */
+                            state_province: string;
+                            postal_code: string;
+                            /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                             *      */
+                            country_code?: string;
+                            /**
+                             * @description Indicates whether this is a residential address.
+                             * @default unknown
+                             * @example no
+                             */
+                            address_residential_indicator: "unknown" | "yes" | "no";
+                        } & {
+                            /** @description Additional text about how to handle the shipment at this address.
+                             *      */
+                            instructions?: string | null;
+                            geolocation?: {
+                                /**
+                                 * @description Enum of available type of geolocation items:
+                                 *       - 'what3words' functionality allows to specify a location by providing 3 words that have been assign to the specific location see [link](https://what3words.com/business) for more details.
+                                 *
+                                 * @example what3words
+                                 * @enum {string}
+                                 */
+                                type?: "what3words";
+                                /**
+                                 * @description value of the geolocation item
+                                 * @example cats.with.thumbs
+                                 */
+                                value?: string;
+                            }[];
+                        };
+                        /**
+                         * @description Indicates how the label was voided. This field is `null` if the label has not been voided.
+                         *
+                         * @example manual
+                         */
+                        readonly void_type?: ("refund_assist" | "manual") | null;
+                        /** @description Information about the Refund Assist request for this label. This field is `null` if the label is not eligible for Refund Assist.
+                         *      */
+                        readonly refund_details?: {
+                            /** @description The current status of the refund request */
+                            readonly refund_status?: "request_scheduled" | "pending" | "approved" | "rejected" | "excluded";
+                            /** @description The date and time when the refund request was submitted */
+                            readonly request_date?: string;
+                            /** @description The amount that was originally paid for the label */
+                            readonly amount_paid?: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            } | null;
+                            /** @description The amount requested to be refunded */
+                            readonly amount_requested?: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            } | null;
+                            /** @description The amount approved for refund by the carrier */
+                            readonly amount_approved?: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            } | null;
+                            /** @description The amount that has been credited back to the account */
+                            readonly amount_credited?: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            } | null;
+                        } | null;
                     };
                 };
             };
@@ -62308,6 +72783,11 @@ export interface operations {
                         /** @description The shipment that this label is for.  ShipEngine can create a shipment for you automatically when you [create a label](https://www.shipengine.com/docs/labels/create-a-label/), or you can [create your own shipment](https://www.shipengine.com/docs/shipping/create-a-shipment/) and then [use it to print a label](https://www.shipengine.com/docs/labels/create-from-shipment/)
                          *      */
                         readonly shipment_id?: string;
+                        /** @description A unique user-defined key to identify a shipment.  This can be used to retrieve the shipment.
+                         *      */
+                        readonly external_shipment_id?: string | null;
+                        /** @description ID that the Order Source assigned */
+                        readonly external_order_id?: string | null;
                         /** @description The shipment information used to generate the label */
                         shipment?: {
                             /** @description A string that uniquely identifies the shipment */
@@ -62628,7 +73108,7 @@ export interface operations {
                              * @description The type of delivery confirmation that is required for this shipment.
                              * @default none
                              */
-                            confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                            confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                             /**
                              * @description Customs information.  This is usually only needed for international shipments.
                              *
@@ -62970,6 +73450,26 @@ export interface operations {
                                  * @example 784515
                                  */
                                 certificate_number: string | null;
+                                /**
+                                 * @description Indicates that the contents of the package are fragile and should be handled with care.
+                                 * @default false
+                                 */
+                                fragile: boolean;
+                                /**
+                                 * @description Instructs the carrier to deliver the package only to the exact address provided.
+                                 * @default false
+                                 */
+                                "delivery-as-addressed": boolean;
+                                /**
+                                 * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                                 * @default false
+                                 */
+                                "return-after-first-attempt": boolean;
+                                /**
+                                 * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                                 * @default null
+                                 */
+                                regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
                             } & {
                                 [key: string]: unknown;
                             };
@@ -63322,8 +73822,6 @@ export interface operations {
                             /** @description If applicable, contains additional data about a rate detail of a specific type, e.g. VAT */
                             rate_detail_attributes?: {
                                 tax_type?: "vat";
-                                /** @description Code for a specific tax type */
-                                tax_code?: string;
                                 /** @description Tax percentage, e.g. 20 for 20%, added to the shipping cost */
                                 tax_percentage?: number;
                             };
@@ -63389,7 +73887,7 @@ export interface operations {
                          * @description The display format that the label should be shown in.
                          * @default label
                          */
-                        display_scheme: "label" | "qr_code" | "label_and_qr_code" | "paperless" | "label_and_paperless";
+                        display_scheme: "label" | "paperless" | "label_and_paperless";
                         /**
                          * @description The layout (size) that you want the label to be in.  The `label_format` determines which sizes are allowed.  `4x6` is supported for all label formats, whereas `letter` (8.5" x 11") is only supported for `pdf` format.
                          *
@@ -63407,7 +73905,7 @@ export interface operations {
                         /** @description The current status of the package, such as `in_transit` or `delivered` */
                         readonly tracking_status?: "unknown" | "in_transit" | "error" | "delivered";
                         /** @description The type of delivery confirmation that is required for this shipment. */
-                        readonly confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                        readonly confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                         readonly label_download?: {
                             /** @description The URL of the linked resource, if any */
                             href?: string;
@@ -63423,6 +73921,13 @@ export interface operations {
                         readonly form_download?: {
                             /** @description The URL of the linked resource, if any */
                             href: string;
+                            /** @description The type of resource, or the type of relationship to the parent resource */
+                            type?: string;
+                        } | null;
+                        /** @description The QR code download for the package */
+                        readonly qr_code_download?: {
+                            /** @description The URL of the linked resource, if any */
+                            href?: string;
                             /** @description The type of resource, or the type of relationship to the parent resource */
                             type?: string;
                         } | null;
@@ -63630,6 +74135,129 @@ export interface operations {
                          * @example https://www.fedex.com/fedextrack/?action=track&trackingnumber=1234
                          */
                         readonly tracking_url?: string | null;
+                        /** @description The recipient's mailing address */
+                        readonly ship_to?: {
+                            /**
+                             * @description The name of a contact person at this address.  This field may be set instead of - or in addition to - the `company_name` field.
+                             *
+                             * @example John Doe
+                             */
+                            name: string;
+                            /**
+                             * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                             *
+                             * @example +1 204-253-9411 ext. 123
+                             */
+                            phone?: string;
+                            /**
+                             * @description Email for the address owner.
+                             *
+                             * @example example@example.com
+                             */
+                            email?: string | null;
+                            /**
+                             * @description If this is a business address, then the company name should be specified here.
+                             *
+                             * @example The Home Depot
+                             */
+                            company_name?: string | null;
+                            /**
+                             * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                             *
+                             * @example 1999 Bishop Grandin Blvd.
+                             */
+                            address_line1: string;
+                            /**
+                             * @description The second line of the street address.  For some addresses, this line may not be needed.
+                             *
+                             * @example Unit 408
+                             */
+                            address_line2?: string | null;
+                            /**
+                             * @description The third line of the street address.  For some addresses, this line may not be needed.
+                             *
+                             * @example Building #7
+                             */
+                            address_line3?: string | null;
+                            /**
+                             * @description The name of the city or locality
+                             * @example Winnipeg
+                             */
+                            city_locality: string;
+                            /**
+                             * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                             *
+                             * @example Manitoba
+                             */
+                            state_province: string;
+                            postal_code: string;
+                            /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                             *      */
+                            country_code?: string;
+                            /**
+                             * @description Indicates whether this is a residential address.
+                             * @default unknown
+                             * @example no
+                             */
+                            address_residential_indicator: "unknown" | "yes" | "no";
+                        } & {
+                            /** @description Additional text about how to handle the shipment at this address.
+                             *      */
+                            instructions?: string | null;
+                            geolocation?: {
+                                /**
+                                 * @description Enum of available type of geolocation items:
+                                 *       - 'what3words' functionality allows to specify a location by providing 3 words that have been assign to the specific location see [link](https://what3words.com/business) for more details.
+                                 *
+                                 * @example what3words
+                                 * @enum {string}
+                                 */
+                                type?: "what3words";
+                                /**
+                                 * @description value of the geolocation item
+                                 * @example cats.with.thumbs
+                                 */
+                                value?: string;
+                            }[];
+                        };
+                        /**
+                         * @description Indicates how the label was voided. This field is `null` if the label has not been voided.
+                         *
+                         * @example manual
+                         */
+                        readonly void_type?: ("refund_assist" | "manual") | null;
+                        /** @description Information about the Refund Assist request for this label. This field is `null` if the label is not eligible for Refund Assist.
+                         *      */
+                        readonly refund_details?: {
+                            /** @description The current status of the refund request */
+                            readonly refund_status?: "request_scheduled" | "pending" | "approved" | "rejected" | "excluded";
+                            /** @description The date and time when the refund request was submitted */
+                            readonly request_date?: string;
+                            /** @description The amount that was originally paid for the label */
+                            readonly amount_paid?: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            } | null;
+                            /** @description The amount requested to be refunded */
+                            readonly amount_requested?: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            } | null;
+                            /** @description The amount approved for refund by the carrier */
+                            readonly amount_approved?: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            } | null;
+                            /** @description The amount that has been credited back to the account */
+                            readonly amount_credited?: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            } | null;
+                        } | null;
                     };
                 };
             };
@@ -63777,7 +74405,7 @@ export interface operations {
                      * @description The display format that the label should be shown in.
                      * @default label
                      */
-                    display_scheme?: "label" | "qr_code" | "label_and_qr_code" | "paperless" | "label_and_paperless";
+                    display_scheme?: "label" | "paperless" | "label_and_paperless";
                     /** @description The label image resource that was used to create a custom label image. */
                     label_image_id?: string | null;
                     /** @description An optional Return Merchandise Authorization number. If provided, this value will be used as the return label's RMA number. If omitted, the system will auto-generate an RMA number (current default behavior). You can set it to any string value.
@@ -63801,6 +74429,11 @@ export interface operations {
                         /** @description The shipment that this label is for.  ShipEngine can create a shipment for you automatically when you [create a label](https://www.shipengine.com/docs/labels/create-a-label/), or you can [create your own shipment](https://www.shipengine.com/docs/shipping/create-a-shipment/) and then [use it to print a label](https://www.shipengine.com/docs/labels/create-from-shipment/)
                          *      */
                         readonly shipment_id?: string;
+                        /** @description A unique user-defined key to identify a shipment.  This can be used to retrieve the shipment.
+                         *      */
+                        readonly external_shipment_id?: string | null;
+                        /** @description ID that the Order Source assigned */
+                        readonly external_order_id?: string | null;
                         /** @description The shipment information used to generate the label */
                         shipment?: {
                             /** @description A string that uniquely identifies the shipment */
@@ -64121,7 +74754,7 @@ export interface operations {
                              * @description The type of delivery confirmation that is required for this shipment.
                              * @default none
                              */
-                            confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                            confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                             /**
                              * @description Customs information.  This is usually only needed for international shipments.
                              *
@@ -64463,6 +75096,26 @@ export interface operations {
                                  * @example 784515
                                  */
                                 certificate_number: string | null;
+                                /**
+                                 * @description Indicates that the contents of the package are fragile and should be handled with care.
+                                 * @default false
+                                 */
+                                fragile: boolean;
+                                /**
+                                 * @description Instructs the carrier to deliver the package only to the exact address provided.
+                                 * @default false
+                                 */
+                                "delivery-as-addressed": boolean;
+                                /**
+                                 * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                                 * @default false
+                                 */
+                                "return-after-first-attempt": boolean;
+                                /**
+                                 * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                                 * @default null
+                                 */
+                                regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
                             } & {
                                 [key: string]: unknown;
                             };
@@ -64815,8 +75468,6 @@ export interface operations {
                             /** @description If applicable, contains additional data about a rate detail of a specific type, e.g. VAT */
                             rate_detail_attributes?: {
                                 tax_type?: "vat";
-                                /** @description Code for a specific tax type */
-                                tax_code?: string;
                                 /** @description Tax percentage, e.g. 20 for 20%, added to the shipping cost */
                                 tax_percentage?: number;
                             };
@@ -64882,7 +75533,7 @@ export interface operations {
                          * @description The display format that the label should be shown in.
                          * @default label
                          */
-                        display_scheme: "label" | "qr_code" | "label_and_qr_code" | "paperless" | "label_and_paperless";
+                        display_scheme: "label" | "paperless" | "label_and_paperless";
                         /**
                          * @description The layout (size) that you want the label to be in.  The `label_format` determines which sizes are allowed.  `4x6` is supported for all label formats, whereas `letter` (8.5" x 11") is only supported for `pdf` format.
                          *
@@ -64900,7 +75551,7 @@ export interface operations {
                         /** @description The current status of the package, such as `in_transit` or `delivered` */
                         readonly tracking_status?: "unknown" | "in_transit" | "error" | "delivered";
                         /** @description The type of delivery confirmation that is required for this shipment. */
-                        readonly confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                        readonly confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                         readonly label_download?: {
                             /** @description The URL of the linked resource, if any */
                             href?: string;
@@ -64916,6 +75567,13 @@ export interface operations {
                         readonly form_download?: {
                             /** @description The URL of the linked resource, if any */
                             href: string;
+                            /** @description The type of resource, or the type of relationship to the parent resource */
+                            type?: string;
+                        } | null;
+                        /** @description The QR code download for the package */
+                        readonly qr_code_download?: {
+                            /** @description The URL of the linked resource, if any */
+                            href?: string;
                             /** @description The type of resource, or the type of relationship to the parent resource */
                             type?: string;
                         } | null;
@@ -65123,6 +75781,129 @@ export interface operations {
                          * @example https://www.fedex.com/fedextrack/?action=track&trackingnumber=1234
                          */
                         readonly tracking_url?: string | null;
+                        /** @description The recipient's mailing address */
+                        readonly ship_to?: {
+                            /**
+                             * @description The name of a contact person at this address.  This field may be set instead of - or in addition to - the `company_name` field.
+                             *
+                             * @example John Doe
+                             */
+                            name: string;
+                            /**
+                             * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                             *
+                             * @example +1 204-253-9411 ext. 123
+                             */
+                            phone?: string;
+                            /**
+                             * @description Email for the address owner.
+                             *
+                             * @example example@example.com
+                             */
+                            email?: string | null;
+                            /**
+                             * @description If this is a business address, then the company name should be specified here.
+                             *
+                             * @example The Home Depot
+                             */
+                            company_name?: string | null;
+                            /**
+                             * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                             *
+                             * @example 1999 Bishop Grandin Blvd.
+                             */
+                            address_line1: string;
+                            /**
+                             * @description The second line of the street address.  For some addresses, this line may not be needed.
+                             *
+                             * @example Unit 408
+                             */
+                            address_line2?: string | null;
+                            /**
+                             * @description The third line of the street address.  For some addresses, this line may not be needed.
+                             *
+                             * @example Building #7
+                             */
+                            address_line3?: string | null;
+                            /**
+                             * @description The name of the city or locality
+                             * @example Winnipeg
+                             */
+                            city_locality: string;
+                            /**
+                             * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                             *
+                             * @example Manitoba
+                             */
+                            state_province: string;
+                            postal_code: string;
+                            /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                             *      */
+                            country_code?: string;
+                            /**
+                             * @description Indicates whether this is a residential address.
+                             * @default unknown
+                             * @example no
+                             */
+                            address_residential_indicator: "unknown" | "yes" | "no";
+                        } & {
+                            /** @description Additional text about how to handle the shipment at this address.
+                             *      */
+                            instructions?: string | null;
+                            geolocation?: {
+                                /**
+                                 * @description Enum of available type of geolocation items:
+                                 *       - 'what3words' functionality allows to specify a location by providing 3 words that have been assign to the specific location see [link](https://what3words.com/business) for more details.
+                                 *
+                                 * @example what3words
+                                 * @enum {string}
+                                 */
+                                type?: "what3words";
+                                /**
+                                 * @description value of the geolocation item
+                                 * @example cats.with.thumbs
+                                 */
+                                value?: string;
+                            }[];
+                        };
+                        /**
+                         * @description Indicates how the label was voided. This field is `null` if the label has not been voided.
+                         *
+                         * @example manual
+                         */
+                        readonly void_type?: ("refund_assist" | "manual") | null;
+                        /** @description Information about the Refund Assist request for this label. This field is `null` if the label is not eligible for Refund Assist.
+                         *      */
+                        readonly refund_details?: {
+                            /** @description The current status of the refund request */
+                            readonly refund_status?: "request_scheduled" | "pending" | "approved" | "rejected" | "excluded";
+                            /** @description The date and time when the refund request was submitted */
+                            readonly request_date?: string;
+                            /** @description The amount that was originally paid for the label */
+                            readonly amount_paid?: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            } | null;
+                            /** @description The amount requested to be refunded */
+                            readonly amount_requested?: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            } | null;
+                            /** @description The amount approved for refund by the carrier */
+                            readonly amount_approved?: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            } | null;
+                            /** @description The amount that has been credited back to the account */
+                            readonly amount_credited?: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            } | null;
+                        } | null;
                     };
                 };
             };
@@ -65527,6 +76308,1620 @@ export interface operations {
                          * @example label_not_found_within_void_period
                          */
                         readonly reason_code?: string & ("unknown" | "unspecified" | "validation_failed" | "label_not_found_within_void_period" | "label_already_used" | "label_already_voided" | "contact_carrier");
+                    };
+                };
+            };
+            /** @description The request contained errors. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description A UUID that uniquely identifies the request id.
+                         *     This can be given to the support team to help debug non-trivial issues that may occur
+                         *      */
+                        request_id: string;
+                        /** @description The errors associated with the failed API call */
+                        readonly errors: {
+                            error_source: "carrier" | "order_source" | "shipengine";
+                            error_type: "account_status" | "business_rules" | "validation" | "security" | "system" | "integrations";
+                            error_code: "auto_fund_not_supported" | "batch_cannot_be_modified" | "carrier_conflict" | "carrier_disconnected" | "carrier_not_connected" | "carrier_not_supported" | "confirmation_not_supported" | "default_warehouse_cannot_be_deleted" | "field_conflict" | "field_value_required" | "forbidden" | "identifier_conflict" | "identifiers_must_match" | "insufficient_funds" | "invalid_address" | "invalid_billing_plan" | "invalid_field_value" | "invalid_identifier" | "invalid_status" | "invalid_string_length" | "label_images_not_supported" | "meter_failure" | "order_source_not_active" | "rate_limit_exceeded" | "refresh_not_supported" | "request_body_required" | "return_label_not_supported" | "settings_not_supported" | "subscription_inactive" | "terms_not_accepted" | "tracking_not_supported" | "trial_expired" | "unauthorized" | "unknown" | "unspecified" | "verification_failure" | "warehouse_conflict" | "webhook_event_type_conflict" | "customs_items_required" | "incompatible_paired_labels" | "invalid_charge_event" | "invalid_object" | "no_rates_returned" | "file_not_found" | "shipping_rule_not_found" | "service_not_determined" | "no_rates_returned" | "funding_source_registration_in_progress" | "insurance_failure" | "funding_source_missing_configuration" | "funding_source_error";
+                            /**
+                             * @description An error message associated with the failed API call
+                             * @example Body of request cannot be null.
+                             */
+                            readonly message: string;
+                            /** @description A string that uniquely identifies the carrier that generated the error. */
+                            readonly carrier_id?: string;
+                            /** @description The name of the [shipping carrier](https://www.shipengine.com/docs/carriers/setup/) that generated the error, such as `fedex`, `dhl_express`, `stamps_com`, etc.
+                             *      */
+                            readonly carrier_code?: string;
+                            /**
+                             * @description The name of the field that caused the error
+                             * @example shipment.ship_to.phone_number
+                             */
+                            readonly field_name?: string;
+                        }[];
+                    };
+                };
+            };
+            /** @description The specified resource does not exist. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description A UUID that uniquely identifies the request id.
+                         *     This can be given to the support team to help debug non-trivial issues that may occur
+                         *      */
+                        request_id: string;
+                        /** @description The errors associated with the failed API call */
+                        readonly errors: {
+                            error_source: "carrier" | "order_source" | "shipengine";
+                            error_type: "account_status" | "business_rules" | "validation" | "security" | "system" | "integrations";
+                            error_code: "auto_fund_not_supported" | "batch_cannot_be_modified" | "carrier_conflict" | "carrier_disconnected" | "carrier_not_connected" | "carrier_not_supported" | "confirmation_not_supported" | "default_warehouse_cannot_be_deleted" | "field_conflict" | "field_value_required" | "forbidden" | "identifier_conflict" | "identifiers_must_match" | "insufficient_funds" | "invalid_address" | "invalid_billing_plan" | "invalid_field_value" | "invalid_identifier" | "invalid_status" | "invalid_string_length" | "label_images_not_supported" | "meter_failure" | "order_source_not_active" | "rate_limit_exceeded" | "refresh_not_supported" | "request_body_required" | "return_label_not_supported" | "settings_not_supported" | "subscription_inactive" | "terms_not_accepted" | "tracking_not_supported" | "trial_expired" | "unauthorized" | "unknown" | "unspecified" | "verification_failure" | "warehouse_conflict" | "webhook_event_type_conflict" | "customs_items_required" | "incompatible_paired_labels" | "invalid_charge_event" | "invalid_object" | "no_rates_returned" | "file_not_found" | "shipping_rule_not_found" | "service_not_determined" | "no_rates_returned" | "funding_source_registration_in_progress" | "insurance_failure" | "funding_source_missing_configuration" | "funding_source_error";
+                            /**
+                             * @description An error message associated with the failed API call
+                             * @example Body of request cannot be null.
+                             */
+                            readonly message: string;
+                            /** @description A string that uniquely identifies the carrier that generated the error. */
+                            readonly carrier_id?: string;
+                            /** @description The name of the [shipping carrier](https://www.shipengine.com/docs/carriers/setup/) that generated the error, such as `fedex`, `dhl_express`, `stamps_com`, etc.
+                             *      */
+                            readonly carrier_code?: string;
+                            /**
+                             * @description The name of the field that caused the error
+                             * @example shipment.ship_to.phone_number
+                             */
+                            readonly field_name?: string;
+                        }[];
+                    };
+                };
+            };
+            /** @description An error occurred on ShipEngine's side.
+             *
+             *     > This error will automatically be reported to our engineers.
+             *      */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description A UUID that uniquely identifies the request id.
+                         *     This can be given to the support team to help debug non-trivial issues that may occur
+                         *      */
+                        request_id: string;
+                        /** @description The errors associated with the failed API call */
+                        readonly errors: {
+                            error_source: "carrier" | "order_source" | "shipengine";
+                            error_type: "account_status" | "business_rules" | "validation" | "security" | "system" | "integrations";
+                            error_code: "auto_fund_not_supported" | "batch_cannot_be_modified" | "carrier_conflict" | "carrier_disconnected" | "carrier_not_connected" | "carrier_not_supported" | "confirmation_not_supported" | "default_warehouse_cannot_be_deleted" | "field_conflict" | "field_value_required" | "forbidden" | "identifier_conflict" | "identifiers_must_match" | "insufficient_funds" | "invalid_address" | "invalid_billing_plan" | "invalid_field_value" | "invalid_identifier" | "invalid_status" | "invalid_string_length" | "label_images_not_supported" | "meter_failure" | "order_source_not_active" | "rate_limit_exceeded" | "refresh_not_supported" | "request_body_required" | "return_label_not_supported" | "settings_not_supported" | "subscription_inactive" | "terms_not_accepted" | "tracking_not_supported" | "trial_expired" | "unauthorized" | "unknown" | "unspecified" | "verification_failure" | "warehouse_conflict" | "webhook_event_type_conflict" | "customs_items_required" | "incompatible_paired_labels" | "invalid_charge_event" | "invalid_object" | "no_rates_returned" | "file_not_found" | "shipping_rule_not_found" | "service_not_determined" | "no_rates_returned" | "funding_source_registration_in_progress" | "insurance_failure" | "funding_source_missing_configuration" | "funding_source_error";
+                            /**
+                             * @description An error message associated with the failed API call
+                             * @example Body of request cannot be null.
+                             */
+                            readonly message: string;
+                            /** @description A string that uniquely identifies the carrier that generated the error. */
+                            readonly carrier_id?: string;
+                            /** @description The name of the [shipping carrier](https://www.shipengine.com/docs/carriers/setup/) that generated the error, such as `fedex`, `dhl_express`, `stamps_com`, etc.
+                             *      */
+                            readonly carrier_code?: string;
+                            /**
+                             * @description The name of the field that caused the error
+                             * @example shipment.ship_to.phone_number
+                             */
+                            readonly field_name?: string;
+                        }[];
+                    };
+                };
+            };
+        };
+    };
+    cancel_label_refund: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Label ID */
+                label_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The refund cancellation was successful. Returns the updated label object. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description A string that uniquely identifies the label. This ID is generated by ShipEngine when the label is created.
+                         *      */
+                        readonly label_id?: string;
+                        readonly status?: "processing" | "completed" | "error" | "voided";
+                        /** @description The shipment that this label is for.  ShipEngine can create a shipment for you automatically when you [create a label](https://www.shipengine.com/docs/labels/create-a-label/), or you can [create your own shipment](https://www.shipengine.com/docs/shipping/create-a-shipment/) and then [use it to print a label](https://www.shipengine.com/docs/labels/create-from-shipment/)
+                         *      */
+                        readonly shipment_id?: string;
+                        /** @description A unique user-defined key to identify a shipment.  This can be used to retrieve the shipment.
+                         *      */
+                        readonly external_shipment_id?: string | null;
+                        /** @description ID that the Order Source assigned */
+                        readonly external_order_id?: string | null;
+                        /** @description The shipment information used to generate the label */
+                        shipment?: {
+                            /** @description A string that uniquely identifies the shipment */
+                            readonly shipment_id: string;
+                            /** @description The carrier account that is billed for the shipping charges */
+                            carrier_id: string;
+                            /** @description The [carrier service](https://www.shipengine.com/docs/shipping/use-a-carrier-service/) used to ship the package, such as `fedex_ground`, `usps_first_class_mail`, `flat_rate_envelope`, etc.
+                             *      */
+                            service_code: string;
+                            /** @description ID of the shipping rule, which you want to use to automate carrier/carrier service selection for the shipment
+                             *      */
+                            shipping_rule_id?: string;
+                            /** @description ID that the Order Source assigned */
+                            external_order_id?: string | null;
+                            /**
+                             * @description Describe the packages included in this shipment as related to potential metadata that was imported from
+                             *     external order sources
+                             *
+                             * @default []
+                             */
+                            items: {
+                                /** @description item name */
+                                name?: string;
+                                /** @description sales order id */
+                                sales_order_id?: string | null;
+                                /** @description sales order item id */
+                                sales_order_item_id?: string | null;
+                                /**
+                                 * Format: int32
+                                 * @description The quantity of this item included in the shipment
+                                 */
+                                quantity?: number;
+                                /** @description Item Stock Keeping Unit */
+                                sku?: string | null;
+                                /** @description Item Stock Keeping Unit of the product bundle */
+                                readonly bundle_sku?: string | null;
+                                /** @description external order id */
+                                external_order_id?: string | null;
+                                /** @description external order item id */
+                                external_order_item_id?: string | null;
+                                /**
+                                 * @description Amazon Standard Identification Number
+                                 * @example B00005N5PF
+                                 */
+                                asin?: string | null;
+                                order_source_code?: "amazon_ca" | "amazon_us" | "brightpearl" | "channel_advisor" | "cratejoy" | "ebay" | "etsy" | "jane" | "groupon_goods" | "magento" | "paypal" | "seller_active" | "shopify" | "stitch_labs" | "squarespace" | "three_dcart" | "tophatter" | "walmart" | "woo_commerce" | "volusion";
+                            }[];
+                            tax_identifiers?: {
+                                taxable_entity_type: "shipper" | "recipient" | "ior";
+                                identifier_type: "vat" | "eori" | "ssn" | "ein" | "tin" | "ioss" | "pan" | "voec" | "pccc" | "oss" | "passport" | "abn" | "ukims";
+                                /** @description The authority that issued this tax. This must be a valid 2 character ISO 3166 Alpha 2 country code. */
+                                issuing_authority: string;
+                                /** @description The value of the identifier */
+                                value: string;
+                            }[] | null;
+                            /** @description A unique user-defined key to identify a shipment.  This can be used to retrieve the shipment.
+                             *
+                             *     > **Warning:** The `external_shipment_id` is limited to 50 characters. Any additional characters will be truncated.
+                             *      */
+                            external_shipment_id?: string | null;
+                            /** @description A non-unique user-defined number used to identify a shipment.  If undefined, this will match the external_shipment_id of the shipment.
+                             *
+                             *     > **Warning:** The `shipment_number` is limited to 50 characters. Any additional characters will be truncated.
+                             *      */
+                            shipment_number?: string | null;
+                            /** @description The date that the shipment was (or will be) shipped.  ShipEngine will take the day of week into consideration. For example, if the carrier does not operate on Sundays, then a package that would have shipped on Sunday will ship on Monday instead.
+                             *      */
+                            ship_date: string;
+                            /** @description The date and time that the shipment was created in ShipEngine. */
+                            readonly created_at: string;
+                            /** @description The date and time that the shipment was created or last modified. */
+                            readonly modified_at: string;
+                            /**
+                             * @description The current status of the shipment
+                             * @default pending
+                             */
+                            readonly shipment_status: "pending" | "processing" | "label_purchased" | "cancelled";
+                            /** @description The recipient's mailing address */
+                            ship_to: {
+                                /**
+                                 * @description The name of a contact person at this address.  This field may be set instead of - or in addition to - the `company_name` field.
+                                 *
+                                 * @example John Doe
+                                 */
+                                name: string;
+                                /**
+                                 * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                                 *
+                                 * @example +1 204-253-9411 ext. 123
+                                 */
+                                phone?: string;
+                                /**
+                                 * @description Email for the address owner.
+                                 *
+                                 * @example example@example.com
+                                 */
+                                email?: string | null;
+                                /**
+                                 * @description If this is a business address, then the company name should be specified here.
+                                 *
+                                 * @example The Home Depot
+                                 */
+                                company_name?: string | null;
+                                /**
+                                 * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                                 *
+                                 * @example 1999 Bishop Grandin Blvd.
+                                 */
+                                address_line1: string;
+                                /**
+                                 * @description The second line of the street address.  For some addresses, this line may not be needed.
+                                 *
+                                 * @example Unit 408
+                                 */
+                                address_line2?: string | null;
+                                /**
+                                 * @description The third line of the street address.  For some addresses, this line may not be needed.
+                                 *
+                                 * @example Building #7
+                                 */
+                                address_line3?: string | null;
+                                /**
+                                 * @description The name of the city or locality
+                                 * @example Winnipeg
+                                 */
+                                city_locality: string;
+                                /**
+                                 * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                                 *
+                                 * @example Manitoba
+                                 */
+                                state_province: string;
+                                postal_code: string;
+                                /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                                 *      */
+                                country_code?: string;
+                                /**
+                                 * @description Indicates whether this is a residential address.
+                                 * @default unknown
+                                 * @example no
+                                 */
+                                address_residential_indicator: "unknown" | "yes" | "no";
+                            } & {
+                                /** @description Additional text about how to handle the shipment at this address.
+                                 *      */
+                                instructions?: string | null;
+                                geolocation?: {
+                                    /**
+                                     * @description Enum of available type of geolocation items:
+                                     *       - 'what3words' functionality allows to specify a location by providing 3 words that have been assign to the specific location see [link](https://what3words.com/business) for more details.
+                                     *
+                                     * @example what3words
+                                     * @enum {string}
+                                     */
+                                    type?: "what3words";
+                                    /**
+                                     * @description value of the geolocation item
+                                     * @example cats.with.thumbs
+                                     */
+                                    value?: string;
+                                }[];
+                            };
+                            /** @description The shipment's origin address. If you frequently ship from the same location, consider [creating a warehouse](https://www.shipengine.com/docs/reference/create-warehouse/).  Then you can simply specify the `warehouse_id` rather than the complete address each time.
+                             *      */
+                            ship_from: {
+                                /**
+                                 * @description The name of a contact person at this address.  This field may be set instead of - or in addition to - the `company_name` field.
+                                 *
+                                 * @example John Doe
+                                 */
+                                name: string;
+                                /**
+                                 * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                                 *
+                                 * @example +1 204-253-9411 ext. 123
+                                 */
+                                phone?: string;
+                                /**
+                                 * @description Email for the address owner.
+                                 *
+                                 * @example example@example.com
+                                 */
+                                email?: string | null;
+                                /**
+                                 * @description If this is a business address, then the company name should be specified here.
+                                 *
+                                 * @example The Home Depot
+                                 */
+                                company_name?: string | null;
+                                /**
+                                 * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                                 *
+                                 * @example 1999 Bishop Grandin Blvd.
+                                 */
+                                address_line1: string;
+                                /**
+                                 * @description The second line of the street address.  For some addresses, this line may not be needed.
+                                 *
+                                 * @example Unit 408
+                                 */
+                                address_line2?: string | null;
+                                /**
+                                 * @description The third line of the street address.  For some addresses, this line may not be needed.
+                                 *
+                                 * @example Building #7
+                                 */
+                                address_line3?: string | null;
+                                /**
+                                 * @description The name of the city or locality
+                                 * @example Winnipeg
+                                 */
+                                city_locality: string;
+                                /**
+                                 * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                                 *
+                                 * @example Manitoba
+                                 */
+                                state_province: string;
+                                postal_code: string;
+                                /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                                 *      */
+                                country_code?: string;
+                                /**
+                                 * @description Indicates whether this is a residential address.
+                                 * @default unknown
+                                 * @example no
+                                 */
+                                address_residential_indicator: "unknown" | "yes" | "no";
+                            } & {
+                                /** @description Additional text about how to handle the shipment at this address.
+                                 *      */
+                                instructions?: string | null;
+                            };
+                            /**
+                             * @description The [warehouse](https://www.shipengine.com/docs/shipping/ship-from-a-warehouse/) that the shipment is being shipped from.  Either `warehouse_id` or `ship_from` must be specified.
+                             *
+                             * @default null
+                             */
+                            warehouse_id: string | null;
+                            /** @description The return address for this shipment.  Defaults to the `ship_from` address.
+                             *      */
+                            return_to: {
+                                /**
+                                 * @description The name of a contact person at this address.  This field may be set instead of - or in addition to - the `company_name` field.
+                                 *
+                                 * @example John Doe
+                                 */
+                                name: string;
+                                /**
+                                 * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                                 *
+                                 * @example +1 204-253-9411 ext. 123
+                                 */
+                                phone?: string;
+                                /**
+                                 * @description Email for the address owner.
+                                 *
+                                 * @example example@example.com
+                                 */
+                                email?: string | null;
+                                /**
+                                 * @description If this is a business address, then the company name should be specified here.
+                                 *
+                                 * @example The Home Depot
+                                 */
+                                company_name?: string | null;
+                                /**
+                                 * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                                 *
+                                 * @example 1999 Bishop Grandin Blvd.
+                                 */
+                                address_line1: string;
+                                /**
+                                 * @description The second line of the street address.  For some addresses, this line may not be needed.
+                                 *
+                                 * @example Unit 408
+                                 */
+                                address_line2?: string | null;
+                                /**
+                                 * @description The third line of the street address.  For some addresses, this line may not be needed.
+                                 *
+                                 * @example Building #7
+                                 */
+                                address_line3?: string | null;
+                                /**
+                                 * @description The name of the city or locality
+                                 * @example Winnipeg
+                                 */
+                                city_locality: string;
+                                /**
+                                 * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                                 *
+                                 * @example Manitoba
+                                 */
+                                state_province: string;
+                                postal_code: string;
+                                /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                                 *      */
+                                country_code?: string;
+                                /**
+                                 * @description Indicates whether this is a residential address.
+                                 * @default unknown
+                                 * @example no
+                                 */
+                                address_residential_indicator: "unknown" | "yes" | "no";
+                            } & {
+                                /** @description Additional text about how to handle the shipment at this address.
+                                 *      */
+                                instructions?: string | null;
+                            };
+                            /**
+                             * @description An optional indicator if the shipment is intended to be a return. Defaults to false if not provided.
+                             *
+                             * @default false
+                             */
+                            is_return: boolean | null;
+                            /**
+                             * @description The type of delivery confirmation that is required for this shipment.
+                             * @default none
+                             */
+                            confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
+                            /**
+                             * @description Customs information.  This is usually only needed for international shipments.
+                             *
+                             * @default null
+                             */
+                            customs: {
+                                /**
+                                 * @description The type of contents in this shipment.  This may impact import duties or customs treatment.
+                                 * @default merchandise
+                                 */
+                                contents: "merchandise" | "documents" | "gift" | "returned_goods" | "sample" | "other";
+                                /** @description Explanation for contents (required if the `contents` is provided as `other`) */
+                                contents_explanation?: string;
+                                /**
+                                 * @description Indicates what to do if a package is unable to be delivered.
+                                 * @default return_to_sender
+                                 */
+                                non_delivery: "return_to_sender" | "treat_as_abandoned";
+                                /** @description Specifies the supported terms of trade code (incoterms) */
+                                terms_of_trade_code?: string & ("exw" | "fca" | "cpt" | "cip" | "dpu" | "dap" | "ddp" | "fas" | "fob" | "cfr" | "cif" | "ddu" | "daf" | "deq" | "des");
+                                /** @description Declaration statement to be placed on the commercial invoice */
+                                declaration?: string;
+                                invoice_additional_details?: {
+                                    /** @description Freight Charge for shipment. */
+                                    freight_charge?: {
+                                        currency: string;
+                                        /** @description The monetary amount, in the specified currency. */
+                                        amount: number;
+                                    };
+                                    /** @description Insurance Charge for shipment. */
+                                    insurance_charge?: {
+                                        currency: string;
+                                        /** @description The monetary amount, in the specified currency. */
+                                        amount: number;
+                                    };
+                                    /** @description Discount for shipment. */
+                                    discount?: {
+                                        currency: string;
+                                        /** @description The monetary amount, in the specified currency. */
+                                        amount: number;
+                                    };
+                                    /** @description Estimated import charges for commercial invoices for international shipments. */
+                                    estimated_import_charges?: {
+                                        /** @description Estimated import taxes. */
+                                        taxes?: {
+                                            currency: string;
+                                            /** @description The monetary amount, in the specified currency. */
+                                            amount: number;
+                                        };
+                                        /** @description Estimated import duties. */
+                                        duties?: {
+                                            currency: string;
+                                            /** @description The monetary amount, in the specified currency. */
+                                            amount: number;
+                                        };
+                                    };
+                                    /** @description Other charge for shipment. */
+                                    other_charge?: {
+                                        currency: string;
+                                        /** @description The monetary amount, in the specified currency. */
+                                        amount: number;
+                                    };
+                                    /** @description Description for the other charge (if provided). */
+                                    other_charge_description?: string;
+                                    /** @description The invoice number to be used in the customs. */
+                                    invoice_number?: string;
+                                };
+                                importer_of_record?: {
+                                    /**
+                                     * @description The name of a contact person at this address. Either `name` or the `company_name` field should always be set.
+                                     *
+                                     * @example John Doe
+                                     */
+                                    name: string;
+                                    /**
+                                     * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                                     *
+                                     * @example +1 204-253-9411 ext. 123
+                                     */
+                                    phone?: string;
+                                    /**
+                                     * @description Email for the address owner.
+                                     *
+                                     * @example example@example.com
+                                     */
+                                    email?: string | null;
+                                    /**
+                                     * @description If this is a business address, then the company name should be specified here. Either `name` or the `company_name` field should always be set.
+                                     *
+                                     * @example The Home Depot
+                                     */
+                                    company_name?: string | null;
+                                    /**
+                                     * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                                     *
+                                     * @example 1999 Bishop Grandin Blvd.
+                                     */
+                                    address_line1: string;
+                                    /**
+                                     * @description The second line of the street address.  For some addresses, this line may not be needed.
+                                     *
+                                     * @example Unit 408
+                                     */
+                                    address_line2?: string | null;
+                                    /**
+                                     * @description The third line of the street address.  For some addresses, this line may not be needed.
+                                     *
+                                     * @example Building #7
+                                     */
+                                    address_line3?: string | null;
+                                    /**
+                                     * @description The name of the city or locality
+                                     * @example Winnipeg
+                                     */
+                                    city_locality: string;
+                                    /**
+                                     * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                                     *
+                                     * @example Manitoba
+                                     */
+                                    state_province?: string;
+                                    postal_code: string;
+                                    /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                                     *      */
+                                    country_code: string;
+                                };
+                                /** @description The license number to be used in the customs. */
+                                license_number?: string;
+                                /** @description The certificate number to be used in the customs. */
+                                certificate_number?: string;
+                                /**
+                                 * @deprecated
+                                 * @description Customs declarations for each item in the shipment. (Please provide this information under `products` inside `packages`)
+                                 * @default []
+                                 */
+                                customs_items: {
+                                    /** @description A string that uniquely identifies the customs item */
+                                    readonly customs_item_id: string;
+                                    /**
+                                     * @description A description of the item
+                                     * @default null
+                                     */
+                                    description: string | null;
+                                    /**
+                                     * Format: int32
+                                     * @description The quantity of this item in the shipment.
+                                     * @default 0
+                                     */
+                                    quantity: number;
+                                    /** @description The monetary amount, in the specified currency. */
+                                    value?: number;
+                                    /** @description The currencies that are supported by ShipEngine are the ones that specified by ISO 4217: https://www.iso.org/iso-4217-currency-codes.html
+                                     *      */
+                                    value_currency?: string;
+                                    /** @description The item weight */
+                                    weight?: {
+                                        /** @description The weight, in the specified unit */
+                                        value: number;
+                                        unit: "pound" | "ounce" | "gram" | "kilogram";
+                                    };
+                                    /**
+                                     * @description The [Harmonized Tariff Code](https://en.wikipedia.org/wiki/Harmonized_System) of this item.
+                                     * @default null
+                                     * @example 3926.1
+                                     */
+                                    harmonized_tariff_code: string | null;
+                                    /**
+                                     * @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1) where this item originated
+                                     *
+                                     * @default null
+                                     */
+                                    country_of_origin: string | null;
+                                    unit_of_measure?: string | null;
+                                    /** @description The SKU (Stock Keeping Unit) of the customs item */
+                                    sku?: string | null;
+                                    /** @description Description of the Custom Item's SKU */
+                                    sku_description?: string | null;
+                                }[];
+                            } | null;
+                            /** @description Advanced shipment options.  These are entirely optional. */
+                            advanced_options: {
+                                /**
+                                 * @description This field is used to [bill shipping costs to a third party](https://www.shipengine.com/docs/shipping/bill-to-third-party/).  This field must be used in conjunction with the `bill_to_country_code`, `bill_to_party`, and `bill_to_postal_code` fields.
+                                 *
+                                 * @default null
+                                 */
+                                bill_to_account: string | null;
+                                /**
+                                 * @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1) of the third-party that is responsible for shipping costs.
+                                 *
+                                 * @default null
+                                 */
+                                bill_to_country_code: string | null;
+                                /**
+                                 * @description Indicates whether to bill shipping costs to the recipient or to a third-party.  When billing to a third-party, the `bill_to_account`, `bill_to_country_code`, and `bill_to_postal_code` fields must also be set.
+                                 *
+                                 * @default null
+                                 */
+                                bill_to_party: ("recipient" | "third_party") | null;
+                                /**
+                                 * @description The postal code of the third-party that is responsible for shipping costs.
+                                 *
+                                 * @default null
+                                 */
+                                bill_to_postal_code: string | null;
+                                /**
+                                 * @description Indicates that the shipment contains alcohol.
+                                 * @default false
+                                 */
+                                contains_alcohol: boolean;
+                                /**
+                                 * @description Indicates that the shipper is paying the international delivery duties for this shipment.  This option is supported by UPS, FedEx, and DHL Express.
+                                 *
+                                 * @default false
+                                 */
+                                delivered_duty_paid: boolean;
+                                /**
+                                 * @description Indicates if the shipment contain dry ice
+                                 * @default false
+                                 */
+                                dry_ice: boolean;
+                                /** @description The weight of the dry ice in the shipment */
+                                dry_ice_weight?: {
+                                    /** @description The weight, in the specified unit */
+                                    value: number;
+                                    unit: "pound" | "ounce" | "gram" | "kilogram";
+                                } | null;
+                                /**
+                                 * @description Indicates that the package cannot be processed automatically because it is too large or irregularly shaped. This is primarily for USPS shipments.  See [Section 1.2 of the USPS parcel standards](https://pe.usps.com/text/dmm300/101.htm#ep1047495) for details.
+                                 *
+                                 * @default false
+                                 */
+                                non_machinable: boolean;
+                                /**
+                                 * @description Enables Saturday delivery, if supported by the carrier.
+                                 * @default false
+                                 */
+                                saturday_delivery: boolean;
+                                /** @description Provide details for the Fedex freight service */
+                                fedex_freight?: {
+                                    shipper_load_and_count?: string;
+                                    booking_confirmation?: string;
+                                };
+                                /**
+                                 * @description Whether to use [UPS Ground Freight pricing](https://www.shipengine.com/docs/shipping/ups-ground-freight/).  If enabled, then a `freight_class` must also be specified.
+                                 *
+                                 * @default null
+                                 */
+                                use_ups_ground_freight_pricing: boolean | null;
+                                /**
+                                 * @description The National Motor Freight Traffic Association [freight class](http://www.nmfta.org/pages/nmfc?AspxAutoDetectCookieSupport=1), such as "77.5", "110", or "250".
+                                 *
+                                 * @default null
+                                 * @example 77.5
+                                 */
+                                freight_class: string | null;
+                                /**
+                                 * @description An arbitrary field that can be used to store information about the shipment.
+                                 *
+                                 * @default null
+                                 */
+                                custom_field1: string | null;
+                                /**
+                                 * @description An arbitrary field that can be used to store information about the shipment.
+                                 *
+                                 * @default null
+                                 */
+                                custom_field2: string | null;
+                                /**
+                                 * @description An arbitrary field that can be used to store information about the shipment.
+                                 *
+                                 * @default null
+                                 */
+                                custom_field3: string | null;
+                                /** @default null */
+                                origin_type: ("pickup" | "drop_off") | null;
+                                /**
+                                 * @description Indicate to the carrier that this shipment requires additional handling.
+                                 *
+                                 * @default null
+                                 */
+                                additional_handling: boolean | null;
+                                /** @default null */
+                                shipper_release: boolean | null;
+                                /**
+                                 * collect_on_delivery
+                                 * @description Defer payment until package is delivered, instead of when it is ordered.
+                                 */
+                                collect_on_delivery?: {
+                                    payment_type?: "any" | "cash" | "cash_equivalent" | "none";
+                                    /** payment_amount */
+                                    payment_amount?: {
+                                        currency?: string;
+                                        amount?: number;
+                                    };
+                                };
+                                /**
+                                 * @description Third Party Consignee option is a value-added service that allows the shipper to supply goods without commercial invoices being attached
+                                 * @default false
+                                 */
+                                third_party_consignee: boolean;
+                                /**
+                                 * @description Indicates if the Dangerous goods are present in the shipment
+                                 * @default false
+                                 */
+                                dangerous_goods: boolean;
+                                /** @description Contact information for Dangerous goods */
+                                dangerous_goods_contact?: {
+                                    /** @description Name of the contact */
+                                    name?: string;
+                                    /** @description Phone number of the contact */
+                                    phone?: string;
+                                };
+                                /** @description The Windsor framework is a new regulation in the UK that simplifies customs procedures for goods moved from the UK mainland to Northern Ireland. */
+                                windsor_framework_details?: {
+                                    /**
+                                     * @description An indicator that will tell the carrier and HMRC the type of movement for the shipment.
+                                     * @enum {string}
+                                     */
+                                    movement_indicator?: "c2c" | "b2c" | "c2b" | "b2b";
+                                    /** @description An indicator that allows a shipper to declare the shipment as not-at-risk. */
+                                    not_at_risk?: boolean;
+                                };
+                                /**
+                                 * @description license_number - This field was part of a historical implementation for passing customs-related data. For new integrations, please use the corresponding parameters within the shipment.customs object.
+                                 * @default null
+                                 * @example 514785
+                                 */
+                                license_number: string | null;
+                                /**
+                                 * @description invoice_number - This field was part of a historical implementation for passing customs-related data. For new integrations, please use the corresponding parameters within the shipment.customs object.
+                                 * @default null
+                                 * @example IOC56888
+                                 */
+                                invoice_number: string | null;
+                                /**
+                                 * @description certificate_number - This field was part of a historical implementation for passing customs-related data. For new integrations, please use the corresponding parameters within the shipment.customs object.
+                                 * @default null
+                                 * @example 784515
+                                 */
+                                certificate_number: string | null;
+                                /**
+                                 * @description Indicates that the contents of the package are fragile and should be handled with care.
+                                 * @default false
+                                 */
+                                fragile: boolean;
+                                /**
+                                 * @description Instructs the carrier to deliver the package only to the exact address provided.
+                                 * @default false
+                                 */
+                                "delivery-as-addressed": boolean;
+                                /**
+                                 * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                                 * @default false
+                                 */
+                                "return-after-first-attempt": boolean;
+                                /**
+                                 * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                                 * @default null
+                                 */
+                                regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
+                            } & {
+                                [key: string]: unknown;
+                            };
+                            /**
+                             * @description The insurance provider to use for any insured packages in the shipment.
+                             *
+                             * @default none
+                             */
+                            insurance_provider: "none" | "shipsurance" | "carrier" | "third_party";
+                            /**
+                             * @description Arbitrary tags associated with this shipment.  Tags can be used to categorize shipments, and shipments can be queried by their tags.
+                             *
+                             * @default []
+                             */
+                            readonly tags: {
+                                /**
+                                 * Format: int32
+                                 * @description An integer uniquely identifying a tag.
+                                 * @example 8712
+                                 */
+                                readonly tag_id?: number;
+                                /**
+                                 * @description The tag name.
+                                 * @example Fragile
+                                 */
+                                name: string;
+                                /**
+                                 * @description A hex-coded string identifying the color of the tag.
+                                 * @example #FF0000
+                                 */
+                                color?: string;
+                            }[];
+                            order_source_code?: "amazon_ca" | "amazon_us" | "brightpearl" | "channel_advisor" | "cratejoy" | "ebay" | "etsy" | "jane" | "groupon_goods" | "magento" | "paypal" | "seller_active" | "shopify" | "stitch_labs" | "squarespace" | "three_dcart" | "tophatter" | "walmart" | "woo_commerce" | "volusion";
+                            /** @description The packages in the shipment.
+                             *
+                             *     > **Note:** Some carriers only allow one package per shipment.  If you attempt to create a multi-package shipment for a carrier that doesn't allow it, an error will be returned.
+                             *      */
+                            packages: {
+                                /** @description A string that uniquely identifies this shipment package */
+                                readonly shipment_package_id?: string;
+                                /** @description A string that uniquely identifies this [package type](https://www.shipengine.com/docs/reference/list-carrier-packages/) */
+                                package_id?: string;
+                                /** @description The [package type](https://www.shipengine.com/docs/reference/list-carrier-packages/), such as `thick_envelope`, `small_flat_rate_box`, `large_package`, etc.  The code `package` indicates a custom or unknown package type.
+                                 *      */
+                                package_code?: string;
+                                /** @description The name of the of the [package type](https://www.shipengine.com/docs/reference/list-carrier-packages/) */
+                                package_name?: string;
+                                /** @description The package weight */
+                                weight: {
+                                    /** @description The weight, in the specified unit */
+                                    value: number;
+                                    unit: "pound" | "ounce" | "gram" | "kilogram";
+                                };
+                                /** @description The package dimensions */
+                                dimensions?: {
+                                    /** @default inch */
+                                    unit: "inch" | "centimeter";
+                                    /**
+                                     * @description The length of the package, in the specified unit
+                                     * @default 0
+                                     */
+                                    length: number;
+                                    /**
+                                     * @description The width of the package, in the specified unit
+                                     * @default 0
+                                     */
+                                    width: number;
+                                    /**
+                                     * @description The height of the package, in the specified unit
+                                     * @default 0
+                                     */
+                                    height: number;
+                                };
+                                /**
+                                 * @description The insured value of the package.  Requires the `insurance_provider` field of the shipment to be set.
+                                 *
+                                 * @default {
+                                 *       "currency": "USD",
+                                 *       "amount": 0
+                                 *     }
+                                 */
+                                insured_value: {
+                                    currency: string;
+                                    /** @description The monetary amount, in the specified currency. */
+                                    amount: number;
+                                };
+                                label_messages?: {
+                                    /**
+                                     * @description The first line of the custom label message.  Some carriers may prefix this line with something like "REF", "Reference", "Trx Ref No.", etc.
+                                     *
+                                     * @default null
+                                     */
+                                    reference1: string | null;
+                                    /**
+                                     * @description The second line of the custom label message.  Some carriers may prefix this line with something like "INV", "Reference 2", "Trx Ref No.", etc.
+                                     *
+                                     * @default null
+                                     */
+                                    reference2: string | null;
+                                    /**
+                                     * @description The third line of the custom label message.  Some carriers may prefix this line with something like "PO", "Reference 3", etc.
+                                     *
+                                     * @default null
+                                     */
+                                    reference3: string | null;
+                                };
+                                /** @description An external package id. */
+                                external_package_id?: string;
+                                /** @description The tracking number for the package.  The format depends on the carrier.
+                                 *      */
+                                readonly tracking_number?: string;
+                                /**
+                                 * @description A short description of the package content. Required for shipments moving to, from, and through Mexico.
+                                 *
+                                 * @example Hand knitted wool socks
+                                 */
+                                content_description?: string | null;
+                                /**
+                                 * @description Details about products inside packages (Information provided would be used on custom documentation)
+                                 * @default []
+                                 */
+                                products: {
+                                    /**
+                                     * @description A description of the item
+                                     * @default null
+                                     */
+                                    description: string | null;
+                                    /**
+                                     * Format: int32
+                                     * @description The quantity of this item in the shipment.
+                                     * @default 0
+                                     */
+                                    quantity: number;
+                                    /** @description The declared value of each item */
+                                    value?: {
+                                        currency: string;
+                                        /** @description The monetary amount, in the specified currency. */
+                                        amount: number;
+                                    };
+                                    /** @description The item weight */
+                                    weight?: {
+                                        /** @description The weight, in the specified unit */
+                                        value: number;
+                                        unit: "pound" | "ounce" | "gram" | "kilogram";
+                                    };
+                                    /**
+                                     * @description The [Harmonized Tariff Code](https://en.wikipedia.org/wiki/Harmonized_System) of this item.
+                                     * @default null
+                                     * @example 3926.1
+                                     */
+                                    harmonized_tariff_code: string | null;
+                                    /**
+                                     * @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1) where this item originated
+                                     *
+                                     * @default null
+                                     */
+                                    country_of_origin: string | null;
+                                    unit_of_measure?: string | null;
+                                    /** @description The SKU (Stock Keeping Unit) of the item */
+                                    sku?: string | null;
+                                    /** @description Description of the Custom Item's SKU */
+                                    sku_description?: string | null;
+                                    /** @description Manufacturers Identification code */
+                                    mid_code?: string | null;
+                                    /** @description link to the item on the seller website */
+                                    product_url?: string | null;
+                                    /**
+                                     * @description VAT rate applicable to the item
+                                     * @example 0.2
+                                     */
+                                    vat_rate?: number | null;
+                                    /**
+                                     * @description Details about dangerous goods inside products
+                                     * @default []
+                                     */
+                                    dangerous_goods: {
+                                        /**
+                                         * @description UN number to identify the dangerous goods.
+                                         * @default null
+                                         */
+                                        id_number: string | null;
+                                        /**
+                                         * @description Trade description of the dangerous goods.
+                                         * @default null
+                                         */
+                                        shipping_name: string | null;
+                                        /**
+                                         * @description Recognized Technical or chemical name of dangerous goods.
+                                         * @default null
+                                         */
+                                        technical_name: string | null;
+                                        /**
+                                         * @description Dangerous goods product class based on regulation.
+                                         * @default null
+                                         */
+                                        product_class: string | null;
+                                        /**
+                                         * @description A secondary of product class for substances presenting more than one particular hazard
+                                         * @default null
+                                         */
+                                        product_class_subsidiary: string | null;
+                                        /**
+                                         * packaging_group
+                                         * @enum {string}
+                                         */
+                                        packaging_group?: "i" | "ii" | "iii";
+                                        /** @description This model represents the amount of the dangerous goods. */
+                                        dangerous_amount?: {
+                                            /**
+                                             * @description The amount of dangerous goods.
+                                             * @default 0
+                                             */
+                                            amount: number;
+                                            /**
+                                             * @description The unit of dangerous goods.
+                                             * @default null
+                                             */
+                                            unit: string | null;
+                                        };
+                                        /**
+                                         * Format: int32
+                                         * @description Quantity of dangerous goods.
+                                         * @default 0
+                                         */
+                                        quantity: number;
+                                        /**
+                                         * @description The specific standardized packaging instructions from the relevant regulatory agency that have been applied to the parcel/container.
+                                         * @default null
+                                         */
+                                        packaging_instruction: string | null;
+                                        /**
+                                         * packaging_instruction_section
+                                         * @enum {string}
+                                         */
+                                        packaging_instruction_section?: "section_1" | "section_2" | "section_1a" | "section_1b";
+                                        /**
+                                         * @description The type of exterior packaging used to contain the dangerous good.
+                                         * @default null
+                                         */
+                                        packaging_type: string | null;
+                                        /**
+                                         * transport_mean
+                                         * @enum {string}
+                                         */
+                                        transport_mean?: "ground" | "water" | "cargo_aircraft_only" | "passenger_aircraft";
+                                        /**
+                                         * @description Transport category assign to dangerous goods for the transport purpose.
+                                         * @default null
+                                         */
+                                        transport_category: string | null;
+                                        /**
+                                         * @description Name of the regulatory authority.
+                                         * @default null
+                                         */
+                                        regulation_authority: string | null;
+                                        /**
+                                         * regulation_level
+                                         * @enum {string}
+                                         */
+                                        regulation_level?: "lightly_regulated" | "fully_regulated" | "limited_quantities" | "excepted_quantity";
+                                        /**
+                                         * @description Indication if the substance is radioactive.
+                                         * @example false
+                                         */
+                                        radioactive?: boolean | null;
+                                        /**
+                                         * @description Indication if the substance needs to be reported to regulatory authority based on the quantity.
+                                         * @example false
+                                         */
+                                        reportable_quantity?: boolean | null;
+                                        /**
+                                         * @description Defines which types of tunnels the shipment is allowed to go through
+                                         * @default null
+                                         */
+                                        tunnel_code: string | null;
+                                        /**
+                                         * @description Provider additonal description regarding the dangerous goods. This is used as a placed holder to provider additional context and varies by carrier
+                                         * @default null
+                                         */
+                                        additional_description: string | null;
+                                    }[];
+                                    /** @description Additional details about products */
+                                    extended_details?: {
+                                        [key: string]: unknown;
+                                    };
+                                }[];
+                            }[];
+                            /** @description The combined weight of all packages in the shipment */
+                            readonly total_weight: {
+                                /** @description The weight, in the specified unit */
+                                value: number;
+                                unit: "pound" | "ounce" | "gram" | "kilogram";
+                            };
+                            /**
+                             * @description Calculate a rate for this shipment with the requested carrier using a ratecard that differs from the default.  Only supported for UPS and USPS.
+                             * @example retail
+                             */
+                            comparison_rate_type?: string | null;
+                            /**
+                             * Format: int32
+                             * @description Certain carriers base [their rates](https://blog.stamps.com/2017/09/08/usps-postal-zones/) off of
+                             *     custom zones that vary depending upon the ship_to and ship_from location
+                             *
+                             * @example 6
+                             */
+                            readonly zone?: number | null;
+                        };
+                        /** @description The date that the package was (or will be) shipped.  ShipEngine will take the day of week into consideration. For example, if the carrier does not operate on Sundays, then a package that would have shipped on Sunday will ship on Monday instead.
+                         *      */
+                        readonly ship_date?: string;
+                        /** @description The date and time that the label was created in ShipEngine. */
+                        readonly created_at?: string;
+                        /** @description The cost of shipping, delivery confirmation, and other carrier charges.  This amount **does not** include insurance costs.
+                         *      */
+                        readonly shipment_cost?: {
+                            currency: string;
+                            /** @description The monetary amount, in the specified currency. */
+                            amount: number;
+                        };
+                        /** @description The insurance cost for this package.  Add this to the `shipment_cost` field to get the total cost.
+                         *      */
+                        readonly insurance_cost?: {
+                            currency: string;
+                            /** @description The monetary amount, in the specified currency. */
+                            amount: number;
+                        };
+                        /** @description The total shipping cost for the specified comparison_rate_type.
+                         *      */
+                        readonly requested_comparison_amount?: {
+                            currency: string;
+                            /** @description The monetary amount, in the specified currency. */
+                            amount: number;
+                        };
+                        /** @description A list of rate details that are associated with shipping cost. This is useful for
+                         *     displaying a breakdown of the rate to the user.
+                         *      */
+                        readonly rate_details?: {
+                            rate_detail_type?: "uncategorized" | "shipping" | "insurance" | "confirmation" | "discount" | "fuel_charge" | "additional_fees" | "tariff" | "tax" | "delivery" | "handling" | "special_goods" | "pickup" | "location_fee" | "oversize" | "returns" | "notifications" | "tip" | "duties_and_taxes" | "brokerage_fee" | "admin_fee" | "adjustment";
+                            /** @description A rate detail description defined by a carrier */
+                            carrier_description?: string;
+                            /** @description A rate detail code defined by a carrier */
+                            carrier_billing_code?: string;
+                            /** @description Contains any additional information */
+                            carrier_memo?: string;
+                            amount?: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            };
+                            /** @description If applicable, contains additional data about a rate detail of a specific type, e.g. VAT */
+                            rate_detail_attributes?: {
+                                tax_type?: "vat";
+                                /** @description Tax percentage, e.g. 20 for 20%, added to the shipping cost */
+                                tax_percentage?: number;
+                            };
+                            /** @description The source of the billing information. This is typically the carrier, but could be a third party, e.g insurance */
+                            billing_source?: string;
+                        }[];
+                        /**
+                         * @description The tracking number for the package. Tracking number formats vary across carriers.
+                         * @example 782758401696
+                         */
+                        readonly tracking_number?: string;
+                        /** @description Indicates whether this is a return label.  You may also want to set the `rma_number` so you know what is being returned.
+                         *      */
+                        is_return_label?: boolean;
+                        /** @description An optional Return Merchandise Authorization number.  This field is useful for return labels.  You can set it to any string value.
+                         *      */
+                        rma_number?: string | null;
+                        /** @description Indicates whether this is an international shipment.  That is, the originating country and destination country are different.
+                         *      */
+                        readonly is_international?: boolean;
+                        /** @description If this label was created as part of a [batch](https://www.shipengine.com/docs/labels/bulk/), then this is the unique ID of that batch.
+                         *      */
+                        readonly batch_id?: string;
+                        /** @description The unique ID of the [carrier account](https://www.shipengine.com/docs/carriers/setup/) that was used to create this label
+                         *      */
+                        readonly carrier_id?: string;
+                        /** @description The label charge event.
+                         *      */
+                        charge_event?: "carrier_default" | "on_creation" | "on_carrier_acceptance";
+                        /** @description The `label_id` of the original (outgoing) label that the return label is for. This associates the two labels together, which is
+                         *     required by some carriers.
+                         *      */
+                        outbound_label_id?: string;
+                        /** @description The [carrier service](https://www.shipengine.com/docs/shipping/use-a-carrier-service/) used to ship the package, such as `fedex_ground`, `usps_first_class_mail`, `flat_rate_envelope`, etc.
+                         *      */
+                        readonly service_code?: string;
+                        /**
+                         * @deprecated
+                         * @description Indicate if this label is being used only for testing purposes. If true, then no charge will be added to your account.
+                         * @default false
+                         */
+                        test_label: boolean;
+                        /** @description The [package type](https://www.shipengine.com/docs/reference/list-carrier-packages/), such as `thick_envelope`, `small_flat_rate_box`, `large_package`, etc.  The code `package` indicates a custom or unknown package type.
+                         *      */
+                        readonly package_code?: string;
+                        /** @default validate_and_clean */
+                        validate_address: "no_validation" | "validate_only" | "validate_and_clean";
+                        /** @description Indicates whether the label has been [voided](https://www.shipengine.com/docs/labels/voiding/)
+                         *      */
+                        readonly voided?: boolean;
+                        /** @description The date and time that the label was [voided](https://www.shipengine.com/docs/labels/voiding/), or `null` if the label has not been voided
+                         *      */
+                        readonly voided_at?: string | null;
+                        /** @default url */
+                        label_download_type: "url" | "inline";
+                        /**
+                         * @description The file format that you want the label to be in.  We recommend `pdf` format because it is supported by all carriers, whereas some carriers do not support the `png` or `zpl` formats.
+                         *
+                         * @default pdf
+                         */
+                        label_format: "pdf" | "png" | "zpl";
+                        /**
+                         * @description The display format that the label should be shown in.
+                         * @default label
+                         */
+                        display_scheme: "label" | "paperless" | "label_and_paperless";
+                        /**
+                         * @description The layout (size) that you want the label to be in.  The `label_format` determines which sizes are allowed.  `4x6` is supported for all label formats, whereas `letter` (8.5" x 11") is only supported for `pdf` format.
+                         *
+                         * @default 4x6
+                         */
+                        label_layout: "4x6" | "letter" | "A4" | "A6";
+                        /** @description Indicates whether the shipment is trackable, in which case the `tracking_status` field will reflect the current status and each package will have a `tracking_number`.
+                         *      */
+                        readonly trackable?: boolean;
+                        /** @description The label image resource that was used to create a custom label image. */
+                        label_image_id?: string | null;
+                        /** @description The [shipping carrier](https://www.shipengine.com/docs/carriers/setup/) who will ship the package, such as `fedex`, `dhl_express`, `stamps_com`, etc.
+                         *      */
+                        readonly carrier_code?: string;
+                        /** @description The current status of the package, such as `in_transit` or `delivered` */
+                        readonly tracking_status?: "unknown" | "in_transit" | "error" | "delivered";
+                        /** @description The type of delivery confirmation that is required for this shipment. */
+                        readonly confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
+                        readonly label_download?: {
+                            /** @description The URL of the linked resource, if any */
+                            href?: string;
+                            /** @description The URL for the pdf generated label */
+                            pdf?: string;
+                            /** @description The URL for the png generated label */
+                            png?: string;
+                            /** @description The URL for the zpl generated label */
+                            zpl?: string;
+                        };
+                        /** @description The link to download the customs form (a.k.a. commercial invoice) for this shipment, if any.  Forms are in PDF format. This field is null if the shipment does not require a customs form, or if the carrier does not support it.
+                         *      */
+                        readonly form_download?: {
+                            /** @description The URL of the linked resource, if any */
+                            href: string;
+                            /** @description The type of resource, or the type of relationship to the parent resource */
+                            type?: string;
+                        } | null;
+                        /** @description The QR code download for the package */
+                        readonly qr_code_download?: {
+                            /** @description The URL of the linked resource, if any */
+                            href?: string;
+                            /** @description The type of resource, or the type of relationship to the parent resource */
+                            type?: string;
+                        } | null;
+                        /** @description The paperless details which may contain elements like `href`, `instructions` and `handoff_code`.
+                         *      */
+                        readonly paperless_download?: {
+                            /** @description The URL of the linked resource, if any */
+                            href?: string;
+                            /**
+                             * @description The instructions for the paperless download.
+                             *
+                             * @default null
+                             */
+                            instructions: string | null;
+                            /**
+                             * @description The handoff code for the paperless download.
+                             *
+                             * @default null
+                             */
+                            handoff_code: string | null;
+                        } | null;
+                        /** @description The link to submit an insurance claim for the shipment.  This field is null if the shipment is not insured or if the insurance provider does not support online claim submission.
+                         *      */
+                        readonly insurance_claim?: {
+                            /** @description The URL of the linked resource, if any */
+                            href: string;
+                            /** @description The type of resource, or the type of relationship to the parent resource */
+                            type?: string;
+                        } | null;
+                        /** @description The label's package(s).
+                         *
+                         *     > **Note:** Some carriers only allow one package per label.  If you attempt to create a multi-package label for a carrier that doesn't allow it, an error will be returned.
+                         *      */
+                        readonly packages?: ({
+                            /**
+                             * Format: int32
+                             * @description The shipment package id
+                             */
+                            readonly package_id?: number;
+                            /** @description The [package type](https://www.shipengine.com/docs/reference/list-carrier-packages/), such as `thick_envelope`, `small_flat_rate_box`, `large_package`, etc.  The code `package` indicates a custom or unknown package type.
+                             *      */
+                            package_code?: string;
+                            /** @description The package weight */
+                            weight: {
+                                /** @description The weight, in the specified unit */
+                                value: number;
+                                unit: "pound" | "ounce" | "gram" | "kilogram";
+                            };
+                            /** @description The package dimensions */
+                            dimensions?: {
+                                /** @default inch */
+                                unit: "inch" | "centimeter";
+                                /**
+                                 * @description The length of the package, in the specified unit
+                                 * @default 0
+                                 */
+                                length: number;
+                                /**
+                                 * @description The width of the package, in the specified unit
+                                 * @default 0
+                                 */
+                                width: number;
+                                /**
+                                 * @description The height of the package, in the specified unit
+                                 * @default 0
+                                 */
+                                height: number;
+                            };
+                            /**
+                             * @description The insured value of the package.  Requires the `insurance_provider` field of the shipment to be set.
+                             *
+                             * @default {
+                             *       "currency": "USD",
+                             *       "amount": 0
+                             *     }
+                             */
+                            insured_value: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            };
+                            /** @description The tracking number for the package.  The format depends on the carrier.
+                             *      */
+                            readonly tracking_number?: string;
+                            /** @description The label download for the package */
+                            readonly label_download?: {
+                                /** @description The URL of the linked resource, if any */
+                                href?: string;
+                                /** @description The URL for the pdf generated label */
+                                pdf?: string;
+                                /** @description The URL for the png generated label */
+                                png?: string;
+                                /** @description The URL for the zpl generated label */
+                                zpl?: string;
+                            };
+                            /** @description The form download for any customs that are needed */
+                            readonly form_download?: {
+                                /** @description The URL of the linked resource, if any */
+                                href?: string;
+                                /** @description The type of resource, or the type of relationship to the parent resource */
+                                type?: string;
+                            };
+                            /** @description The QR code download for the package */
+                            readonly qr_code_download?: {
+                                /** @description The URL of the linked resource, if any */
+                                href?: string;
+                                /** @description The type of resource, or the type of relationship to the parent resource */
+                                type?: string;
+                            };
+                            /** @description The paperless details which may contain elements like `href`, `instructions` and `handoff_code`. */
+                            readonly paperless_download?: {
+                                /** @description The URL of the linked resource, if any */
+                                href?: string;
+                                /**
+                                 * @description The instructions for the paperless download.
+                                 *
+                                 * @default null
+                                 */
+                                instructions: string | null;
+                                /**
+                                 * @description The handoff code for the paperless download.
+                                 *
+                                 * @default null
+                                 */
+                                handoff_code: string | null;
+                            };
+                            label_messages?: {
+                                /**
+                                 * @description The first line of the custom label message.  Some carriers may prefix this line with something like "REF", "Reference", "Trx Ref No.", etc.
+                                 *
+                                 * @default null
+                                 */
+                                reference1: string | null;
+                                /**
+                                 * @description The second line of the custom label message.  Some carriers may prefix this line with something like "INV", "Reference 2", "Trx Ref No.", etc.
+                                 *
+                                 * @default null
+                                 */
+                                reference2: string | null;
+                                /**
+                                 * @description The third line of the custom label message.  Some carriers may prefix this line with something like "PO", "Reference 3", etc.
+                                 *
+                                 * @default null
+                                 */
+                                reference3: string | null;
+                            };
+                            /** @description An external package id. */
+                            external_package_id?: string;
+                            /**
+                             * @description A short description of the package content. Required for shipments moving to, from, and through Mexico.
+                             *
+                             * @example Hand knitted wool socks
+                             */
+                            content_description?: string | null;
+                            /**
+                             * Format: int32
+                             * @description Package sequence
+                             */
+                            readonly sequence?: number;
+                            /** @description Whether the package has label documents available for download */
+                            has_label_documents?: boolean;
+                            /** @description Whether the package has form documents available for download */
+                            has_form_documents?: boolean;
+                            /** @description Whether the package has QR code documents available for download */
+                            has_qr_code_documents?: boolean;
+                            /** @description Whether the package has paperless documents available for download */
+                            has_paperless_label_documents?: boolean;
+                        } & {
+                            /** @description Alternative identifiers associated with this package.
+                             *      */
+                            readonly alternative_identifiers?: {
+                                /**
+                                 * @description The type of alternative_identifier that corresponds to the value.
+                                 *
+                                 * @example last_mile_tracking_number
+                                 */
+                                type?: string;
+                                /**
+                                 * @description The value of the alternative_identifier.
+                                 *
+                                 * @example 12345678912345678912
+                                 */
+                                value?: string;
+                            }[] | null;
+                        })[];
+                        /** @description Additional information some carriers may provide by which to identify a given label in their system.
+                         *      */
+                        readonly alternative_identifiers?: {
+                            /**
+                             * @description The type of alternative_identifier that corresponds to the value.
+                             *
+                             * @example last_mile_tracking_number
+                             */
+                            type?: string;
+                            /**
+                             * @description The value of the alternative_identifier.
+                             *
+                             * @example 12345678912345678912
+                             */
+                            value?: string;
+                        }[] | null;
+                        /**
+                         * @description The URL to track the package. This URL is provided by the carrier and is unique to the tracking number.
+                         *
+                         * @example https://www.fedex.com/fedextrack/?action=track&trackingnumber=1234
+                         */
+                        readonly tracking_url?: string | null;
+                        /** @description The recipient's mailing address */
+                        readonly ship_to?: {
+                            /**
+                             * @description The name of a contact person at this address.  This field may be set instead of - or in addition to - the `company_name` field.
+                             *
+                             * @example John Doe
+                             */
+                            name: string;
+                            /**
+                             * @description The phone number of a contact person at this address.  The format of this phone number varies depending on the country.
+                             *
+                             * @example +1 204-253-9411 ext. 123
+                             */
+                            phone?: string;
+                            /**
+                             * @description Email for the address owner.
+                             *
+                             * @example example@example.com
+                             */
+                            email?: string | null;
+                            /**
+                             * @description If this is a business address, then the company name should be specified here.
+                             *
+                             * @example The Home Depot
+                             */
+                            company_name?: string | null;
+                            /**
+                             * @description The first line of the street address.  For some addresses, this may be the only line.  Other addresses may require 2 or 3 lines.
+                             *
+                             * @example 1999 Bishop Grandin Blvd.
+                             */
+                            address_line1: string;
+                            /**
+                             * @description The second line of the street address.  For some addresses, this line may not be needed.
+                             *
+                             * @example Unit 408
+                             */
+                            address_line2?: string | null;
+                            /**
+                             * @description The third line of the street address.  For some addresses, this line may not be needed.
+                             *
+                             * @example Building #7
+                             */
+                            address_line3?: string | null;
+                            /**
+                             * @description The name of the city or locality
+                             * @example Winnipeg
+                             */
+                            city_locality: string;
+                            /**
+                             * @description The state or province.  For some countries (including the U.S.) only abbreviations are allowed.  Other countries allow the full name or abbreviation.
+                             *
+                             * @example Manitoba
+                             */
+                            state_province: string;
+                            postal_code: string;
+                            /** @description The two-letter [ISO 3166-1 country code](https://en.wikipedia.org/wiki/ISO_3166-1)
+                             *      */
+                            country_code?: string;
+                            /**
+                             * @description Indicates whether this is a residential address.
+                             * @default unknown
+                             * @example no
+                             */
+                            address_residential_indicator: "unknown" | "yes" | "no";
+                        } & {
+                            /** @description Additional text about how to handle the shipment at this address.
+                             *      */
+                            instructions?: string | null;
+                            geolocation?: {
+                                /**
+                                 * @description Enum of available type of geolocation items:
+                                 *       - 'what3words' functionality allows to specify a location by providing 3 words that have been assign to the specific location see [link](https://what3words.com/business) for more details.
+                                 *
+                                 * @example what3words
+                                 * @enum {string}
+                                 */
+                                type?: "what3words";
+                                /**
+                                 * @description value of the geolocation item
+                                 * @example cats.with.thumbs
+                                 */
+                                value?: string;
+                            }[];
+                        };
+                        /**
+                         * @description Indicates how the label was voided. This field is `null` if the label has not been voided.
+                         *
+                         * @example manual
+                         */
+                        readonly void_type?: ("refund_assist" | "manual") | null;
+                        /** @description Information about the Refund Assist request for this label. This field is `null` if the label is not eligible for Refund Assist.
+                         *      */
+                        readonly refund_details?: {
+                            /** @description The current status of the refund request */
+                            readonly refund_status?: "request_scheduled" | "pending" | "approved" | "rejected" | "excluded";
+                            /** @description The date and time when the refund request was submitted */
+                            readonly request_date?: string;
+                            /** @description The amount that was originally paid for the label */
+                            readonly amount_paid?: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            } | null;
+                            /** @description The amount requested to be refunded */
+                            readonly amount_requested?: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            } | null;
+                            /** @description The amount approved for refund by the carrier */
+                            readonly amount_approved?: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            } | null;
+                            /** @description The amount that has been credited back to the account */
+                            readonly amount_credited?: {
+                                currency: string;
+                                /** @description The monetary amount, in the specified currency. */
+                                amount: number;
+                            } | null;
+                        } | null;
                     };
                 };
             };
@@ -68501,7 +80896,18 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": {
+                "application/json": ({
+                    /**
+                     * @description A unique identifier for a carrier service point where the shipment will be delivered by the carrier. This will take precedence over a shipment's ship to address.
+                     * @example 614940
+                     */
+                    ship_to_service_point_id?: string | null;
+                    /**
+                     * @description A unique identifier for a carrier drop off point where a merchant plans to deliver packages. This will take precedence over a shipment's ship from address.
+                     * @example 614940
+                     */
+                    ship_from_service_point_id?: string | null;
+                } & {
                     /** @description The rate options */
                     rate_options?: {
                         /** @description Array of carrier ids to get rates for */
@@ -68519,7 +80925,7 @@ export interface operations {
                          */
                         rate_type?: "check" | "shipment" | "quick";
                     };
-                } & ({
+                }) & ({
                     /** @description A string that uniquely identifies the shipment */
                     shipment_id?: string;
                 } | {
@@ -68846,7 +81252,7 @@ export interface operations {
                          * @description The type of delivery confirmation that is required for this shipment.
                          * @default none
                          */
-                        confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                        confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                         /**
                          * @description Customs information.  This is usually only needed for international shipments.
                          *
@@ -69188,6 +81594,26 @@ export interface operations {
                              * @example 784515
                              */
                             certificate_number?: string | null;
+                            /**
+                             * @description Indicates that the contents of the package are fragile and should be handled with care.
+                             * @default false
+                             */
+                            fragile?: boolean;
+                            /**
+                             * @description Instructs the carrier to deliver the package only to the exact address provided.
+                             * @default false
+                             */
+                            "delivery-as-addressed"?: boolean;
+                            /**
+                             * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                             * @default false
+                             */
+                            "return-after-first-attempt"?: boolean;
+                            /**
+                             * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                             * @default null
+                             */
+                            regulated_content_type?: ("day_old_poultry" | "other_live_animal") | null;
                         } & {
                             [key: string]: unknown;
                         };
@@ -69824,7 +82250,7 @@ export interface operations {
                          * @description The type of delivery confirmation that is required for this shipment.
                          * @default none
                          */
-                        confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                        confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                         /**
                          * @description Customs information.  This is usually only needed for international shipments.
                          *
@@ -70166,6 +82592,26 @@ export interface operations {
                              * @example 784515
                              */
                             certificate_number: string | null;
+                            /**
+                             * @description Indicates that the contents of the package are fragile and should be handled with care.
+                             * @default false
+                             */
+                            fragile: boolean;
+                            /**
+                             * @description Instructs the carrier to deliver the package only to the exact address provided.
+                             * @default false
+                             */
+                            "delivery-as-addressed": boolean;
+                            /**
+                             * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                             * @default false
+                             */
+                            "return-after-first-attempt": boolean;
+                            /**
+                             * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                             * @default null
+                             */
+                            regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
                         } & {
                             [key: string]: unknown;
                         };
@@ -70476,7 +82922,7 @@ export interface operations {
                         /** @description The rates response */
                         rate_response: {
                             /** @description An array of shipment rates */
-                            readonly rates?: {
+                            readonly rates?: ({
                                 /** @description A string that uniquely identifies the rate */
                                 readonly rate_id: string;
                                 readonly rate_type: "check" | "shipment";
@@ -70537,8 +82983,6 @@ export interface operations {
                                     /** @description If applicable, contains additional data about a rate detail of a specific type, e.g. VAT */
                                     rate_detail_attributes?: {
                                         tax_type?: "vat";
-                                        /** @description Code for a specific tax type */
-                                        tax_code?: string;
                                         /** @description Tax percentage, e.g. 20 for 20%, added to the shipping cost */
                                         tax_percentage?: number;
                                     };
@@ -70595,7 +83039,10 @@ export interface operations {
                                 readonly warning_messages: string[];
                                 /** @description The error messages */
                                 readonly error_messages: string[];
-                            }[];
+                            } & {
+                                /** @description Optional attributes that indicate the most profitable rates */
+                                rate_attributes?: ("best_value" | "cheapest" | "fastest")[];
+                            })[];
                             /**
                              * @description An array of invalid shipment rates
                              * @default []
@@ -70661,8 +83108,6 @@ export interface operations {
                                     /** @description If applicable, contains additional data about a rate detail of a specific type, e.g. VAT */
                                     rate_detail_attributes?: {
                                         tax_type?: "vat";
-                                        /** @description Code for a specific tax type */
-                                        tax_code?: string;
                                         /** @description Tax percentage, e.g. 20 for 20%, added to the shipping cost */
                                         tax_percentage?: number;
                                     };
@@ -70838,7 +83283,18 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": {
+                "application/json": ({
+                    /**
+                     * @description A unique identifier for a carrier service point where the shipment will be delivered by the carrier. This will take precedence over a shipment's ship to address.
+                     * @example 614940
+                     */
+                    ship_to_service_point_id?: string | null;
+                    /**
+                     * @description A unique identifier for a carrier drop off point where a merchant plans to deliver packages. This will take precedence over a shipment's ship from address.
+                     * @example 614940
+                     */
+                    ship_from_service_point_id?: string | null;
+                } & {
                     /** @description The rate options */
                     rate_options: {
                         /** @description Array of carrier ids to get rates for */
@@ -70856,7 +83312,7 @@ export interface operations {
                          */
                         rate_type?: "check" | "shipment" | "quick";
                     };
-                } & ({
+                }) & ({
                     /** @description The array of shipment IDs */
                     shipment_ids: string[];
                 } | {
@@ -71183,7 +83639,7 @@ export interface operations {
                          * @description The type of delivery confirmation that is required for this shipment.
                          * @default none
                          */
-                        confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                        confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                         /**
                          * @description Customs information.  This is usually only needed for international shipments.
                          *
@@ -71525,6 +83981,26 @@ export interface operations {
                              * @example 784515
                              */
                             certificate_number?: string | null;
+                            /**
+                             * @description Indicates that the contents of the package are fragile and should be handled with care.
+                             * @default false
+                             */
+                            fragile?: boolean;
+                            /**
+                             * @description Instructs the carrier to deliver the package only to the exact address provided.
+                             * @default false
+                             */
+                            "delivery-as-addressed"?: boolean;
+                            /**
+                             * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                             * @default false
+                             */
+                            "return-after-first-attempt"?: boolean;
+                            /**
+                             * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                             * @default null
+                             */
+                            regulated_content_type?: ("day_old_poultry" | "other_live_animal") | null;
                         } & {
                             [key: string]: unknown;
                         };
@@ -72009,7 +84485,7 @@ export interface operations {
                          */
                         height: number;
                     };
-                    confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                    confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                     address_residential_indicator?: "unknown" | "yes" | "no";
                     /** @description ship date */
                     ship_date: string;
@@ -72116,6 +84592,8 @@ export interface operations {
                         readonly warning_messages: string[];
                         /** @description The error messages */
                         readonly error_messages: string[];
+                        /** @description Optional attributes that indicate the most profitable rates */
+                        rate_attributes?: ("best_value" | "cheapest" | "fastest")[];
                     }[];
                 };
             };
@@ -72273,8 +84751,6 @@ export interface operations {
                             /** @description If applicable, contains additional data about a rate detail of a specific type, e.g. VAT */
                             rate_detail_attributes?: {
                                 tax_type?: "vat";
-                                /** @description Code for a specific tax type */
-                                tax_code?: string;
                                 /** @description Tax percentage, e.g. 20 for 20%, added to the shipping cost */
                                 tax_percentage?: number;
                             };
@@ -73514,7 +85990,7 @@ export interface operations {
                              * @description The type of delivery confirmation that is required for this shipment.
                              * @default none
                              */
-                            confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                            confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                             /**
                              * @description Customs information.  This is usually only needed for international shipments.
                              *
@@ -73856,6 +86332,26 @@ export interface operations {
                                  * @example 784515
                                  */
                                 certificate_number: string | null;
+                                /**
+                                 * @description Indicates that the contents of the package are fragile and should be handled with care.
+                                 * @default false
+                                 */
+                                fragile: boolean;
+                                /**
+                                 * @description Instructs the carrier to deliver the package only to the exact address provided.
+                                 * @default false
+                                 */
+                                "delivery-as-addressed": boolean;
+                                /**
+                                 * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                                 * @default false
+                                 */
+                                "return-after-first-attempt": boolean;
+                                /**
+                                 * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                                 * @default null
+                                 */
+                                regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
                             } & {
                                 [key: string]: unknown;
                             };
@@ -74656,7 +87152,7 @@ export interface operations {
                          * @description The type of delivery confirmation that is required for this shipment.
                          * @default none
                          */
-                        confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                        confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                         /**
                          * @description Customs information.  This is usually only needed for international shipments.
                          *
@@ -74998,6 +87494,26 @@ export interface operations {
                              * @example 784515
                              */
                             certificate_number?: string | null;
+                            /**
+                             * @description Indicates that the contents of the package are fragile and should be handled with care.
+                             * @default false
+                             */
+                            fragile?: boolean;
+                            /**
+                             * @description Instructs the carrier to deliver the package only to the exact address provided.
+                             * @default false
+                             */
+                            "delivery-as-addressed"?: boolean;
+                            /**
+                             * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                             * @default false
+                             */
+                            "return-after-first-attempt"?: boolean;
+                            /**
+                             * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                             * @default null
+                             */
+                            regulated_content_type?: ("day_old_poultry" | "other_live_animal") | null;
                         } & {
                             [key: string]: unknown;
                         };
@@ -75641,7 +88157,7 @@ export interface operations {
                              * @description The type of delivery confirmation that is required for this shipment.
                              * @default none
                              */
-                            confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                            confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                             /**
                              * @description Customs information.  This is usually only needed for international shipments.
                              *
@@ -75983,6 +88499,26 @@ export interface operations {
                                  * @example 784515
                                  */
                                 certificate_number: string | null;
+                                /**
+                                 * @description Indicates that the contents of the package are fragile and should be handled with care.
+                                 * @default false
+                                 */
+                                fragile: boolean;
+                                /**
+                                 * @description Instructs the carrier to deliver the package only to the exact address provided.
+                                 * @default false
+                                 */
+                                "delivery-as-addressed": boolean;
+                                /**
+                                 * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                                 * @default false
+                                 */
+                                "return-after-first-attempt": boolean;
+                                /**
+                                 * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                                 * @default null
+                                 */
+                                regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
                             } & {
                                 [key: string]: unknown;
                             };
@@ -76861,7 +89397,7 @@ export interface operations {
                          * @description The type of delivery confirmation that is required for this shipment.
                          * @default none
                          */
-                        confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                        confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                         /**
                          * @description Customs information.  This is usually only needed for international shipments.
                          *
@@ -77203,6 +89739,26 @@ export interface operations {
                              * @example 784515
                              */
                             certificate_number: string | null;
+                            /**
+                             * @description Indicates that the contents of the package are fragile and should be handled with care.
+                             * @default false
+                             */
+                            fragile: boolean;
+                            /**
+                             * @description Instructs the carrier to deliver the package only to the exact address provided.
+                             * @default false
+                             */
+                            "delivery-as-addressed": boolean;
+                            /**
+                             * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                             * @default false
+                             */
+                            "return-after-first-attempt": boolean;
+                            /**
+                             * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                             * @default null
+                             */
+                            regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
                         } & {
                             [key: string]: unknown;
                         };
@@ -77961,7 +90517,7 @@ export interface operations {
                          * @description The type of delivery confirmation that is required for this shipment.
                          * @default none
                          */
-                        confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                        confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                         /**
                          * @description Customs information.  This is usually only needed for international shipments.
                          *
@@ -78303,6 +90859,26 @@ export interface operations {
                              * @example 784515
                              */
                             certificate_number?: string | null;
+                            /**
+                             * @description Indicates that the contents of the package are fragile and should be handled with care.
+                             * @default false
+                             */
+                            fragile?: boolean;
+                            /**
+                             * @description Instructs the carrier to deliver the package only to the exact address provided.
+                             * @default false
+                             */
+                            "delivery-as-addressed"?: boolean;
+                            /**
+                             * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                             * @default false
+                             */
+                            "return-after-first-attempt"?: boolean;
+                            /**
+                             * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                             * @default null
+                             */
+                            regulated_content_type?: ("day_old_poultry" | "other_live_animal") | null;
                         } & {
                             [key: string]: unknown;
                         };
@@ -78951,7 +91527,7 @@ export interface operations {
                              * @description The type of delivery confirmation that is required for this shipment.
                              * @default none
                              */
-                            confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                            confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                             /**
                              * @description Customs information.  This is usually only needed for international shipments.
                              *
@@ -79293,6 +91869,26 @@ export interface operations {
                                  * @example 784515
                                  */
                                 certificate_number: string | null;
+                                /**
+                                 * @description Indicates that the contents of the package are fragile and should be handled with care.
+                                 * @default false
+                                 */
+                                fragile: boolean;
+                                /**
+                                 * @description Instructs the carrier to deliver the package only to the exact address provided.
+                                 * @default false
+                                 */
+                                "delivery-as-addressed": boolean;
+                                /**
+                                 * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                                 * @default false
+                                 */
+                                "return-after-first-attempt": boolean;
+                                /**
+                                 * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                                 * @default null
+                                 */
+                                regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
                             } & {
                                 [key: string]: unknown;
                             };
@@ -80045,7 +92641,7 @@ export interface operations {
                          * @description The type of delivery confirmation that is required for this shipment.
                          * @default none
                          */
-                        confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                        confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                         /**
                          * @description Customs information.  This is usually only needed for international shipments.
                          *
@@ -80387,6 +92983,26 @@ export interface operations {
                              * @example 784515
                              */
                             certificate_number: string | null;
+                            /**
+                             * @description Indicates that the contents of the package are fragile and should be handled with care.
+                             * @default false
+                             */
+                            fragile: boolean;
+                            /**
+                             * @description Instructs the carrier to deliver the package only to the exact address provided.
+                             * @default false
+                             */
+                            "delivery-as-addressed": boolean;
+                            /**
+                             * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                             * @default false
+                             */
+                            "return-after-first-attempt": boolean;
+                            /**
+                             * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                             * @default null
+                             */
+                            regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
                         } & {
                             [key: string]: unknown;
                         };
@@ -81137,7 +93753,7 @@ export interface operations {
                      * @description The type of delivery confirmation that is required for this shipment.
                      * @default none
                      */
-                    confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                    confirmation?: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                     /**
                      * @description Customs information.  This is usually only needed for international shipments.
                      *
@@ -81479,6 +94095,26 @@ export interface operations {
                          * @example 784515
                          */
                         certificate_number?: string | null;
+                        /**
+                         * @description Indicates that the contents of the package are fragile and should be handled with care.
+                         * @default false
+                         */
+                        fragile?: boolean;
+                        /**
+                         * @description Instructs the carrier to deliver the package only to the exact address provided.
+                         * @default false
+                         */
+                        "delivery-as-addressed"?: boolean;
+                        /**
+                         * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                         * @default false
+                         */
+                        "return-after-first-attempt"?: boolean;
+                        /**
+                         * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                         * @default null
+                         */
+                        regulated_content_type?: ("day_old_poultry" | "other_live_animal") | null;
                     } & {
                         [key: string]: unknown;
                     };
@@ -82117,7 +94753,7 @@ export interface operations {
                          * @description The type of delivery confirmation that is required for this shipment.
                          * @default none
                          */
-                        confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation";
+                        confirmation: "none" | "delivery" | "signature" | "adult_signature" | "direct_signature" | "delivery_mailed" | "verbal_confirmation" | "delivery_code" | "age_verification_16_plus";
                         /**
                          * @description Customs information.  This is usually only needed for international shipments.
                          *
@@ -82459,6 +95095,26 @@ export interface operations {
                              * @example 784515
                              */
                             certificate_number: string | null;
+                            /**
+                             * @description Indicates that the contents of the package are fragile and should be handled with care.
+                             * @default false
+                             */
+                            fragile: boolean;
+                            /**
+                             * @description Instructs the carrier to deliver the package only to the exact address provided.
+                             * @default false
+                             */
+                            "delivery-as-addressed": boolean;
+                            /**
+                             * @description Ensures the shipment is immediately flagged for return to the sender if the initial delivery attempt fails.
+                             * @default false
+                             */
+                            "return-after-first-attempt": boolean;
+                            /**
+                             * @description Indicates the category of goods in the shipment that is subject to special regulatory or compliance requirements.
+                             * @default null
+                             */
+                            regulated_content_type: ("day_old_poultry" | "other_live_animal") | null;
                         } & {
                             [key: string]: unknown;
                         };
@@ -83192,7 +95848,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @description An array of shipment rates */
-                        readonly rates: {
+                        readonly rates: ({
                             /** @description A string that uniquely identifies the rate */
                             readonly rate_id: string;
                             readonly rate_type: "check" | "shipment";
@@ -83253,8 +95909,6 @@ export interface operations {
                                 /** @description If applicable, contains additional data about a rate detail of a specific type, e.g. VAT */
                                 rate_detail_attributes?: {
                                     tax_type?: "vat";
-                                    /** @description Code for a specific tax type */
-                                    tax_code?: string;
                                     /** @description Tax percentage, e.g. 20 for 20%, added to the shipping cost */
                                     tax_percentage?: number;
                                 };
@@ -83311,7 +95965,10 @@ export interface operations {
                             readonly warning_messages: string[];
                             /** @description The error messages */
                             readonly error_messages: string[];
-                        }[];
+                        } & {
+                            /** @description Optional attributes that indicate the most profitable rates */
+                            rate_attributes?: ("best_value" | "cheapest" | "fastest")[];
+                        })[];
                         /**
                          * @description An array of invalid shipment rates
                          * @default []
@@ -83377,8 +96034,6 @@ export interface operations {
                                 /** @description If applicable, contains additional data about a rate detail of a specific type, e.g. VAT */
                                 rate_detail_attributes?: {
                                     tax_type?: "vat";
-                                    /** @description Code for a specific tax type */
-                                    tax_code?: string;
                                     /** @description Tax percentage, e.g. 20 for 20%, added to the shipping cost */
                                     tax_percentage?: number;
                                 };
@@ -84266,6 +96921,166 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /**
+                     * @description The tag name.
+                     * @example Fragile
+                     */
+                    name: string;
+                    /**
+                     * @description A hex-coded string identifying the color of the tag.
+                     * @example #FF0000
+                     */
+                    color?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description The requested object creation was a success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * Format: int32
+                         * @description An integer uniquely identifying a tag.
+                         * @example 8712
+                         */
+                        readonly tag_id?: number;
+                        /**
+                         * @description The tag name.
+                         * @example Fragile
+                         */
+                        name: string;
+                        /**
+                         * @description A hex-coded string identifying the color of the tag.
+                         * @example #FF0000
+                         */
+                        color?: string;
+                    };
+                };
+            };
+            /** @description The request contained errors. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description A UUID that uniquely identifies the request id.
+                         *     This can be given to the support team to help debug non-trivial issues that may occur
+                         *      */
+                        request_id: string;
+                        /** @description The errors associated with the failed API call */
+                        readonly errors: {
+                            error_source: "carrier" | "order_source" | "shipengine";
+                            error_type: "account_status" | "business_rules" | "validation" | "security" | "system" | "integrations";
+                            error_code: "auto_fund_not_supported" | "batch_cannot_be_modified" | "carrier_conflict" | "carrier_disconnected" | "carrier_not_connected" | "carrier_not_supported" | "confirmation_not_supported" | "default_warehouse_cannot_be_deleted" | "field_conflict" | "field_value_required" | "forbidden" | "identifier_conflict" | "identifiers_must_match" | "insufficient_funds" | "invalid_address" | "invalid_billing_plan" | "invalid_field_value" | "invalid_identifier" | "invalid_status" | "invalid_string_length" | "label_images_not_supported" | "meter_failure" | "order_source_not_active" | "rate_limit_exceeded" | "refresh_not_supported" | "request_body_required" | "return_label_not_supported" | "settings_not_supported" | "subscription_inactive" | "terms_not_accepted" | "tracking_not_supported" | "trial_expired" | "unauthorized" | "unknown" | "unspecified" | "verification_failure" | "warehouse_conflict" | "webhook_event_type_conflict" | "customs_items_required" | "incompatible_paired_labels" | "invalid_charge_event" | "invalid_object" | "no_rates_returned" | "file_not_found" | "shipping_rule_not_found" | "service_not_determined" | "no_rates_returned" | "funding_source_registration_in_progress" | "insurance_failure" | "funding_source_missing_configuration" | "funding_source_error";
+                            /**
+                             * @description An error message associated with the failed API call
+                             * @example Body of request cannot be null.
+                             */
+                            readonly message: string;
+                            /** @description A string that uniquely identifies the carrier that generated the error. */
+                            readonly carrier_id?: string;
+                            /** @description The name of the [shipping carrier](https://www.shipengine.com/docs/carriers/setup/) that generated the error, such as `fedex`, `dhl_express`, `stamps_com`, etc.
+                             *      */
+                            readonly carrier_code?: string;
+                            /**
+                             * @description The name of the field that caused the error
+                             * @example shipment.ship_to.phone_number
+                             */
+                            readonly field_name?: string;
+                        }[];
+                    };
+                };
+            };
+            /** @description The specified resource does not exist. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description A UUID that uniquely identifies the request id.
+                         *     This can be given to the support team to help debug non-trivial issues that may occur
+                         *      */
+                        request_id: string;
+                        /** @description The errors associated with the failed API call */
+                        readonly errors: {
+                            error_source: "carrier" | "order_source" | "shipengine";
+                            error_type: "account_status" | "business_rules" | "validation" | "security" | "system" | "integrations";
+                            error_code: "auto_fund_not_supported" | "batch_cannot_be_modified" | "carrier_conflict" | "carrier_disconnected" | "carrier_not_connected" | "carrier_not_supported" | "confirmation_not_supported" | "default_warehouse_cannot_be_deleted" | "field_conflict" | "field_value_required" | "forbidden" | "identifier_conflict" | "identifiers_must_match" | "insufficient_funds" | "invalid_address" | "invalid_billing_plan" | "invalid_field_value" | "invalid_identifier" | "invalid_status" | "invalid_string_length" | "label_images_not_supported" | "meter_failure" | "order_source_not_active" | "rate_limit_exceeded" | "refresh_not_supported" | "request_body_required" | "return_label_not_supported" | "settings_not_supported" | "subscription_inactive" | "terms_not_accepted" | "tracking_not_supported" | "trial_expired" | "unauthorized" | "unknown" | "unspecified" | "verification_failure" | "warehouse_conflict" | "webhook_event_type_conflict" | "customs_items_required" | "incompatible_paired_labels" | "invalid_charge_event" | "invalid_object" | "no_rates_returned" | "file_not_found" | "shipping_rule_not_found" | "service_not_determined" | "no_rates_returned" | "funding_source_registration_in_progress" | "insurance_failure" | "funding_source_missing_configuration" | "funding_source_error";
+                            /**
+                             * @description An error message associated with the failed API call
+                             * @example Body of request cannot be null.
+                             */
+                            readonly message: string;
+                            /** @description A string that uniquely identifies the carrier that generated the error. */
+                            readonly carrier_id?: string;
+                            /** @description The name of the [shipping carrier](https://www.shipengine.com/docs/carriers/setup/) that generated the error, such as `fedex`, `dhl_express`, `stamps_com`, etc.
+                             *      */
+                            readonly carrier_code?: string;
+                            /**
+                             * @description The name of the field that caused the error
+                             * @example shipment.ship_to.phone_number
+                             */
+                            readonly field_name?: string;
+                        }[];
+                    };
+                };
+            };
+            /** @description An error occurred on ShipEngine's side.
+             *
+             *     > This error will automatically be reported to our engineers.
+             *      */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description A UUID that uniquely identifies the request id.
+                         *     This can be given to the support team to help debug non-trivial issues that may occur
+                         *      */
+                        request_id: string;
+                        /** @description The errors associated with the failed API call */
+                        readonly errors: {
+                            error_source: "carrier" | "order_source" | "shipengine";
+                            error_type: "account_status" | "business_rules" | "validation" | "security" | "system" | "integrations";
+                            error_code: "auto_fund_not_supported" | "batch_cannot_be_modified" | "carrier_conflict" | "carrier_disconnected" | "carrier_not_connected" | "carrier_not_supported" | "confirmation_not_supported" | "default_warehouse_cannot_be_deleted" | "field_conflict" | "field_value_required" | "forbidden" | "identifier_conflict" | "identifiers_must_match" | "insufficient_funds" | "invalid_address" | "invalid_billing_plan" | "invalid_field_value" | "invalid_identifier" | "invalid_status" | "invalid_string_length" | "label_images_not_supported" | "meter_failure" | "order_source_not_active" | "rate_limit_exceeded" | "refresh_not_supported" | "request_body_required" | "return_label_not_supported" | "settings_not_supported" | "subscription_inactive" | "terms_not_accepted" | "tracking_not_supported" | "trial_expired" | "unauthorized" | "unknown" | "unspecified" | "verification_failure" | "warehouse_conflict" | "webhook_event_type_conflict" | "customs_items_required" | "incompatible_paired_labels" | "invalid_charge_event" | "invalid_object" | "no_rates_returned" | "file_not_found" | "shipping_rule_not_found" | "service_not_determined" | "no_rates_returned" | "funding_source_registration_in_progress" | "insurance_failure" | "funding_source_missing_configuration" | "funding_source_error";
+                            /**
+                             * @description An error message associated with the failed API call
+                             * @example Body of request cannot be null.
+                             */
+                            readonly message: string;
+                            /** @description A string that uniquely identifies the carrier that generated the error. */
+                            readonly carrier_id?: string;
+                            /** @description The name of the [shipping carrier](https://www.shipengine.com/docs/carriers/setup/) that generated the error, such as `fedex`, `dhl_express`, `stamps_com`, etc.
+                             *      */
+                            readonly carrier_code?: string;
+                            /**
+                             * @description The name of the field that caused the error
+                             * @example shipment.ship_to.phone_number
+                             */
+                            readonly field_name?: string;
+                        }[];
+                    };
+                };
+            };
+        };
+    };
+    create_tag: {
+        parameters: {
+            query?: never;
+            header?: never;
             path: {
                 tag_name: string;
             };
@@ -84714,6 +97529,8 @@ export interface operations {
                  * @example 9405511899223197428490
                  */
                 tracking_number?: string;
+                /** @description Carrier ID */
+                carrier_id?: string;
             };
             header?: never;
             path?: never;
@@ -84983,6 +97800,8 @@ export interface operations {
                  * @example 9405511899223197428490
                  */
                 tracking_number?: string;
+                /** @description Carrier ID */
+                carrier_id?: string;
             };
             header?: never;
             path?: never;
@@ -85124,6 +97943,8 @@ export interface operations {
                  * @example 9405511899223197428490
                  */
                 tracking_number?: string;
+                /** @description Carrier ID */
+                carrier_id?: string;
             };
             header?: never;
             path?: never;
