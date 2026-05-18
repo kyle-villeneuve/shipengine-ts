@@ -1,36 +1,33 @@
 {
   "name": "shipengine-ts",
-  "version": "2.0.7",
+  "version": "2.1.0",
   "description": "A type-safe fetch client for the ShipEngine.com API",
-  "main": "dist/index.js",
-  "module": "dist/index.mjs",
-  "types": "dist/index.d.ts",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "author": "Kyle Villeneuve (skusavvy.com)",
   "license": "MIT",
   "private": false,
   "exports": {
     ".": {
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     }
   },
   "files": [
     "dist"
   ],
   "dependencies": {
-    "openapi-fetch": "^0.14.0"
+    "openapi-fetch": "^0.17.0"
   },
   "scripts": {
     "clean": "rm -rf dist",
-    "typegen": "npx openapi-typescript https://raw.githubusercontent.com/ShipEngine/shipengine-openapi/master/openapi.json  -o ./src/definitions.ts",
-    "build": "yarn tsup"
+    "typegen": "node scripts/typegen.mjs",
+    "build": "rm -rf dist && tsc"
   },
   "devDependencies": {
     "@types/node": "^22.8.7",
-    "@types/node-fetch": "^2.6.12",
-    "openapi-typescript": "^7.8.0",
-    "tsup": "^8.5.0",
-    "typescript": "5.8.3"
+    "openapi-typescript": "^7.13.0",
+    "typescript": "^6.0.3"
   }
 }
