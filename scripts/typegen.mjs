@@ -1,8 +1,8 @@
 import { writeFile } from "node:fs/promises";
 import openapiTS, { astToString } from "openapi-typescript";
 
-const SPEC_URL =
-  "https://raw.githubusercontent.com/ShipEngine/shipengine-openapi/master/openapi.json";
+// The docs site serves the current spec; github.com/ShipEngine/shipengine-openapi is deprecated.
+const SPEC_URL = "https://docs.shipstation.com/_spec/apis/@shipengine/openapi.json";
 const OUTPUT = new URL("../src/definitions.ts", import.meta.url);
 
 const HTTP_METHODS = [
@@ -52,7 +52,9 @@ for (const r of renames) {
   console.log(`renamed operationId ${r.from} -> ${r.to} (${r.where})`);
 }
 
-const ast = await openapiTS(spec);
+// A default is what the server applies when a field is omitted, so it must not make the field
+// required in a request body.
+const ast = await openapiTS(spec, { defaultNonNullable: false });
 const code = astToString(ast);
 await writeFile(OUTPUT, code);
 console.log(`wrote ${OUTPUT.pathname}`);

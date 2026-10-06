@@ -1,3 +1,22 @@
 **/node_modules
 dist
 dist/
+
+# LLM and coding agent files
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+AGENTS.md
+GEMINI.md
+.gemini/
+.codex/
+.cursor/
+.cursorrules
+.windsurf/
+.windsurfrules
+.clinerules
+.roo/
+.continue/
+.junie/
+.aider*
+.github/copilot-instructions.md
