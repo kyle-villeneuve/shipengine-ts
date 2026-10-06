@@ -1,6 +1,6 @@
 {
   "name": "shipengine-ts",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "A type-safe fetch client for the ShipEngine.com API",
   "type": "module",
   "main": "./dist/index.js",

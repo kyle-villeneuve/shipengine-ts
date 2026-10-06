@@ -3050,7 +3050,7 @@ export interface components {
             /** @description The original address that was sent for validation */
             original_address: components["schemas"]["address"];
             /** @description The matched address found by the Shipengine API */
-            matched_address: components["schemas"]["address"] & (Record<string, never> | null);
+            readonly matched_address: components["schemas"]["address"] | null;
             /**
              * @description The list of messages that were generated during the address validation request.
              * @default []
@@ -3082,7 +3082,7 @@ export interface components {
              */
             readonly message: string;
             readonly type: components["schemas"]["address_validation_message_type"];
-            detail_code: components["schemas"]["address_validation_detail_code"] & (string | null);
+            detail_code: components["schemas"]["address_validation_detail_code"] | null;
         };
         /**
          * address_validation_code
@@ -3186,7 +3186,7 @@ export interface components {
             /** @description The date and time the batch was created in ShipEngine */
             readonly created_at: components["schemas"]["date_time"];
             /** @description The date and time the batch was processed in ShipEngine */
-            processed_at: components["schemas"]["date_time"] & (string | null);
+            readonly processed_at: components["schemas"]["date_time"] | null;
             /**
              * Format: int32
              * @description The number of errors that occurred while generating the batch
@@ -6439,9 +6439,9 @@ export interface components {
              * @description Indicates how the label was voided. This field is `null` if the label has not been voided.
              * @example manual
              */
-            void_type?: components["schemas"]["void_type"] & (string | null);
+            readonly void_type?: components["schemas"]["void_type"] | null;
             /** @description Information about the Refund Assist request for this label. This field is `null` if the label is not eligible for Refund Assist. */
-            refund_details?: components["schemas"]["refund_details"] & (Record<string, never> | null);
+            readonly refund_details?: components["schemas"]["refund_details"] | null;
         };
         /**
          * shipment
@@ -6755,13 +6755,13 @@ export interface components {
             /** @description The date and time when the refund request was submitted */
             readonly request_date?: components["schemas"]["date_time"];
             /** @description The amount that was originally paid for the label */
-            amount_paid?: components["schemas"]["monetary_value"] & (Record<string, never> | null);
+            readonly amount_paid?: components["schemas"]["monetary_value"] | null;
             /** @description The amount requested to be refunded */
-            amount_requested?: components["schemas"]["monetary_value"] & (Record<string, never> | null);
+            readonly amount_requested?: components["schemas"]["monetary_value"] | null;
             /** @description The amount approved for refund by the carrier */
-            amount_approved?: components["schemas"]["monetary_value"] & (Record<string, never> | null);
+            readonly amount_approved?: components["schemas"]["monetary_value"] | null;
             /** @description The amount that has been credited back to the account */
-            amount_credited?: components["schemas"]["monetary_value"] & (Record<string, never> | null);
+            readonly amount_credited?: components["schemas"]["monetary_value"] | null;
         };
         /**
          * refund_status
@@ -9760,7 +9760,7 @@ export interface components {
          * freight_book_address
          * @description An origin or destination address for a freight booking. Extends `freight_address` with the contact details — name, company, street, and phone — that the carrier needs to produce a Bill of Lading and to reach the pickup or delivery contact.
          */
-        freight_book_address: components["schemas"]["freight_address"] & Record<string, never>;
+        freight_book_address: WithRequired<components["schemas"]["freight_address"], "name" | "company_name" | "address_line1" | "phone">;
         /**
          * freight_tradeshow
          * @description Identifies a tradeshow when picking up from or delivering to one.
