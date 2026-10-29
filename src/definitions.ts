@@ -789,7 +789,7 @@ export interface paths {
          *     There are two ways to request quotes:
          *
          *     - **Inline.** Describe the shipment in the request: `ship_from`, `ship_to`, and `handling_units`.
-         *     - **Linked to an existing shipment.** Provide `shipment_id`. The origin is taken from the shipment's ship-from warehouse and the destination from the order's ship-to address, so `ship_from` and `ship_to` must be omitted. `handling_units`, `accessorials`, and `insurance` are optional in this mode: when provided they are saved as the shipment's freight configuration, and when omitted the previously saved configuration is reused.
+         *     - **Linked to an existing shipment.** Provide `shipment_id`. The origin is taken from the shipment's ship-from warehouse and the destination from the order's ship-to address, so `ship_from` must be omitted, and `ship_to` may contain only `location_type`. `handling_units`, `accessorials`, and `insurance` are optional in this mode: when provided they are saved as the shipment's freight configuration, and when omitted the previously saved configuration is reused. A `ship_to.location_type` you send is saved the same way.
          *
          *     To book one of the returned offers, pass its `offer_id` to [Book a freight shipment](#operation/book_freight_shipment).
          *
@@ -2119,6 +2119,85 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/shipments/{shipment_id}/split": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Shipment ID */
+                shipment_id: components["schemas"]["se_id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Split a shipment
+         * @description Move items from a shipment into one or more new shipments. Each entry in `shipments` creates one new
+         *     shipment holding the items and quantities listed for it. Items and quantities that you don't list
+         *     stay on the original shipment.
+         *
+         *     Each new shipment is based on the original shipment and stays linked to the same sales order, so
+         *     the order source keeps getting shipment notifications after the split.
+         *
+         *     To split a shipment:
+         *
+         *     - It must have a `shipment_status` of `pending`, `awaiting_payment`, or `on_hold`.
+         *     - It must be linked to a sales order. Check `sales_order_ids` on the shipment.
+         *     - It can't come from a marketplace that supplies its own shipping labels.
+         *     - All of the items you move must belong to the same sales order. To move items from more than one
+         *       sales order, make one request for each sales order.
+         *     - At least one item must stay on the original shipment.
+         *
+         *     Get the `item_id` values from the `items` array of the shipment, using
+         *     [Get shipment by id](#operation/get_shipment_by_id).
+         */
+        post: operations["split_shipment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/shipments/{shipment_id}/merge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Shipment ID */
+                shipment_id: components["schemas"]["se_id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Merge shipments
+         * @description Merge one or more shipments into the shipment in the URL. The items from each shipment in
+         *     `shipment_ids` move onto the shipment in the URL, and the shipments in `shipment_ids` are then
+         *     deleted.
+         *
+         *     The shipment in the URL stays linked to its own sales orders and becomes linked to the sales orders
+         *     of every shipment merged into it, so order sources keep getting shipment notifications. The merged
+         *     shipments can belong to different sales orders.
+         *
+         *     To merge shipments:
+         *
+         *     - Every shipment, including the one in the URL, must have a `shipment_status` of `pending`,
+         *       `awaiting_payment`, or `on_hold`.
+         *     - Every shipment must be linked to a sales order. Check `sales_order_ids` on each shipment.
+         *     - None of the shipments can come from a marketplace that supplies its own shipping labels.
+         *
+         *     If `shipment_ids` includes the shipment in the URL or lists a shipment more than once, the extra
+         *     entries are ignored.
+         */
+        post: operations["merge_shipments"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/shipments/{shipment_id}/tags": {
         parameters: {
             query?: never;
@@ -2634,6 +2713,32 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/delivery_predictions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Predict delivery dates
+         * @description Predict delivery dates for one or more carrier and service combinations on a single lane, using ShipStation's delivery prediction model rather than the estimate quoted by the carrier.
+         *
+         *     The prediction stands on its own: this endpoint does not price the shipment, create a shipment or a label, and nothing it returns is stored. Send the origin and destination once and list every carrier and service combination you want predicted for that lane.
+         *
+         *     A requested combination comes back as an entry in `delivery_predictions` or as an entry in `warnings`, never both. A combination the model has no coverage for becomes a warning, so a response where nothing is supported is still a `200` with an empty `delivery_predictions` array. A combination the model returns nothing usable for is in neither array. Combinations are matched by `carrier_code` and `service_code` rather than by position, and are returned as the model reports them rather than echoed back.
+         *
+         *     There is no limit you need to manage on your side: a request with more combinations than the model accepts in one call is split across several calls automatically, and none are dropped.
+         */
+        post: operations["create_delivery_predictions"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2655,6 +2760,7 @@ export interface components {
         /**
          * default_label_layout
          * @description The possible default label layout values
+         * @example 4x6
          * @enum {string}
          */
         default_label_layout: "4x6" | "Letter";
@@ -2700,26 +2806,39 @@ export interface components {
              * @example shipment.ship_to.phone_number
              */
             readonly field_name?: string;
+            /** @description The name of the carrier account that generated the error. */
+            readonly carrier_name?: string;
+            /** @description The carrier's own error code, such as `INVALID_PARAMETER_VALUE`. */
+            readonly carrier_error_code?: string;
+            /** @description The carrier's own error message. More specific than `message` when present. */
+            readonly carrier_error_message?: string;
+            /** @description The HTTP status the carrier's API answered with. */
+            readonly carrier_response_code?: number;
+            /** @description The carrier's id for the request, for its support. */
+            readonly carrier_request_id?: string;
         };
         /**
          * error_source
          * @description The source of the error, as indicated by the name this informs us if the API call failed because of the
          *     carrier, the order source, or the ShipEngine API itself.
+         * @example shipengine
          * @enum {string}
          */
         error_source: "carrier" | "order_source" | "shipengine";
         /**
          * error_type
          * @description The type of error
+         * @example validation
          * @enum {string}
          */
         error_type: "account_status" | "business_rules" | "validation" | "security" | "system" | "integrations";
         /**
          * error_code
          * @description The error code specified for the failed API Call
+         * @example invalid_field_value
          * @enum {string}
          */
-        error_code: "auto_fund_not_supported" | "batch_cannot_be_modified" | "carrier_conflict" | "carrier_disconnected" | "carrier_not_connected" | "carrier_not_supported" | "confirmation_not_supported" | "default_warehouse_cannot_be_deleted" | "field_conflict" | "field_value_required" | "forbidden" | "identifier_conflict" | "identifiers_must_match" | "insufficient_funds" | "invalid_address" | "invalid_billing_plan" | "invalid_field_value" | "invalid_identifier" | "invalid_status" | "invalid_string_length" | "label_images_not_supported" | "meter_failure" | "order_source_not_active" | "rate_limit_exceeded" | "refresh_not_supported" | "request_body_required" | "return_label_not_supported" | "settings_not_supported" | "subscription_inactive" | "terms_not_accepted" | "tracking_not_supported" | "trial_expired" | "unauthorized" | "unknown" | "unspecified" | "verification_failure" | "warehouse_conflict" | "webhook_event_type_conflict" | "customs_items_required" | "incompatible_paired_labels" | "invalid_charge_event" | "invalid_object" | "no_rates_returned" | "file_not_found" | "shipping_rule_not_found" | "service_not_determined" | "no_rates_returned" | "funding_source_registration_in_progress" | "insurance_failure" | "funding_source_missing_configuration" | "funding_source_error" | "freight_connection_inactive" | "freight_provider_id_required" | "freight_provider_already_connected" | "freight_shipment_not_found" | "freight_tracking_not_available" | "freight_tracking_not_found" | "freight_shipment_not_batchable";
+        error_code: "auto_fund_not_supported" | "batch_cannot_be_modified" | "bring_your_own_label_not_supported" | "carrier_conflict" | "carrier_disconnected" | "carrier_not_connected" | "carrier_not_supported" | "confirmation_not_supported" | "default_warehouse_cannot_be_deleted" | "field_conflict" | "field_value_required" | "forbidden" | "identifier_conflict" | "identifiers_must_match" | "insufficient_funds" | "invalid_address" | "invalid_billing_plan" | "invalid_field_value" | "invalid_identifier" | "invalid_status" | "invalid_string_length" | "label_images_not_supported" | "meter_failure" | "multiple_sales_orders" | "order_source_not_active" | "rate_limit_exceeded" | "refresh_not_supported" | "request_body_required" | "return_label_not_supported" | "sales_order_link_required" | "settings_not_supported" | "subscription_inactive" | "terms_not_accepted" | "tracking_not_supported" | "trial_expired" | "unauthorized" | "unknown" | "unspecified" | "verification_failure" | "warehouse_conflict" | "webhook_event_type_conflict" | "customs_items_required" | "incompatible_paired_labels" | "invalid_charge_event" | "invalid_object" | "no_rates_returned" | "file_not_found" | "shipping_rule_not_found" | "service_not_determined" | "funding_source_registration_in_progress" | "insurance_failure" | "funding_source_missing_configuration" | "funding_source_error" | "freight_connection_inactive" | "freight_provider_id_required" | "freight_provider_already_connected" | "freight_shipment_not_found" | "freight_tracking_not_available" | "freight_tracking_not_found" | "freight_shipment_not_batchable";
         /**
          * se_id
          * @description A string that uniquely identifies a ShipEngine resource, such as a carrier, label, shipment, etc.
@@ -2973,6 +3092,7 @@ export interface components {
         /**
          * address_residential_indicator
          * @description Indicates whether an address is residential.
+         * @example no
          * @enum {string}
          */
         address_residential_indicator: "unknown" | "yes" | "no";
@@ -3060,6 +3180,7 @@ export interface components {
         /**
          * address_validation_status
          * @description The possible address validation status values
+         * @example verified
          * @enum {string}
          */
         address_validation_status: "unverified" | "verified" | "warning" | "error";
@@ -3227,6 +3348,8 @@ export interface components {
             readonly batch_errors_url: components["schemas"]["optional_link"];
             /** @description The label download for the batch */
             readonly label_download: components["schemas"]["label_download"];
+            /** @description Link to download the packing slips for all shipments in the batch. Populated only when the batch was created or processed with `generate_packing_slips` set to `true`; otherwise an empty object. The file is available once the batch has been processed. */
+            readonly packing_slip_download?: components["schemas"]["optional_link"];
             /** @description The form download for any customs that are needed */
             readonly form_download: components["schemas"]["optional_link"];
             /** @description The paperless details which may contain elements like `href`, `instructions` and `handoff_code`. */
@@ -3247,7 +3370,7 @@ export interface components {
          *     |--------------|-----------------------------------
          *     |`pdf`         | All carriers
          *     |`png`         | `fedex` <br> `stamps_com` <br> `ups` <br> `usps`
-         *     |`zpl`         | `access_worldwide` <br> `apc` <br> `asendia` <br> `dhl_global_mail` <br> `dhl_express` <br> `dhl_express_australia` <br> `dhl_express_canada` <br> `dhl_express_worldwide` <br> `dhl_express_uk` <br> `dpd` <br> `endicia` <br> `fedex` <br> `fedex_uk` <br> `firstmile` <br> `imex` <br> `newgistics` <br> `ontrac` <br> `rr_donnelley` <br> `stamps_com` <br> `ups` <br> `usps`
+         *     |`zpl`         | `access_worldwide` <br> `apc` <br> `asendia` <br> `dhl_global_mail` <br> `dhl_express` <br> `dhl_express_australia` <br> `dhl_express_canada` <br> `dhl_express_worldwide` <br> `dhl_express_uk` <br> `dpd` <br> `endicia` <br> `fedex` <br> `fedex_uk` <br> `firstmile` <br> `imex` <br> `newgistics` <br> `ontrac` <br> `stamps_com` <br> `ups` <br> `usps`
          * @enum {string}
          */
         label_format: "pdf" | "png" | "zpl";
@@ -3283,36 +3406,11 @@ export interface components {
              */
             handoff_code?: string | null;
         };
-        /** create_batch_request */
-        create_batch_request: components["schemas"]["create_batch_request_body"] | components["schemas"]["create_and_process_batch_request_body"];
         /**
-         * create_batch_request_body
+         * create_batch_request
          * @description A create batch request body
          */
-        create_batch_request_body: {
-            /** @description A string that uniquely identifies the external batch */
-            external_batch_id?: components["schemas"]["se_id"];
-            /**
-             * @description Add custom messages for a particular batch
-             * @example This is my batch
-             */
-            batch_notes?: string;
-            /**
-             * Format: uuid
-             * @description Assign a user to the batch at creation time. The user must be an active member of your account.
-             * @example a2df9fa5-b7ee-467f-be4e-9c660542c187
-             */
-            assigned_user?: string;
-            /** @description Array of shipment IDs used in the batch */
-            shipment_ids?: components["schemas"]["se_id"][];
-            /** @description Array of rate IDs used in the batch */
-            rate_ids?: components["schemas"]["se_id"][];
-        };
-        /**
-         * create_and_process_batch_request_body
-         * @description A create and process batch request body
-         */
-        create_and_process_batch_request_body: {
+        create_batch_request: {
             /** @description A string that uniquely identifies the external batch */
             external_batch_id?: components["schemas"]["se_id"];
             /**
@@ -3332,9 +3430,11 @@ export interface components {
             rate_ids?: components["schemas"]["se_id"][];
             /** @description The information used to process the batch */
             process_labels?: {
-                /** @description When 'true', the batch will be enqueued for processing */
+                /**
+                 * @description When 'true', the batch will be enqueued for processing
+                 * @example true
+                 */
                 create_batch_and_process_labels?: boolean;
-                /** @description The Ship date the batch is being processed for */
                 ship_date?: components["schemas"]["date_time"];
                 /** @default 4x6 */
                 label_layout?: components["schemas"]["label_layout"];
@@ -3345,6 +3445,12 @@ export interface components {
                  * @default label
                  */
                 display_scheme?: components["schemas"]["display_scheme"];
+                /**
+                 * @description When `true`, a packing slip is generated for each shipment in the batch and placed in line with the labels in the `label_download` file. A separate download link for all packing slips in the batch is returned in `packing_slip_download`.
+                 * @default false
+                 * @example true
+                 */
+                generate_packing_slips?: boolean;
             };
         };
         /**
@@ -3444,6 +3550,12 @@ export interface components {
              * @default label
              */
             display_scheme?: components["schemas"]["display_scheme"];
+            /**
+             * @description When `true`, a packing slip is generated for each shipment in the batch and placed in line with the labels in the `label_download` file. A separate download link for all packing slips in the batch is returned in `packing_slip_download`.
+             * @default false
+             * @example true
+             */
+            generate_packing_slips?: boolean;
         };
         /**
          * remove_from_batch_request_body
@@ -3717,6 +3829,7 @@ export interface components {
         /**
          * currency
          * @description The currencies that are supported by ShipEngine are the ones that specified by ISO 4217: https://www.iso.org/iso-4217-currency-codes.html
+         * @example USD
          */
         currency: string;
         /**
@@ -3756,9 +3869,9 @@ export interface components {
          * @description The shipping carriers that are supported by ShipEngine
          * @enum {string}
          */
-        carrier_name: "access_worldwide" | "amazon_buy_shipping" | "amazon_shipping_uk" | "apc" | "asendia" | "australia_post" | "canada_post" | "dhl_ecommerce" | "dhl_express" | "dhl_express_au" | "dhl_express_ca" | "dhl_express_uk" | "dpd" | "endicia" | "fedex" | "fedex_uk" | "firstmile" | "imex" | "newgistics" | "ontrac" | "purolator_canada" | "royal_mail" | "rr_donnelley" | "seko" | "sendle" | "stamps_com" | "ups" | "lasership";
+        carrier_name: "access_worldwide" | "amazon_buy_shipping" | "amazon_shipping_uk" | "apc" | "asendia" | "australia_post" | "canada_post" | "dhl_ecommerce" | "dhl_express" | "dhl_express_au" | "dhl_express_ca" | "dhl_express_uk" | "dpd" | "endicia" | "epg_shipping" | "fedex" | "fedex_uk" | "firstmile" | "imex" | "newgistics" | "ontrac" | "purolator_canada" | "royal_mail" | "seko" | "sendle" | "stamps_com" | "ups" | "lasership";
         /** connect_carrier_request_body */
-        connect_carrier_request_body: components["schemas"]["connect_access_worldwide_request_body"] | components["schemas"]["connect_amazon_buy_shipping_request_body"] | components["schemas"]["connect_amazon_shipping_uk"] | components["schemas"]["connect_apc_request_body"] | components["schemas"]["connect_asendia_request_body"] | components["schemas"]["connect_australia_post_request_body"] | components["schemas"]["connect_canada_post_request_body"] | components["schemas"]["connect_dhl_ecommerce_request_body"] | components["schemas"]["connect_dhl_express_request_body"] | components["schemas"]["connect_dhl_express_au_request_body"] | components["schemas"]["connect_dhl_express_ca_request_body"] | components["schemas"]["connect_dhl_express_uk_request_body"] | components["schemas"]["connect_dpd_request_body"] | components["schemas"]["connect_endicia_request_body"] | components["schemas"]["connect_fedex_request_body"] | components["schemas"]["connect_fedex_uk_request_body"] | components["schemas"]["connect_firstmile_request_body"] | components["schemas"]["connect_imex_request_body"] | components["schemas"]["connect_lasership_request_body"] | components["schemas"]["connect_newgistics_request_body"] | components["schemas"]["connect_ontrac_request_body"] | components["schemas"]["connect_purolator_request_body"] | components["schemas"]["connect_royal_mail_request_body"] | components["schemas"]["connect_rr_donnelley_request_body"] | components["schemas"]["connect_seko_request_body"] | components["schemas"]["connect_sendle_request_body"] | components["schemas"]["connect_stamps_request_body"] | components["schemas"]["connect_ups_request_body"];
+        connect_carrier_request_body: components["schemas"]["connect_access_worldwide_request_body"] | components["schemas"]["connect_amazon_buy_shipping_request_body"] | components["schemas"]["connect_amazon_shipping_uk"] | components["schemas"]["connect_apc_request_body"] | components["schemas"]["connect_asendia_request_body"] | components["schemas"]["connect_australia_post_request_body"] | components["schemas"]["connect_canada_post_request_body"] | components["schemas"]["connect_dhl_ecommerce_request_body"] | components["schemas"]["connect_dhl_express_request_body"] | components["schemas"]["connect_dhl_express_au_request_body"] | components["schemas"]["connect_dhl_express_ca_request_body"] | components["schemas"]["connect_dhl_express_uk_request_body"] | components["schemas"]["connect_dpd_request_body"] | components["schemas"]["connect_endicia_request_body"] | components["schemas"]["connect_epg_shipping_request_body"] | components["schemas"]["connect_fedex_request_body"] | components["schemas"]["connect_fedex_uk_request_body"] | components["schemas"]["connect_firstmile_request_body"] | components["schemas"]["connect_imex_request_body"] | components["schemas"]["connect_lasership_request_body"] | components["schemas"]["connect_newgistics_request_body"] | components["schemas"]["connect_ontrac_request_body"] | components["schemas"]["connect_purolator_request_body"] | components["schemas"]["connect_royal_mail_request_body"] | components["schemas"]["connect_seko_request_body"] | components["schemas"]["connect_sendle_request_body"] | components["schemas"]["connect_stamps_request_body"] | components["schemas"]["connect_ups_request_body"];
         /**
          * connect_access_worldwide_request_body
          * @description An Access Worldwide account information request body
@@ -3936,6 +4049,7 @@ export interface components {
          *     | `address_service_requested`    | Forward the package to the new address, if possible; otherwise, return it to the sender. This is similar to `forwarding_service_requested`, but different restrictions and charges may apply.
          *     | `change_service_requested`     | The package is discarded. If possible, notification of the new address is sent to the sender.
          *     | `leave_if_no_response`         |
+         * @example leave_if_no_response
          * @enum {string}
          */
         ancillary_service_endorsement: "none" | "return_service_requested" | "forwarding_service_requested" | "address_service_requested" | "change_service_requested" | "leave_if_no_response";
@@ -4011,6 +4125,22 @@ export interface components {
             account: string;
             /** @description Passphrase */
             passphrase: string;
+        };
+        /**
+         * connect_epg_shipping_request_body
+         * @description An EPG (ePost Global) account information request body
+         */
+        connect_epg_shipping_request_body: {
+            /**
+             * @description Nickname
+             * @example My Carrier Account
+             */
+            nickname: string;
+            /**
+             * @description Token
+             * @example your_token
+             */
+            token: string;
         };
         /**
          * connect_fedex_request_body
@@ -4246,18 +4376,6 @@ export interface components {
             nickname: string;
         };
         /**
-         * connect_rr_donnelley_request_body
-         * @description A RR Donnelley account information request body
-         */
-        connect_rr_donnelley_request_body: {
-            /** @description Nickname */
-            nickname: string;
-            /** @description Username */
-            username: string;
-            /** @description Password */
-            password: string;
-        };
-        /**
          * connect_seko_request_body
          * @description A SEKO account information request body
          */
@@ -4374,12 +4492,14 @@ export interface components {
          *     |`drop_box`                | You will drop-off packages in a FedEx drop box
          *     |`business_service_center` | You will drop-off packages at an authorized FedEx business service center
          *     |`station`                 | You will drop-off the package at a FedEx Station
+         * @example regular_pickup
          * @enum {string}
          */
         fedex_pickup_type: "none" | "regular_pickup" | "request_courier" | "drop_box" | "business_service_center" | "station";
         /**
          * smart_post_hub
          * @description The possible smart post hub values
+         * @example groveport_oh
          * @enum {string}
          */
         smart_post_hub: "none" | "allentown_pa" | "atlanta_ga" | "baltimore_md" | "charlotte_nc" | "chino_ca" | "dallas_tx" | "denver_co" | "detroit_mi" | "edison_nj" | "grove_city_oh" | "groveport_oh" | "houston_tx" | "indianapolis_in" | "kansas_city_ks" | "los_angeles_ca" | "martinsburg_wv" | "memphis_tn" | "minneapolis_mn" | "new_berlin_wi" | "northborough_ma" | "orlando_fl" | "phoneix_az" | "pittsburgh_pa" | "reno_nv" | "sacramento_ca" | "salt_lake_city_ut" | "seattle_wa" | "st_louis_mo" | "windsor_ct" | "newark_ny" | "south_brunswick_nj" | "scranton_pa" | "wheeling_il" | "middletown_ct" | "portland_or";
@@ -4419,6 +4539,7 @@ export interface components {
         /**
          * ups_pickup_type
          * @description The possible ups pickup type values
+         * @example daily_pickup
          * @enum {string}
          */
         ups_pickup_type: "daily_pickup" | "occasional_pickup" | "customer_counter";
@@ -4724,6 +4845,7 @@ export interface components {
          *     |--------------------|------------------------------
          *     |`url`               |You will receive a URL, which you can use to download the label in a separate request. The URL will remain valid for 90 days.
          *     |`inline`            |You will receive the Base64-encoded label as part of the response. No need for a second request to download the label.
+         * @example url
          * @enum {string}
          */
         label_download_type: "url" | "inline";
@@ -4785,9 +4907,10 @@ export interface components {
         /**
          * webhook_event
          * @description The possible webhook event values
+         * @example batch
          * @enum {string}
          */
-        webhook_event: "batch" | "carrier_connected" | "order_source_refresh_complete" | "rate" | "report_complete" | "sales_orders_imported" | "track";
+        webhook_event: "batch" | "carrier_connected" | "order_source_refresh_complete" | "rate" | "report_complete" | "sales_orders_imported" | "track" | "freight_track_event_v2";
         /**
          * webhook_header
          * @description Optional header to be specified in webhook
@@ -5023,6 +5146,8 @@ export interface components {
                 readonly tracking_url?: string | null;
                 /** @description The recipient's mailing address */
                 readonly ship_to?: components["schemas"]["shipping_address_to"];
+                /** @description ShipStation's predicted delivery estimate for this label. This is the only delivery estimate in a label response; it is omitted when no prediction is available. */
+                readonly delivery_prediction?: components["schemas"]["delivery_prediction"];
             }[];
         } & components["schemas"]["paged_list_response_body"];
         /**
@@ -5046,11 +5171,7 @@ export interface components {
          * @description Request body for creating NetStamps labels.
          */
         create_netstamps_labels_request_body: {
-            /**
-             * @description The shipments to create NetStamps labels for. All shipments must use the same `carrier_id`.
-             *
-             *     Each shipment must include `advanced_options.netstamps_options` with `row` and `column` to control stamp placement. Row/column combinations must be unique across shipments.
-             */
+            /** @description The shipments to create NetStamps labels for. All shipments must use the same `carrier_id`. Each shipment must include `advanced_options.netstamps_options` with `row` and `column` to control stamp placement. Row/column combinations must be unique across shipments. */
             shipments: components["schemas"]["shipment_request"][];
             /**
              * @description The NetStamps layout to use.
@@ -5403,9 +5524,17 @@ export interface components {
         shipment_item: {
             /** @description item name */
             name?: string;
-            /** @description sales order id */
+            /**
+             * @description The ID of the sales order that this item belongs to. In shipment responses, this is `null` if the
+             *     item isn't linked to a sales order.
+             * @example 8c1f2a5e-3b7d-4e9a-a6c2-1d4f5e6a7b8c
+             */
             sales_order_id?: string | null;
-            /** @description sales order item id */
+            /**
+             * @description The ID of the sales order line item that this item belongs to. In shipment responses, this is
+             *     `null` if the item isn't linked to a sales order.
+             * @example 2e7b9c4d-6a1f-4c3e-8b5d-9f0a1b2c3d4e
+             */
             sales_order_item_id?: string | null;
             /**
              * Format: int32
@@ -5426,6 +5555,12 @@ export interface components {
              */
             asin?: string | null;
             order_source_code?: components["schemas"]["order_source_name"];
+            /**
+             * @description Unique identifier for the item. Use this value as `item_id` when you
+             *     [split a shipment](#operation/split_shipment).
+             * @example 1402291169813
+             */
+            item_id?: string | null;
         };
         /**
          * order_source_name
@@ -6324,6 +6459,8 @@ export interface components {
             shipment?: components["schemas"]["shipment"];
             /** @description The date that the package was (or will be) shipped.  ShipEngine will take the day of week into consideration. For example, if the carrier does not operate on Sundays, then a package that would have shipped on Sunday will ship on Monday instead. */
             readonly ship_date?: components["schemas"]["date"];
+            /** @description ShipStation's predicted delivery estimate for this label. This is the only delivery estimate in a label response; it is omitted when no prediction is available. */
+            readonly delivery_prediction?: components["schemas"]["delivery_prediction"];
             /** @description The date and time that the label was created in ShipEngine. */
             readonly created_at?: components["schemas"]["date_time"];
             /** @description The cost of shipping, delivery confirmation, and other carrier charges.  This amount **does not** include insurance costs. */
@@ -6449,7 +6586,23 @@ export interface components {
          *
          *     > **Note:** Either `ship_from` or `warehouse_id` must be set.
          */
-        shipment: WithRequired<components["schemas"]["partial_shipment"], "shipment_id" | "carrier_id" | "service_code" | "ship_date" | "created_at" | "modified_at" | "shipment_status" | "ship_to" | "ship_from" | "warehouse_id" | "return_to" | "insurance_provider" | "tags" | "packages" | "total_weight" | "batch_ids">;
+        shipment: WithRequired<components["schemas"]["partial_shipment"], "shipment_id" | "carrier_id" | "service_code" | "ship_date" | "created_at" | "modified_at" | "shipment_status" | "ship_to" | "ship_from" | "warehouse_id" | "return_to" | "insurance_provider" | "tags" | "packages" | "total_weight" | "batch_ids"> & {
+            /**
+             * @description The IDs of the sales orders that the shipment is linked to. The array is empty if the shipment
+             *     isn't linked to a sales order. This field is read-only and is ignored in requests.
+             *
+             *     A shipment must be linked to a sales order before it can be
+             *     [split](#operation/split_shipment) or [merged](#operation/merge_shipments).
+             *
+             *     > **Note:** After a split, the original shipment can still list a sales order even if all of
+             *     that sales order's items have moved to other shipments. To see which sales order each item
+             *     belongs to, use `items[].sales_order_id`.
+             * @example [
+             *       "8c1f2a5e-3b7d-4e9a-a6c2-1d4f5e6a7b8c"
+             *     ]
+             */
+            readonly sales_order_ids?: string[];
+        };
         /**
          * partial_shipment
          * @description The information necessary to ship a package, such as the origin, the destination, the carrier service, and the package dimensions and weight.
@@ -6653,6 +6806,7 @@ export interface components {
         /**
          * tax_type
          * @description Type of a tax added to shipping cost. Includes Canadian tax types GST (Goods and Services Tax), HST (Harmonized Sales Tax), QST (Quebec Sales Tax), and PST (Provincial Sales Tax).
+         * @example vat
          * @enum {string}
          */
         tax_type: "vat" | "gst" | "hst" | "qst" | "pst";
@@ -7402,6 +7556,7 @@ export interface components {
          *     |`AT` | Delivery Attempt
          *     |`NY` | Not Yet In System
          *     |`SP` | Delivered To Collection Location
+         * @example DE
          * @enum {string}
          */
         status_code: "UN" | "AC" | "IT" | "DE" | "EX" | "AT" | "NY" | "SP";
@@ -8113,6 +8268,8 @@ export interface components {
             readonly estimated_delivery_date?: (string & components["schemas"]["date"]) | null;
             /** @description The carrier delivery days */
             readonly carrier_delivery_days?: string | null;
+            /** @description ShipStation's predicted estimated delivery date. */
+            readonly delivery_prediction?: components["schemas"]["delivery_prediction"];
             /**
              * Format: date-time
              * @description ship date
@@ -8307,6 +8464,8 @@ export interface components {
             readonly estimated_delivery_date?: (string & components["schemas"]["date"]) | null;
             /** @description The carrier delivery days */
             readonly carrier_delivery_days?: string | null;
+            /** @description ShipStation's predicted estimated delivery date. */
+            readonly delivery_prediction?: components["schemas"]["delivery_prediction"];
             /**
              * Format: date-time
              * @description ship date
@@ -9017,6 +9176,87 @@ export interface components {
             request_id?: components["schemas"]["uuid"];
         };
         /**
+         * split_shipment_request_body
+         * @description A request body for splitting a shipment into one or more new shipments
+         */
+        split_shipment_request_body: {
+            /**
+             * @description The new shipments to create. Each entry creates one new shipment that holds the listed items.
+             *     Items and quantities that you don't list stay on the original shipment.
+             */
+            shipments: {
+                /** @description The items to move from the original shipment into this new shipment */
+                items: {
+                    /**
+                     * @description The `item_id` of an item on the original shipment, from the `items` array returned by
+                     *     [Get shipment by id](#operation/get_shipment_by_id). Each item can be listed only once
+                     *     in the same new shipment.
+                     * @example 1402291169813
+                     */
+                    item_id: string;
+                    /**
+                     * Format: int32
+                     * @description The number of units of the item to move into the new shipment. Across all new
+                     *     shipments, the total for an item can't be more than the quantity on the original shipment.
+                     * @example 1
+                     */
+                    quantity: number;
+                }[];
+            }[];
+        };
+        /**
+         * split_shipment_response_body
+         * @description A response body for splitting a shipment
+         */
+        split_shipment_response_body: {
+            /**
+             * @description The original shipment, which keeps the items that weren't moved
+             * @example se-202902255
+             */
+            shipment_id?: components["schemas"]["se_id"];
+            /**
+             * @description The new shipments, in the same order as the `shipments` array in the request
+             * @example [
+             *       "se-202902301"
+             *     ]
+             */
+            new_shipment_ids?: components["schemas"]["se_id"][];
+        };
+        /**
+         * merge_shipments_request_body
+         * @description A request body for merging shipments into a shipment
+         */
+        merge_shipments_request_body: {
+            /**
+             * @description The shipments to merge into the shipment in the URL. At least one of them must be a shipment other
+             *     than the one in the URL.
+             * @example [
+             *       "se-202902301",
+             *       "se-202902302"
+             *     ]
+             */
+            shipment_ids: components["schemas"]["se_id"][];
+        };
+        /**
+         * merge_shipments_response_body
+         * @description A response body for merging shipments
+         */
+        merge_shipments_response_body: {
+            /**
+             * @description The shipment that now holds all of the items
+             * @example se-202902255
+             */
+            shipment_id?: components["schemas"]["se_id"];
+            /**
+             * @description The shipments that were merged in. These shipments have been deleted.
+             * @example [
+             *       "se-202902301",
+             *       "se-202902302"
+             *     ]
+             */
+            merged_shipment_ids?: components["schemas"]["se_id"][];
+        };
+        /**
          * list_shipment_rates_response_body
          * @description A list shipment rates response body
          */
@@ -9645,16 +9885,18 @@ export interface components {
              */
             readonly currency?: string;
             /**
-             * @description The estimated number of days in transit, when available.
+             * @description The carrier's estimated number of days in transit, when available.
              * @example 2
              */
             readonly estimated_delivery_days?: number | null;
             /**
              * Format: date-time
-             * @description The estimated delivery date, when available.
+             * @description The carrier's estimated delivery date, when available.
              * @example 2026-06-26T00:00:00Z
              */
             readonly estimated_delivery_date?: string | null;
+            /** @description ShipStation's predicted delivery date for this rate. */
+            readonly delivery_prediction?: components["schemas"]["delivery_prediction"];
         };
         /**
          * calculate_checkout_rates_response_body
@@ -9693,6 +9935,143 @@ export interface components {
              * @example 2026-06-24T10:00:00Z
              */
             readonly created_at?: string;
+        };
+        /**
+         * delivery_prediction_carrier_details
+         * @description The carrier and service a delivery prediction or warning belongs to.
+         */
+        delivery_prediction_carrier_details: {
+            /**
+             * @description The carrier code, in lowercase.
+             * @example ups
+             */
+            carrier_code: string;
+            /**
+             * @description The carrier service code, in lowercase.
+             * @example ups_ground
+             */
+            service_code: string;
+        };
+        /**
+         * delivery_prediction_option
+         * @description A carrier and service combination to predict a delivery date for.
+         */
+        delivery_prediction_option: {
+            /** @description The carrier and service to predict for. */
+            carrier_details: components["schemas"]["delivery_prediction_carrier_details"];
+        };
+        /**
+         * delivery_predictions_request_body
+         * @description The lane and the carrier and service combinations to predict delivery dates for.
+         */
+        delivery_predictions_request_body: {
+            /**
+             * @description The ISO 3166-1 alpha-2 country code of the origin.
+             * @example US
+             */
+            from_country_code: string;
+            /**
+             * @description The postal code of the origin.
+             * @example 78701
+             */
+            from_postal_code: string;
+            /**
+             * @description The ISO 3166-1 alpha-2 country code of the destination.
+             * @example US
+             */
+            to_country_code: string;
+            /**
+             * @description The postal code of the destination.
+             * @example 90210
+             */
+            to_postal_code: string;
+            /**
+             * Format: date
+             * @description The date the shipment leaves the origin. Defaults to today when omitted. A date in the past is rejected.
+             * @example 2026-07-01
+             */
+            ship_date?: string;
+            /** @description The carrier and service combinations to predict for. A combination listed more than once is predicted once. */
+            delivery_options: components["schemas"]["delivery_prediction_option"][];
+        };
+        /**
+         * delivery_prediction
+         * @description ShipStation's own predicted delivery estimate, from its delivery prediction model rather than quoted by the carrier.
+         *
+         *     This complements the carrier's own estimate rather than replacing it — where carrier fields are present, they are still populated. The whole object is omitted when a prediction is not available for the carrier, service, and lane, so treat its absence as "no prediction" rather than as an error.
+         *
+         *     To request predictions on their own, without rating or buying anything, use [Predict delivery dates](#operation/create_delivery_predictions).
+         */
+        delivery_prediction: {
+            /**
+             * Format: date
+             * @description The predicted delivery date.
+             * @example 2026-07-04
+             */
+            readonly delivery_date?: string | null;
+            /**
+             * @description How much historical data the prediction rests on.
+             *
+             *     - `high` — the prediction is based on historical data for this carrier service.
+             *     - `low` — little or no historical data was available for this service, so the prediction is based on similar services.
+             * @example high
+             * @enum {string}
+             */
+            readonly confidence_level?: "high" | "low";
+        };
+        /**
+         * delivery_prediction_result
+         * @description A predicted delivery date for one carrier and service combination.
+         */
+        delivery_prediction_result: {
+            /**
+             * Format: date
+             * @description The ship date the prediction was calculated for.
+             * @example 2026-07-01
+             */
+            readonly ship_date?: string;
+            /**
+             * Format: date
+             * @description The predicted delivery date.
+             * @example 2026-07-04
+             */
+            readonly delivery_date?: string | null;
+            /**
+             * @description How much historical data the prediction rests on.
+             *
+             *     - `high` — the prediction is based on historical data for this carrier service.
+             *     - `low` — little or no historical data was available for this service, so the prediction is based on similar services.
+             * @example high
+             * @enum {string}
+             */
+            readonly confidence_level?: "high" | "low";
+            /** @description The carrier and service this prediction is for. */
+            carrier_details?: components["schemas"]["delivery_prediction_carrier_details"];
+        };
+        /**
+         * delivery_prediction_warning
+         * @description A requested carrier and service combination that no prediction could be made for.
+         */
+        delivery_prediction_warning: {
+            /** @description The carrier and service the warning is about. */
+            carrier_details?: components["schemas"]["delivery_prediction_carrier_details"];
+            /**
+             * @description Why no prediction was returned for this combination.
+             * @example Carrier and service combination is unsupported.
+             */
+            readonly message?: string;
+        };
+        /**
+         * delivery_predictions_response_body
+         * @description The delivery predictions for the requested lane.
+         *
+         *     A requested carrier and service combination is never in both arrays: it is either a prediction or a warning. A combination the model returns nothing usable for is in neither, so match on `carrier_details` and treat an absent combination as no prediction being available rather than as an error. When none of the requested combinations is supported, `delivery_predictions` is empty and every combination appears in `warnings`.
+         */
+        delivery_predictions_response_body: {
+            /** @description One prediction per supported carrier and service combination. */
+            delivery_predictions?: components["schemas"]["delivery_prediction_result"][];
+            /** @description One entry per requested combination that no prediction could be made for. */
+            warnings?: components["schemas"]["delivery_prediction_warning"][];
         };
         /**
          * freight_address
@@ -9750,11 +10129,23 @@ export interface components {
              */
             email?: string | null;
             /**
-             * @description How the carrier should classify this location. Location type affects accessorial charges — for example, residential and limited-access locations usually carry a surcharge. An unrecognized value is rejected with a `400 Bad Request`.
+             * @description How the carrier should classify this location. Location type affects accessorial charges — for example, residential and limited-access locations usually carry a surcharge. An unrecognized value is rejected with a `400 Bad Request`. It describes the kind of site and is independent of the `residential_*` and `construction_site_*` accessorials, so a limited-access destination can also request `residential_delivery`.
              * @example commercial
              * @enum {string|null}
              */
             location_type?: "airport" | "carrier_terminal" | "commercial" | "construction" | "container_freight_station" | "distribution_center" | "government_facility" | "limited_access" | "pier_port_wharf" | "residential" | "secured_access" | "trade_show" | null;
+        };
+        /**
+         * freight_destination_location_type
+         * @description The destination of a freight quote that is linked to a shipment with `shipment_id`. The address comes from the shipment, so only `location_type` can be set. It is saved with the shipment's freight configuration and used when you quote or book that shipment again.
+         */
+        freight_destination_location_type: {
+            /**
+             * @description How the carrier should classify the destination. An unrecognized value is rejected with a `400 Bad Request`.
+             * @example limited_access
+             * @enum {string}
+             */
+            location_type: "airport" | "carrier_terminal" | "commercial" | "construction" | "container_freight_station" | "distribution_center" | "government_facility" | "limited_access" | "pier_port_wharf" | "residential" | "secured_access" | "trade_show";
         };
         /**
          * freight_book_address
@@ -9807,6 +10198,18 @@ export interface components {
              */
             grocery_consolidation_pickup?: boolean;
             /**
+             * @description The origin is a residential address. This is independent of `ship_from.location_type`, so it can be combined with any location type.
+             * @default false
+             * @example false
+             */
+            residential_pickup?: boolean;
+            /**
+             * @description The origin is a construction site. This is independent of `ship_from.location_type`, so it can be combined with any location type.
+             * @default false
+             * @example false
+             */
+            construction_site_pickup?: boolean;
+            /**
              * @description The destination has no loading dock and the driver needs a liftgate to unload the freight.
              * @default false
              * @example true
@@ -9842,6 +10245,18 @@ export interface components {
              * @example false
              */
             grocery_consolidation_delivery?: boolean;
+            /**
+             * @description The destination is a residential address. This is independent of `ship_to.location_type`, so it can be combined with any location type, such as `limited_access`.
+             * @default false
+             * @example true
+             */
+            residential_delivery?: boolean;
+            /**
+             * @description The destination is a construction site. This is independent of `ship_to.location_type`, so it can be combined with any location type.
+             * @default false
+             * @example false
+             */
+            construction_site_delivery?: boolean;
             /**
              * @description The carrier sorts or segregates the freight on delivery.
              * @default false
@@ -10179,12 +10594,12 @@ export interface components {
         get_freight_quotes_request_body: {
             /** @description The freight provider account to quote against. It must be an active connection on your account — retrieve it with [List freight provider accounts](#operation/list_freight_provider_accounts). */
             freight_provider_account_id: components["schemas"]["se_id"];
-            /** @description An existing shipment to quote for. When provided, the origin is taken from the shipment's ship-from warehouse and the destination from the order's ship-to address, and `ship_from` and `ship_to` must be omitted. The `handling_units`, `accessorials`, and `insurance` you send are saved as the shipment's freight configuration; omit them to reuse the configuration already saved. */
+            /** @description An existing shipment to quote for. When provided, the origin is taken from the shipment's ship-from warehouse and the destination from the order's ship-to address, so `ship_from` must be omitted and `ship_to` may contain only `location_type`. The `handling_units`, `accessorials`, `insurance`, and `ship_to.location_type` you send are saved as the shipment's freight configuration; omit them to reuse the configuration already saved. */
             shipment_id?: components["schemas"]["se_id"];
             /** @description The origin address. Required when `shipment_id` is omitted, and must not be provided when `shipment_id` is present. */
             ship_from?: components["schemas"]["freight_address"];
-            /** @description The destination address. Required when `shipment_id` is omitted, and must not be provided when `shipment_id` is present. */
-            ship_to?: components["schemas"]["freight_address"];
+            /** @description The destination address. Required when `shipment_id` is omitted. When `shipment_id` is present, the address comes from the shipment and only `location_type` may be provided. */
+            ship_to?: components["schemas"]["freight_address"] | components["schemas"]["freight_destination_location_type"];
             /**
              * Format: date-time
              * @description The date the freight is ready to ship. Defaults to the current date when omitted.
@@ -10462,6 +10877,11 @@ export interface components {
         freight_shipment_response_body: {
             /** @description The identifier of the freight shipment. */
             freight_shipment_id?: components["schemas"]["se_id"];
+            /**
+             * @description The ID of the base shipment associated with the freight shipment, allowing pairing between standard shipment records and freight shipment records. `null` when no base shipment is associated. This is rare, because a base shipment is created when you book without one.
+             * @example se-333551084
+             */
+            shipment_id?: components["schemas"]["se_id"] | null;
             /** @description The freight provider account the shipment was booked through. */
             freight_provider_account_id?: components["schemas"]["se_id"];
             /**
@@ -12238,7 +12658,7 @@ export interface operations {
                      *           "error_source": "shipengine",
                      *           "error_type": "business_rules",
                      *           "error_code": "unspecified",
-                     *           "message": "ship_from and ship_to must not be provided when shipment_id is present"
+                     *           "message": "ship_from must not be provided when shipment_id is present"
                      *         }
                      *       ]
                      *     }
@@ -12272,13 +12692,13 @@ export interface operations {
                  */
                 page_size?: number;
                 /**
-                 * @description Only return freight shipments created on or after this date/time.
-                 * @example 2019-03-12T19:24:13.657Z
+                 * @description Only return freight shipments created on or after this date and time, in ISO 8601 format. The start of the range is inclusive.
+                 * @example 2026-09-01T00:00:00Z
                  */
                 created_at_start?: string;
                 /**
-                 * @description Only return freight shipments created on or before this date/time.
-                 * @example 2019-03-12T19:24:13.657Z
+                 * @description Only return freight shipments created before this date and time, in ISO 8601 format. The end of the range is exclusive.
+                 * @example 2026-11-01T00:00:00Z
                  */
                 created_at_end?: string;
             };
@@ -12792,7 +13212,23 @@ export interface operations {
                      *       "label_id": "se-2135218",
                      *       "status": "completed",
                      *       "shipment_id": "se-11310579",
+                     *       "external_shipment_id": "ext-shipment-1001",
+                     *       "external_order_id": null,
+                     *       "ship_to": {
+                     *         "name": "John Smith",
+                     *         "phone": "+1 416-555-0123",
+                     *         "address_line1": "301 Front Street West",
+                     *         "city_locality": "Toronto",
+                     *         "state_province": "ON",
+                     *         "postal_code": "M5V 2T6",
+                     *         "country_code": "CA",
+                     *         "address_residential_indicator": "unknown"
+                     *       },
                      *       "ship_date": "2026-05-04T07:00:00Z",
+                     *       "delivery_prediction": {
+                     *         "delivery_date": "2026-05-06",
+                     *         "confidence_level": "high"
+                     *       },
                      *       "created_at": "2026-05-04T12:24:34.4153952Z",
                      *       "shipment_cost": {
                      *         "currency": "usd",
@@ -12865,6 +13301,7 @@ export interface operations {
                      *       ],
                      *       "tracking_number": "1Z2A863C6620022614",
                      *       "is_return_label": false,
+                     *       "rma_number": null,
                      *       "is_international": true,
                      *       "batch_id": "se-0",
                      *       "carrier_id": "se-440144",
@@ -12872,6 +13309,7 @@ export interface operations {
                      *       "service_code": "ups_worldwide_express",
                      *       "package_code": "package",
                      *       "voided": false,
+                     *       "label_image_id": "img_DtBXupDBxREpHnwEXhTfgK",
                      *       "label_format": "pdf",
                      *       "display_scheme": "label",
                      *       "label_layout": "4x6",
@@ -12887,6 +13325,13 @@ export interface operations {
                      *       "form_download": {
                      *         "href": "https://api.shipengine.com/v1/downloads/form-2135218.pdf"
                      *       },
+                     *       "qr_code_download": null,
+                     *       "paperless_download": {
+                     *         "href": "https://api.shipengine.com/v1/downloads/paperless-2135218",
+                     *         "instructions": null,
+                     *         "handoff_code": null
+                     *       },
+                     *       "insurance_claim": null,
                      *       "packages": []
                      *     }
                      */
@@ -13890,6 +14335,8 @@ export interface operations {
                      *             "rate_id": "se-7766853",
                      *             "rate_type": "shipment",
                      *             "carrier_id": "se-426451",
+                     *             "zone": 5,
+                     *             "package_type": "package",
                      *             "shipping_amount": {
                      *               "currency": "usd",
                      *               "amount": 59.07
@@ -13967,6 +14414,10 @@ export interface operations {
                      *             "guaranteed_service": true,
                      *             "estimated_delivery_date": "2026-05-26T12:00:00Z",
                      *             "carrier_delivery_days": "Tuesday 5/26 by 12:00 PM",
+                     *             "delivery_prediction": {
+                     *               "delivery_date": "2026-05-26",
+                     *               "confidence_level": "high"
+                     *             },
                      *             "ship_date": "2026-05-22T00:00:00Z",
                      *             "negotiated_rate": false,
                      *             "service_type": "UPS Worldwide Express®",
@@ -14652,6 +15103,145 @@ export interface operations {
             };
             400: components["responses"]["400_error_response"];
             404: components["responses"]["404_error_response"];
+            500: components["responses"]["500_error_response"];
+        };
+    };
+    split_shipment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Shipment ID */
+                shipment_id: components["schemas"]["se_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["split_shipment_request_body"];
+            };
+        };
+        responses: {
+            /** @description The shipment was split. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "shipment_id": "se-202902255",
+                     *       "new_shipment_ids": [
+                     *         "se-202902301"
+                     *       ]
+                     *     }
+                     */
+                    "application/json": components["schemas"]["split_shipment_response_body"];
+                };
+            };
+            /**
+             * @description The request contained errors, or the shipment can't be split. The `error_code` identifies the reason:
+             *
+             *     | `error_code` | Reason |
+             *     |---|---|
+             *     | `invalid_field_value` | A value in the request can't be used. For example, a quantity is larger than the quantity on the shipment, an item is listed twice in the same new shipment, or no items would stay on the original shipment. |
+             *     | `invalid_identifier` | An `item_id` isn't on the shipment. |
+             *     | `invalid_status` | The shipment has already shipped, has been cancelled, or is in another status that can't be split. |
+             *     | `sales_order_link_required` | The shipment isn't linked to a sales order. |
+             *     | `multiple_sales_orders` | The items you're moving belong to more than one sales order. |
+             *     | `bring_your_own_label_not_supported` | The shipment comes from a marketplace that supplies its own shipping labels. |
+             *     | `unspecified` | The split was rejected for another reason. The `message` explains why. |
+             */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["error_response_body"];
+                };
+            };
+            /** @description The `shipment_id` does not identify a shipment on this account. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["error_response_body"];
+                };
+            };
+            500: components["responses"]["500_error_response"];
+        };
+    };
+    merge_shipments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Shipment ID */
+                shipment_id: components["schemas"]["se_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "shipment_ids": [
+                 *         "se-202902301",
+                 *         "se-202902302"
+                 *       ]
+                 *     }
+                 */
+                "application/json": components["schemas"]["merge_shipments_request_body"];
+            };
+        };
+        responses: {
+            /** @description The shipments were merged. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "shipment_id": "se-202902255",
+                     *       "merged_shipment_ids": [
+                     *         "se-202902301",
+                     *         "se-202902302"
+                     *       ]
+                     *     }
+                     */
+                    "application/json": components["schemas"]["merge_shipments_response_body"];
+                };
+            };
+            /**
+             * @description The request contained errors, or the shipments can't be merged. The `error_code` identifies the reason:
+             *
+             *     | `error_code` | Reason |
+             *     |---|---|
+             *     | `invalid_field_value` | A value in the request can't be used. For example, `shipment_ids` contains only the shipment in the URL, or contains `null`. |
+             *     | `invalid_status` | One of the shipments has already shipped, has been cancelled, or is in another status that can't be merged. |
+             *     | `sales_order_link_required` | One of the shipments isn't linked to a sales order. |
+             *     | `bring_your_own_label_not_supported` | One of the shipments comes from a marketplace that supplies its own shipping labels. |
+             *     | `unspecified` | The merge was rejected for another reason. The `message` explains why. |
+             */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["error_response_body"];
+                };
+            };
+            /** @description The shipment in the URL, or one of the shipments in `shipment_ids`, does not identify a shipment on this account. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["error_response_body"];
+                };
+            };
             500: components["responses"]["500_error_response"];
         };
     };
@@ -15593,6 +16183,79 @@ export interface operations {
                 };
             };
             404: components["responses"]["404_error_response"];
+            500: components["responses"]["500_error_response"];
+        };
+    };
+    create_delivery_predictions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "from_country_code": "US",
+                 *       "from_postal_code": "78701",
+                 *       "to_country_code": "US",
+                 *       "to_postal_code": "90210",
+                 *       "ship_date": "2026-07-01",
+                 *       "delivery_options": [
+                 *         {
+                 *           "carrier_details": {
+                 *             "carrier_code": "ups",
+                 *             "service_code": "ups_ground"
+                 *           }
+                 *         },
+                 *         {
+                 *           "carrier_details": {
+                 *             "carrier_code": "fedex",
+                 *             "service_code": "fedex_express_saver"
+                 *           }
+                 *         }
+                 *       ]
+                 *     }
+                 */
+                "application/json": components["schemas"]["delivery_predictions_request_body"];
+            };
+        };
+        responses: {
+            /** @description The predictions for the requested lane, and a warning for every combination that could not be predicted. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "delivery_predictions": [
+                     *         {
+                     *           "ship_date": "2026-07-01",
+                     *           "delivery_date": "2026-07-04",
+                     *           "confidence_level": "high",
+                     *           "carrier_details": {
+                     *             "carrier_code": "ups",
+                     *             "service_code": "ups_ground"
+                     *           }
+                     *         }
+                     *       ],
+                     *       "warnings": [
+                     *         {
+                     *           "carrier_details": {
+                     *             "carrier_code": "fedex",
+                     *             "service_code": "fedex_express_saver"
+                     *           },
+                     *           "message": "Carrier and service combination is unsupported."
+                     *         }
+                     *       ]
+                     *     }
+                     */
+                    "application/json": components["schemas"]["delivery_predictions_response_body"];
+                };
+            };
+            400: components["responses"]["400_error_response"];
             500: components["responses"]["500_error_response"];
         };
     };

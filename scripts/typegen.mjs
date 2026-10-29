@@ -5,16 +5,7 @@ import openapiTS, { astToString } from "openapi-typescript";
 const SPEC_URL = "https://docs.shipstation.com/_spec/apis/@shipengine/openapi.json";
 const OUTPUT = new URL("../src/definitions.ts", import.meta.url);
 
-const HTTP_METHODS = [
-  "get",
-  "post",
-  "put",
-  "delete",
-  "patch",
-  "options",
-  "head",
-  "trace",
-];
+const HTTP_METHODS = ["get", "post", "put", "delete", "patch", "options", "head", "trace"];
 
 function dedupeOperationIds(spec) {
   const seen = new Map();
@@ -47,7 +38,14 @@ function dedupeOperationIds(spec) {
 // member to its allOf, e.g. allOf: [{ $ref }, { type: "object", nullable: true }].
 // openapi-typescript renders that member as Record<string, never> and intersects it in,
 // which no value satisfies. Move such modifiers onto the parent schema instead.
-const MODIFIER_KEYS = new Set(["type", "nullable", "readOnly", "writeOnly", "required", "description"]);
+const MODIFIER_KEYS = new Set([
+  "type",
+  "nullable",
+  "readOnly",
+  "writeOnly",
+  "required",
+  "description",
+]);
 
 function hoistAllOfModifiers(node) {
   const hoisted = [];
@@ -75,11 +73,54 @@ function hoistAllOfModifiers(node) {
   return hoisted;
 }
 
+// Fields ShipEngine returns on carrier errors that the spec does not list yet (seen on
+// POST /v1/labels/rates/{rate_id}, 2026-10). carrier_error_message is the carrier's own
+// reason, and is more specific than message.
+const UNDOCUMENTED_ERROR_FIELDS = {
+  carrier_name: {
+    type: "string",
+    readOnly: true,
+    description: "The name of the carrier account that generated the error.",
+  },
+  carrier_error_code: {
+    type: "string",
+    readOnly: true,
+    description: "The carrier's own error code, such as `INVALID_PARAMETER_VALUE`.",
+  },
+  carrier_error_message: {
+    type: "string",
+    readOnly: true,
+    description: "The carrier's own error message. More specific than `message` when present.",
+  },
+  carrier_response_code: {
+    type: "integer",
+    readOnly: true,
+    description: "The HTTP status the carrier's API answered with.",
+  },
+  carrier_request_id: {
+    type: "string",
+    readOnly: true,
+    description: "The carrier's id for the request, for its support.",
+  },
+};
+
+function addUndocumentedErrorFields(spec) {
+  const properties = spec.components.schemas.error.properties;
+  for (const [key, schema] of Object.entries(UNDOCUMENTED_ERROR_FIELDS)) {
+    if (properties[key]) {
+      console.log(`error.${key} is now in the spec, remove it from UNDOCUMENTED_ERROR_FIELDS`);
+      continue;
+    }
+    properties[key] = schema;
+  }
+}
+
 const res = await fetch(SPEC_URL);
 if (!res.ok) throw new Error(`Failed to fetch spec: ${res.status}`);
 const spec = await res.json();
 
 const renames = dedupeOperationIds(spec);
+addUndocumentedErrorFields(spec);
 for (const where of hoistAllOfModifiers(spec)) {
   console.log(`hoisted allOf modifier at ${where}`);
 }
